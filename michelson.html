@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迈克尔逊干涉仪 · 波长测量</title>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 380px;
+            min-width: 300px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2 1 550px;
+            min-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary);
+        }
+        .group-box {
+            background: #f8f9fc;
+            border: 1.5px solid #d0d7e2;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+        .group-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .group-row:last-child {
+            margin-bottom: 0;
+        }
+        .group-row span {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            min-width: 32px;
+            white-space: nowrap;
+        }
+        .group-row input {
+            width: 78px;
+            padding: 7px 6px;
+            border: 1.5px solid #dde;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: #fff;
+            text-align: center;
+            transition: 0.25s;
+        }
+        .group-row input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
+        }
+        .group-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+            margin-right: 6px;
+        }
+        .row-label {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .add-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            margin-right: 8px;
+            transition: 0.25s;
+        }
+        .add-btn:hover {
+            background: #218838;
+        }
+        .remove-btn {
+            padding: 8px 16px;
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: 0.25s;
+        }
+        .remove-btn:hover {
+            background: #e04848;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.25s;
+        }
+        .calculate-btn:hover {
+            background: #1e8c4a;
+            transform: translateY(-2px);
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            flex: 1;
+            overflow-y: auto;
+            max-height: 800px;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        table.data-table {
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            width: 100%;
+            margin: 10px 0;
+        }
+        table.data-table th,
+        table.data-table td {
+            padding: 7px 9px;
+            text-align: center;
+            border: 1px solid #dde;
+        }
+        table.data-table th {
+            background: var(--primary);
+            color: #fff;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'Courier New', 'PingFang SC', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔬 迈克尔逊干涉仪 · 波长测量</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 测量数据录入</h3>
+            <div class="instructions">
+                <p>每组数据包含两行：<br>① 起始：条纹数 N₁ 与 镜位置 d₁ (mm)<br>② 结束：条纹数 N₂ 与 镜位置 d₂ (mm)<br>波长 λ = 2|d₂-d₁| / |N₂-N₁| (mm)，结果转换为 nm。</p>
+            </div>
+            <div id="data-groups-container"></div>
+            <div style="margin:12px 0;">
+                <button class="add-btn" id="add-group-btn">+ 添加一组</button>
+                <button class="remove-btn" id="del-group-btn">- 删除末组</button>
+            </div>
+            <button id="calculate-btn" class="calculate-btn">🚀 计算波长与不确定度</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+
+            // 修正后的默认数据：N₁保持 0,50,100,150,200；N₂加200；d₁,d₂对应调整使波长≈632nm
+            const defaultGroups = [
+                { N1: 0,   d1: 30.0000, N2: 250, d2: 30.0790 },
+                { N1: 50,  d1: 30.0790, N2: 300, d2: 30.1580 },
+                { N1: 100, d1: 30.1580, N2: 350, d2: 30.2370 },
+                { N1: 150, d1: 30.2370, N2: 400, d2: 30.3160 },
+                { N1: 200, d1: 30.3160, N2: 450, d2: 30.3950 }
+            ];
+
+            let dataGroups = JSON.parse(JSON.stringify(defaultGroups));
+
+            // 渲染界面：每组两行
+            function renderGroups() {
+                const container = $('#data-groups-container');
+                container.innerHTML = '';
+                dataGroups.forEach((group, idx) => {
+                    const box = document.createElement('div');
+                    box.className = 'group-box';
+                    box.innerHTML = `
+                        <div class="group-row">
+                            <span class="row-label">①</span><span>N₁:</span>
+                            <input type="number" class="n1" value="${group.N1}" step="1" placeholder="条纹数">
+                            <span class="unit">d₁(mm):</span>
+                            <input type="number" class="d1" value="${group.d1.toFixed(4)}" step="0.0001" placeholder="位置">
+                        </div>
+                        <div class="group-row">
+                            <span class="row-label">②</span><span>N₂:</span>
+                            <input type="number" class="n2" value="${group.N2}" step="1" placeholder="条纹数">
+                            <span class="unit">d₂(mm):</span>
+                            <input type="number" class="d2" value="${group.d2.toFixed(4)}" step="0.0001" placeholder="位置">
+                        </div>
+                    `;
+                    container.appendChild(box);
+                });
+            }
+
+            // 从界面读取所有组数据
+            function readGroupsFromInputs() {
+                const groups = [];
+                const boxes = document.querySelectorAll('.group-box');
+                boxes.forEach(box => {
+                    const n1Input = box.querySelector('.n1');
+                    const d1Input = box.querySelector('.d1');
+                    const n2Input = box.querySelector('.n2');
+                    const d2Input = box.querySelector('.d2');
+                    const N1 = parseInt(n1Input.value);
+                    const d1 = parseFloat(d1Input.value);
+                    const N2 = parseInt(n2Input.value);
+                    const d2 = parseFloat(d2Input.value);
+                    if (!isNaN(N1) && !isNaN(d1) && !isNaN(N2) && !isNaN(d2) && N1 !== N2) {
+                        groups.push({ N1, d1, N2, d2 });
+                    }
+                });
+                return groups;
+            }
+
+            // 添加一组（基于最后一组推算）
+            document.getElementById('add-group-btn').addEventListener('click', () => {
+                const last = dataGroups[dataGroups.length - 1] || defaultGroups[0];
+                const newN1 = last.N2;
+                const newN2 = newN1 + 250;  // 保持ΔN=250
+                const deltaD = last.d2 - last.d1;
+                dataGroups.push({
+                    N1: newN1,
+                    d1: last.d2,
+                    N2: newN2,
+                    d2: last.d2 + deltaD
+                });
+                renderGroups();
+            });
+
+            // 删除最后一组
+            document.getElementById('del-group-btn').addEventListener('click', () => {
+                if (dataGroups.length > 1) {
+                    dataGroups.pop();
+                    renderGroups();
+                }
+            });
+
+            // 计算
+            document.getElementById('calculate-btn').addEventListener('click', () => {
+                const validGroups = readGroupsFromInputs();
+                if (validGroups.length < 2) {
+                    alert('至少需要2组有效数据（且N₁≠N₂）');
+                    return;
+                }
+
+                const wavelengths = validGroups.map(g => {
+                    const dN = Math.abs(g.N2 - g.N1);
+                    const dD = Math.abs(g.d2 - g.d1);
+                    const lambda_mm = 2 * dD / dN;
+                    return lambda_mm * 1e6; // nm
+                });
+
+                const avgLambda = wavelengths.reduce((a, b) => a + b, 0) / wavelengths.length;
+                const variance = wavelengths.reduce((sum, val) => sum + (val - avgLambda) ** 2, 0) / (wavelengths.length - 1);
+                const stdDev = Math.sqrt(variance);
+
+                let html = '<h3 class="result-title">🔬 迈克尔逊干涉仪 · 计算结果</h3>';
+                html += '<table class="data-table"><thead><tr><th>组号</th><th>N₁</th><th>d₁ (mm)</th><th>N₂</th><th>d₂ (mm)</th><th>ΔN</th><th>Δd (mm)</th><th>波长 λ (nm)</th></tr></thead><tbody>';
+                validGroups.forEach((g, i) => {
+                    const dN = Math.abs(g.N2 - g.N1);
+                    const dD = Math.abs(g.d2 - g.d1);
+                    const lam = wavelengths[i];
+                    html += `<tr>
+                        <td>${i+1}</td>
+                        <td>${g.N1}</td><td>${g.d1.toFixed(4)}</td><td>${g.N2}</td><td>${g.d2.toFixed(4)}</td>
+                        <td>${dN}</td><td>${dD.toFixed(4)}</td>
+                        <td style="font-weight:700;">${lam.toFixed(2)}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+
+                html += `<div class="result-item"><h4>平均波长 λ̄</h4><div class="result-value success">${avgLambda.toFixed(2)} nm</div></div>`;
+                html += `<div class="result-item"><h4>A类不确定度 (标准偏差)</h4><div class="result-value success">± ${stdDev.toFixed(2)} nm</div></div>`;
+                html += `<div class="result-item"><h4>相对不确定度</h4><div class="result-value">${((stdDev/avgLambda)*100).toFixed(3)}%</div></div>`;
+
+                // 详细推导
+                let detail = `【实验原理】λ = 2Δd / ΔN\n\n`;
+                detail += `【步骤1】共 ${validGroups.length} 组有效数据。\n`;
+                wavelengths.forEach((lam, i) => {
+                    const g = validGroups[i];
+                    detail += `  组${i+1}: N₁=${g.N1}, d₁=${g.d1.toFixed(4)}mm → N₂=${g.N2}, d₂=${g.d2.toFixed(4)}mm\n`;
+                    detail += `    ΔN=${Math.abs(g.N2-g.N1)}, Δd=${Math.abs(g.d2-g.d1).toFixed(4)}mm → λ = ${lam.toFixed(2)} nm\n`;
+                });
+                detail += `\n【步骤3】平均波长 λ̄ = ${avgLambda.toFixed(2)} nm\n`;
+                detail += `【步骤4】标准偏差 s = ${stdDev.toFixed(2)} nm\n`;
+                detail += `  最终结果 λ = (${avgLambda.toFixed(2)} ± ${stdDev.toFixed(2)}) nm, 相对不确定度 ${((stdDev/avgLambda)*100).toFixed(3)}%\n`;
+                html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g, '<br>')}</div>`;
+                $('#result-output').innerHTML = html;
+            });
+
+            // 初始化
+            renderGroups();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

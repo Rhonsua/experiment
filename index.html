@@ -2,1354 +2,636 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>综合物理实验计算工具</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>物理实验计算工具 · 导航</title>
     <style>
         :root {
             --bg: #f5f7fa;
-            --card: #fff;
             --primary: #4b6cb7;
-            --primary-dark: #3a5795;
-            --primary-deep: #182848;
-            --success: #27ae60;
-            --danger: #ff6b6b;
             --text: #2c3e50;
-            --text-light: #666;
-            --border: #e9ecef;
-            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
-            --radius: 14px;
-            --transition: 0.25s ease;
-            --font: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            --side-accent: #8b5cf6;
+            --side-bg: #ffffff;
         }
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         body {
             background: var(--bg);
-            color: #333;
-            font-family: var(--font);
-            line-height: 1.6;
-            padding: 16px;
-            max-width: 1500px;
-            margin: 0 auto;
-            -webkit-font-smoothing: antialiased;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .header {
-            text-align: center;
-            padding: 22px 28px;
-            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
-            color: #fff;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-        }
-        .header h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        .header p {
-            font-size: 1rem;
-            opacity: 0.88;
-            margin-top: 4px;
-        }
-        .main-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .control-panel {
-            flex: 1 1 380px;
-            min-width: 340px;
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 22px 20px;
-            box-shadow: var(--shadow);
-        }
-        .results-panel {
-            flex: 2 1 500px;
-            min-width: 380px;
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 22px 20px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-        }
-        .panel-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 16px;
-            padding-bottom: 10px;
-            border-bottom: 2.5px solid var(--primary);
-            letter-spacing: 0.3px;
-        }
-        .command-buttons {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            padding: 32px 24px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 18px;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 28px;
         }
-        .main-command-btn {
-            padding: 11px 12px;
-            background: #e8ecf4;
-            color: #3a4f7a;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: var(--transition);
+
+        /* 主卡片 — 更大更饱满 */
+        .nav-container {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+            padding: 40px 36px;
+            max-width: 1000px;
+            width: 100%;
             text-align: center;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s;
+            grid-column: 2 / 3;
+            /* center：保持原有的居中观感（中间轨道宽度已固定，切页不会跳动） */
+            justify-self: center;
+        }
+        .nav-container:hover {
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+        }
+
+        /* 超大屏幕时进一步增大主卡片宽度 */
+        @media (min-width: 1400px) {
+            .nav-container {
+                max-width: 1100px;
+                padding: 48px 42px;
+            }
+        }
+
+        /* 侧边卡片保持不变，垂直居中 */
+        .side-card {
+            background: var(--side-bg);
+            border-radius: 28px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            width: 270px;
+            transition: transform 0.25s ease, box-shadow 0.25s;
+            text-decoration: none;
+            display: block;
+            overflow: hidden;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            grid-column: 3 / 4;
+            align-self: center;
+            justify-self: start;
+        }
+        .side-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 32px rgba(0, 0, 0, 0.15);
+            border-color: var(--side-accent);
+        }
+        .side-card-inner {
+            padding: 32px 20px 36px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .side-emoji {
+            font-size: 60px;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.1));
+            transition: transform 0.2s;
+        }
+        .side-card:hover .side-emoji {
+            transform: scale(1.05);
+        }
+        .side-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c5ce7, #a463f5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .side-desc {
+            color: #5b6e8c;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            margin: 4px 0;
+            padding: 0 6px;
+        }
+        .side-badge {
+            background: #ede9fe;
+            color: #6c5ce7;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 60px;
+            margin-top: 6px;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .side-card:hover .side-badge {
+            background: #d9cafc;
+        }
+
+        .announce-btn {
+            position: absolute;
+            top: 28px;
+            right: 32px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            transition: transform 0.2s, opacity 0.2s;
+            background: rgba(75, 108, 183, 0.08);
+            width: 42px;
+            height: 42px;
+            border-radius: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .announce-btn:hover {
+            transform: scale(1.08);
+            background: rgba(75, 108, 183, 0.15);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 14px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .subhead {
+            color: #5d7188;
+            margin-bottom: 36px;
+            font-size: 1.05rem;
+            border-bottom: 1px solid #e9edf2;
+            display: inline-block;
+            padding-bottom: 8px;
+        }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .nav-card {
+            display: block;
+            padding: 18px 14px;
+            background: #f1f4fa;
+            color: #2c3f66;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            text-align: center;
+            box-sizing: border-box;
             letter-spacing: 0.3px;
         }
-        .main-command-btn:hover {
-            background: #dde3f0;
-            transform: translateY(-1px);
-        }
-        .main-command-btn.active {
+        a.nav-card:hover {
             background: var(--primary);
-            color: #fff;
+            color: white;
             border-color: var(--primary);
-            box-shadow: 0 3px 10px rgba(75, 108, 183, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(75,108,183,0.2);
         }
-        .subpanel {
-            margin-top: 6px;
+        .nav-card.placeholder {
+            background: #f8f9fc;
+            color: #9aaec5;
+            cursor: default;
+            border: 2px dashed #cfddee;
+            pointer-events: none;
+            user-select: none;
+            font-weight: 500;
         }
-        .subpanel.hidden {
+
+        /* ===== 分页（第 1 页 / 第 2 页），样式沿用原有卡片配色 ===== */
+        .nav-page {
             display: none;
         }
-        .sub-command-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .sub-command-btn {
-            padding: 8px 14px;
-            background: #f0f2f6;
-            color: #555;
-            border: 1.5px solid #dde;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-        .sub-command-btn:hover {
-            background: #e4e8f0;
-        }
-        .sub-command-btn.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-            font-weight: 600;
-        }
-        .data-input-section {
-            margin-top: 8px;
-        }
-        .input-group {
-            margin-bottom: 14px;
-        }
-        .input-group label {
+        .nav-page.active {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: var(--text);
+            animation: pageFade 0.28s ease;
+        }
+        /* 让分页视图撑满卡片宽度，切页时卡片尺寸不跳动 */
+        .nav-page.active {
+            width: 100%;
+        }
+        @keyframes pageFade {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* 两页共用同一套卡片格式（均为标准两列 .nav-grid） */
+
+        .page-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e9edf2;
+            text-align: left;
+        }
+        .page-topbar h1 {
+            margin-bottom: 0;
+            font-size: 1.5rem;
+        }
+        .page-topbar .subhead {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+            margin-top: 6px;
+            display: block;
             font-size: 0.9rem;
         }
-        .input-group .unit {
+        .page-count {
+            flex-shrink: 0;
+            background: #f1f4fa;
+            color: #4b6cb7;
             font-size: 0.8rem;
-            color: #888;
-            margin-left: 6px;
-            font-weight: 400;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 60px;
+            letter-spacing: 0.3px;
         }
-        input,
-        textarea,
-        select {
-            width: 100%;
-            padding: 10px 13px;
-            border: 1.5px solid #dde;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            font-family: var(--font);
-            background: #fafbfc;
-        }
-        input:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
-            background: #fff;
-        }
-        .data-row {
+
+        .pagination {
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
             align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e9edf2;
             flex-wrap: wrap;
         }
-        .data-row input {
-            flex: 1 1 100px;
-            min-width: 80px;
-        }
-        .data-row .unit {
-            font-size: 0.8rem;
-            color: #888;
-            margin-right: 6px;
-            white-space: nowrap;
-        }
-        .remove-btn {
-            background: var(--danger);
-            color: #fff;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            transition: var(--transition);
-            flex-shrink: 0;
-            line-height: 30px;
-            text-align: center;
-        }
-        .remove-btn:hover {
-            background: #e04848;
-            transform: scale(1.08);
-        }
-        .add-btn {
-            padding: 9px 18px;
-            background: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.88rem;
-            font-weight: 500;
-            transition: var(--transition);
-            margin-bottom: 14px;
-        }
-        .add-btn:hover {
-            background: #218838;
-        }
-        .calculate-btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--success);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 8px;
-            letter-spacing: 0.5px;
-        }
-        .calculate-btn:hover {
-            background: #1e8c4a;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.3);
-        }
-        .clear-btn {
-            width: 100%;
-            padding: 11px;
-            background: #6c757d;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 8px;
-        }
-        .clear-btn:hover {
-            background: #545b62;
-        }
-        .result-output {
-            background: #fafbfc;
-            border-radius: 10px;
-            padding: 18px;
-            flex: 1;
-            min-height: 300px;
-            max-height: 800px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-        }
-        .result-title {
-            color: var(--text);
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--primary);
-        }
-        .result-item {
-            margin-bottom: 10px;
-            padding: 10px 14px;
-            background: #fff;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary);
-        }
-        .result-item h4 {
-            color: var(--text);
-            margin-bottom: 3px;
-            font-size: 0.95rem;
-        }
-        .result-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-        .result-value.success {
-            color: #1e8c4a;
-        }
-        .result-value.warning {
-            color: #e74c3c;
-        }
-        .result-detail {
-            color: var(--text-light);
-            font-size: 0.85rem;
-            margin-top: 3px;
-        }
-        .result-equation {
-            font-size: 1.2rem;
-            font-weight: 700;
-            text-align: center;
-            padding: 14px;
-            background: #e8f4fc;
-            border-radius: 8px;
-            margin: 12px 0;
-            color: var(--text);
-        }
-        .table-container {
-            overflow-x: auto;
-            margin-top: 16px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .page-btn {
+            border: 2px solid transparent;
+            background: #f1f4fa;
+            color: #2c3f66;
+            font-family: inherit;
             font-size: 0.9rem;
+            font-weight: 600;
+            padding: 9px 20px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
         }
-        th,
-        td {
-            padding: 10px 12px;
-            text-align: center;
-            border: 1px solid #dde;
+        .page-btn:hover {
+            background: #e3eaf6;
+            transform: translateY(-2px);
         }
-        th {
+        .page-btn.active {
             background: var(--primary);
             color: #fff;
+            box-shadow: 0 8px 16px rgba(75, 108, 183, 0.25);
+        }
+        .page-nav-btn {
+            border: 2px solid #cfddee;
+            background: #fff;
+            color: var(--primary);
+            font-family: inherit;
+            font-size: 0.9rem;
             font-weight: 600;
+            padding: 9px 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        tr:nth-child(even) {
-            background: #f8f9fb;
+        .page-nav-btn:hover:not(:disabled) {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: translateY(-2px);
         }
-        .chart-container {
-            margin-top: 20px;
-            position: relative;
-            width: 100%;
-            max-height: 380px;
+        .page-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
-        .chart-container canvas {
-            width: 100% !important;
-            max-height: 360px;
-        }
-        .instructions {
-            background: #e8f4fc;
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-            font-size: 0.88rem;
-        }
-        .instructions h3 {
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .instructions ul,
-        .instructions ol {
-            padding-left: 18px;
-        }
-        .instructions li {
-            margin-bottom: 5px;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 12px;
-            color: #8e99a4;
-            font-size: 0.85rem;
-        }
-        .uncertainty-box {
-            background: #fffdf0;
-            border: 1.5px solid #e8d44d;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-top: 12px;
-        }
-        .uncertainty-box h4 {
-            color: #8b7300;
-            margin-bottom: 6px;
-        }
-        @media (max-width: 768px) {
-            .main-content {
+        @media (max-width: 620px) {
+            .page-topbar {
                 flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
-            .command-buttons {
-                grid-template-columns: 1fr 1fr;
+            .page-topbar h1 {
+                font-size: 1.3rem;
             }
-            .data-row {
-                flex-direction: column;
+            .pagination {
                 gap: 6px;
             }
-            .header h1 {
-                font-size: 1.6rem;
+            .page-btn,
+            .page-nav-btn {
+                padding: 8px 13px;
+                font-size: 0.82rem;
             }
+        }
+
+        /* 响应式：窄屏时切换为单列 */
+        @media (max-width: 1100px) {
+            body {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                gap: 28px;
+                padding: 24px 20px;
+            }
+            .nav-container {
+                grid-column: auto;
+                width: 100%;
+                max-width: 100%;
+                padding: 32px 24px;
+            }
+            .side-card {
+                grid-column: auto;
+                width: 100%;
+                max-width: 500px;
+                align-self: auto;
+                justify-self: center;
+            }
+            .announce-btn {
+                top: 22px;
+                right: 22px;
+                width: 38px;
+                height: 38px;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .nav-container {
+                padding: 28px 20px;
+            }
+            .nav-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+            .subhead {
+                font-size: 0.95rem;
+                margin-bottom: 28px;
+            }
+            .announce-btn {
+                top: 18px;
+                right: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container {
+                padding: 24px 16px;
+            }
+            .side-card-inner {
+                padding: 24px 16px 28px;
+            }
+            .side-emoji {
+                font-size: 52px;
+            }
+            .announce-btn {
+                top: 14px;
+                right: 14px;
+                width: 34px;
+                height: 34px;
+                font-size: 1.2rem;
+            }
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(3px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 28px;
+            padding: 28px 30px 28px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            position: relative;
+            text-align: left;
+        }
+        .modal-box h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.6rem;
+            margin-bottom: 18px;
+            font-weight: 700;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #8f9eb5;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #2c3e50;
+        }
+        .modal-content {
+            font-size: 1rem;
+            line-height: 1.75;
+            color: #2c3f55;
+        }
+        .update-list {
+            padding-left: 1.2rem;
+            margin-top: 8px;
+        }
+        /* 历史版本条目：字号/颜色与最新版本一致，仅加间距，保证版式统一 */
+        .version-head {
+            margin-top: 18px;
+        }
+        .update-list li {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔬 综合物理实验计算工具</h1>
-            <p>最小二乘法 · 液体粘度 · 固体线胀系数 · 表面张力 | 含拟合图像与不确定度分析</p>
-        </div>
-        <div class="main-content">
-            <!-- 控制面板 -->
-            <div class="control-panel">
-                <h2 class="panel-title">📋 控制面板</h2>
-                <div class="command-buttons">
-                    <button class="main-command-btn active" data-cmd="LS">📈 最小二乘法</button>
-                    <button class="main-command-btn" data-cmd="viscosity">💧 液体粘度</button>
-                    <button class="main-command-btn" data-cmd="expansion">📏 固体线胀系数</button>
-                    <button class="main-command-btn" data-cmd="tension">🫧 表面张力</button>
-                </div>
 
-                <!-- 最小二乘法子面板 -->
-                <div id="LS-subpanel" class="subpanel">
-                    <div class="sub-command-buttons">
-                        <button class="sub-command-btn active" data-subcmd="ave1">平均值</button>
-                        <button class="sub-command-btn" data-subcmd="ave12">平方平均值</button>
-                        <button class="sub-command-btn" data-subcmd="ave2">乘积平均值</button>
-                        <button class="sub-command-btn" data-subcmd="LS">线性拟合</button>
-                        <button class="sub-command-btn" data-subcmd="LS_LOG">幂函数拟合</button>
-                        <button class="sub-command-btn" data-subcmd="LS^k">指定幂次拟合</button>
-                    </div>
-                    <div class="data-input-section">
-                        <div class="input-group"><label for="data-count">数据个数 (n):</label><input type="number" id="data-count" min="2" max="100" value="5"></div>
-                        <div class="input-group hidden" id="power-k-group"><label for="power-k">幂次 (k):</label><input type="number" id="power-k" step="any" value="2"></div>
-                        <div class="input-group"><label id="x-label" for="x-data">自变量数据 (x):</label><textarea id="x-data" rows="3">1 2 3 4 5</textarea></div>
-                        <div class="input-group" id="y-data-group"><label id="y-label" for="y-data">因变量数据 (y):</label><textarea id="y-data" rows="3">2.1 3.9 6.2 8.1 9.8</textarea></div>
-                    </div>
-                </div>
+    <!-- 主卡片：物理实验工具集合（居中且更饱满） -->
+    <div class="nav-container">
+        <button class="announce-btn" id="openAnnounceBtn" title="更新公告">📢</button>
 
-                <!-- 液体粘度子面板 -->
-                <div id="viscosity-subpanel" class="subpanel hidden">
-                    <div class="instructions">
-                        <h3>💧 液体粘度计算（落球法 · 斯托克斯公式）</h3>
-                        <p>η = (ρ - ρ₀)·g·d² / [18·v·(1 + K·d/D)]，K=2.4，g=9.794 m/s²</p>
-                        <p>📌 <b>最小二乘法融合</b>：对多组(T,η)数据进行η-T线性拟合，绘制拟合图像</p>
-                        <p>📌 <b>不确定度</b>：A类（多次测量）+ B类（仪器误差传递）</p>
-                    </div>
-                    <div class="data-input-section">
-                        <div class="input-group"><label>小球密度 ρ <span class="unit">×10³ kg/m³</span></label><input type="number" id="rho" value="7.8" step="0.1"></div>
-                        <div class="input-group"><label>液体密度 ρ₀ <span class="unit">×10³ kg/m³</span></label><input type="number" id="rho0" value="0.957" step="0.001"></div>
-                        <div class="input-group"><label>管径 D <span class="unit">mm</span></label><input type="number" id="D" value="22.0" step="0.1"></div>
-                        <div class="input-group"><label>仪器误差 Δd <span class="unit">mm</span></label><input type="number" id="delta-d-instr" value="0.01" step="0.001"></div>
-                        <div class="input-group"><label>仪器误差 Δv <span class="unit">cm/s</span></label><input type="number" id="delta-v-instr" value="0.05" step="0.01"></div>
-                        <h4 style="margin-top:10px;">📊 实验数据（温度T用于η-T拟合）</h4>
-                        <div id="viscosity-data-inputs">
-                            <div class="data-row">
-                                <input type="number" class="t-input" placeholder="温度 T" step="0.1" value="25.0"><span class="unit">°C</span>
-                                <input type="number" class="d-input" placeholder="小球直径 d" step="0.01" value="1.20"><span class="unit">mm</span>
-                                <input type="number" class="v-input" placeholder="沉降速度 v" step="0.01" value="2.50"><span class="unit">cm/s</span>
-                                <button class="remove-btn" onclick="removeViscosityRow(this)" style="display:none;">×</button>
-                            </div>
-                        </div>
-                        <button class="add-btn" onclick="addViscosityRow()">+ 添加数据行</button>
-                    </div>
+        <!-- 第 1 页：本次新增的实验（声速 / 刚体转动惯量 / 惠斯通电桥 / 电表改装 / 导热系数 / RLC） -->
+        <section class="nav-page active" id="page-1" data-page="1">
+            <div class="page-topbar">
+                <div>
+                    <h1>🔬 综合物理实验计算工具</h1>
+                    <div class="subhead">⚡ 精确计算 · 辅助分析</div>
                 </div>
-
-                <!-- 固体线胀系数子面板 -->
-                <div id="expansion-subpanel" class="subpanel hidden">
-                    <div class="instructions">
-                        <h3>📏 固体线胀系数计算</h3>
-                        <p>ΔL = α·L₀·ΔT，通过最小二乘法拟合ΔL-ΔT得到斜率k，α = k/L₀</p>
-                        <p>📌 <b>最小二乘法融合</b>：线性拟合ΔL与ΔT，绘制ΔL-T拟合图像</p>
-                    </div>
-                    <div class="data-input-section">
-                        <div class="input-group"><label for="L0">原始长度 L₀ (mm):</label><input type="number" id="L0" value="100.0" step="0.1"></div>
-                        <h4>📊 温度与长度变化数据</h4>
-                        <div id="expansion-data-inputs">
-                            <div class="data-row">
-                                <input type="number" class="t-input" placeholder="温度变化 ΔT" step="0.1" value="10.0"><span class="unit">°C</span>
-                                <input type="number" class="dl-input" placeholder="长度变化 ΔL" step="0.0001" value="0.024"><span class="unit">mm</span>
-                                <button class="remove-btn" onclick="removeExpansionRow(this)" style="display:none;">×</button>
-                            </div>
-                        </div>
-                        <button class="add-btn" onclick="addExpansionRow()">+ 添加数据行</button>
-                    </div>
-                </div>
-
-                <!-- 表面张力子面板 -->
-                <div id="tension-subpanel" class="subpanel hidden">
-                    <div class="instructions">
-                        <h3>🫧 表面张力系数计算（拉脱法）</h3>
-                        <p>阶段1：灵敏度标定 U = k·(m·g)，最小二乘法拟合求k</p>
-                        <p>阶段2：α = (δU·g) / (π·(D外+D内)·k)</p>
-                        <p>📌 <b>最小二乘法融合</b>：U-mg线性拟合，绘制拟合图像</p>
-                        <p>📌 <b>不确定度</b>：A类（δU多次测量）+ k的不确定度传递</p>
-                    </div>
-                    <div class="data-input-section">
-                        <div class="tension-phase" id="tension-phase1">
-                            <h4>🔧 阶段1：灵敏度标定 (m-U)</h4>
-                            <div id="tension-calibration-inputs">
-                                <div class="data-row">
-                                    <input type="number" class="m-input" placeholder="质量 m" step="0.001" value="0.500"><span class="unit">g</span>
-                                    <input type="number" class="u-input" placeholder="电压 U" step="0.01" value="2.50"><span class="unit">mV</span>
-                                    <button class="remove-btn" onclick="removeTensionCalibrationRow(this)" style="display:none;">×</button>
-                                </div>
-                            </div>
-                            <button class="add-btn" onclick="addTensionCalibrationRow()">+ 添加标定数据</button>
-                            <div class="input-group"><label>重力加速度 g (m/s²):</label><input type="number" id="gravity" value="9.794" step="0.001"></div>
-                        </div>
-                        <div class="tension-phase" id="tension-phase2">
-                            <h4>📐 阶段2：表面张力测量</h4>
-                            <div class="input-group"><label>外径 D外 (mm):</label><input type="number" id="D-out" value="60.0" step="0.1"></div>
-                            <div class="input-group"><label>内径 D内 (mm):</label><input type="number" id="D-in" value="55.0" step="0.1"></div>
-                            <div class="input-group"><label>仪器误差 Δ(δU) (mV):</label><input type="number" id="delta-du-instr" value="0.05" step="0.01"></div>
-                            <h5>📊 电压变化数据 δU</h5>
-                            <div id="tension-measurement-inputs">
-                                <div class="data-row">
-                                    <input type="number" class="du-input" placeholder="电压变化 δU" step="0.01" value="1.20"><span class="unit">mV</span>
-                                    <button class="remove-btn" onclick="removeTensionMeasurementRow(this)" style="display:none;">×</button>
-                                </div>
-                            </div>
-                            <button class="add-btn" onclick="addTensionMeasurementRow()">+ 添加测量数据</button>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
-                <button id="clear-btn" class="clear-btn">🗑️ 清空当前数据</button>
-                <div class="instructions">
-                    <h3>💡 使用说明</h3>
-                    <ul>
-                        <li>数据用空格、逗号或分号分隔</li>
-                        <li>粘度模块输入温度T可进行η-T拟合</li>
-                        <li>线胀系数自动用最小二乘法拟合ΔL-ΔT</li>
-                        <li>表面张力自动拟合U-mg求灵敏度k</li>
-                        <li>所有拟合结果均绘制图像</li>
-                        <li>粘度η和表面张力α含不确定度分析</li>
-                    </ul>
-                </div>
+                <span class="page-count" id="pageCount1">第 1 / 2 页</span>
             </div>
-
-            <!-- 结果面板 -->
-            <div class="results-panel">
-                <h2 class="panel-title">📊 计算结果</h2>
-                <div id="result-output" class="result-output">
-                    <p id="result-placeholder" style="color:#999;text-align:center;padding-top:40px;">👆 请选择计算功能并输入数据，然后点击"开始计算"</p>
-                </div>
+            <div class="nav-grid">
+                <a href="rotational-inertia.html" class="nav-card">⚙️ 刚体转动惯量（恒力矩法）</a>
+                <a href="wheatstone-bridge.html" class="nav-card">🌉 惠斯通电桥（测电阻）</a>
+                <a href="meter-modification.html" class="nav-card">🔌 电表改装（电流/电压/欧姆表）</a>
+                <a href="thermal-conductivity.html" class="nav-card">🌡️ 导热系数的测定（稳态平板法）</a>
+                <a href="rlc-series-circuit.html" class="nav-card">📶 RLC 串联电路稳态特性</a>
+                <a href="sound-velocity.html" class="nav-card">🔊 声速的测定（驻波/相位/时差法）</a>
+                <a href="grating-spectrum.html" class="nav-card">🔭 光栅法测光谱波长</a>
+                <a href="labview-tutorial.html" class="nav-card">💻 LabVIEW 实验（温度报警 / 传感器读取）</a>
+                <a href="photoresistor.html" class="nav-card">🔆 光敏电阻特性（伏安 / 光照特性）</a>
+                <a href="elastic-modulus.html" class="nav-card">🧵 杨氏（弹性）模量（拉伸法 / 光杠杆 / 逐差法）</a>
+                <a href="electron-charge-mass.html" class="nav-card">🧲 电子荷质比 e/m（磁偏转法）</a>
+                <a href="millikan-oil-drop.html" class="nav-card">💧 密里根油滴实验（静态平衡法）</a>
             </div>
+        </section>
+
+        <!-- 第 2 页：其余实验 -->
+        <section class="nav-page" id="page-2" data-page="2">
+            <div class="page-topbar">
+                <div>
+                    <h1>🔬 更多物理实验工具</h1>
+                    <div class="subhead">⚡ 精确计算 · 辅助分析</div>
+                </div>
+                <span class="page-count" id="pageCount2">第 2 / 2 页</span>
+            </div>
+            <div class="nav-grid">
+                <a href="least_squares.html" class="nav-card">📈 最小二乘法</a>
+                <a href="viscosity.html" class="nav-card">💧 液体粘度（落球法）</a>
+                <a href="expansion.html" class="nav-card">📏 固体线胀系数</a>
+                <a href="tension.html" class="nav-card">🫧 表面张力系数（拉脱法）</a>
+                <a href="interference.html" class="nav-card">🌈 等厚干涉（牛顿环/劈尖）</a>
+                <a href="magnetoresistance.html" class="nav-card">🧲 磁阻效应</a>
+                <a href="electron-work-function.html" class="nav-card">⚡ 电子逸出功</a>
+                <a href="hall-sensor.html" class="nav-card">🧲 霍尔传感器实验</a>
+                <a href="michelson.html" class="nav-card">🔬 迈克尔逊干涉仪</a>
+                <a href="dysteresis-loop.html" class="nav-card">🧲 动态磁滞回线</a>
+                <a href="pzg.html" class="nav-card">🔦 偏振光</a>
+                <div class="nav-card placeholder">✨ 敬请期待</div>
+            </div>
+        </section>
+
+        <!-- 翻页控件 -->
+        <div class="pagination" id="pagination">
+            <button type="button" class="page-nav-btn" id="prevPageBtn" disabled>← 上一页</button>
+            <button type="button" class="page-btn active" data-goto="1">第 1 页</button>
+            <button type="button" class="page-btn" data-goto="2">第 2 页</button>
+            <button type="button" class="page-nav-btn" id="nextPageBtn">下一页 →</button>
         </div>
-        <div class="footer">
-            <p>综合物理实验计算工具 | 最小二乘法融合 · 拟合图像 · 不确定度分析</p>
+    </div>
+
+    <!-- 侧边独立卡片：灵魂动物测试（右侧垂直居中） -->
+    <a href="animals.html" class="side-card" target="_blank" rel="noopener noreferrer">
+        <div class="side-card-inner">
+            <div class="side-emoji">🐾🦊</div>
+            <div class="side-title">灵魂动物测试</div>
+            <div class="side-desc">测一测你的内在人格图腾<br>神秘又治愈的魔法鉴定</div>
+            <span class="side-badge">✨ 立即探索 →</span>
+            <div style="transform: rotate(180deg); font-size: 12px; color: #aaa; margin-top: 8px;">这里需要倒观</div>
+        </div>
+    </a>
+
+    <!-- 更新公告弹窗 -->
+    <div class="modal-overlay" id="announceModal">
+        <div class="modal-box">
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+            <h2>📢 更新公告</h2>
+            <div class="modal-content" id="announceContent">
+                <p>📅 6.7.3 版本更新</p>
+                <ul class="update-list" style="margin-top: 8px;">
+                    <li>📄 <b>计算过程完整显示</b>：修复公式排版后步骤框沿用固定高度而截断内容的问题，计算结果与详细步骤随内容完整展开</li>
+                    <li>📱 <b>内外层布局修复</b>：一并解除霍尔、磁滞回线等结果面板的高度限制；长公式继续单独横向查看，保留复制与打印功能</li>
+                </ul>
+                <p class="version-head">📅 6.7.2 版本更新</p>
+                <ul class="update-list" style="margin-top: 8px;">
+                    <li>📐 <b>其他实验公式渲染</b>：21 个计算型实验页接入共享数学排版，提供原理公式，并渲染计算后生成的分式、根号、上下标和负指数</li>
+                    <li>🖨️ <b>显示与输出</b>：手机长公式可横向查看；打印展开完整计算过程，复制时保留公式原文，实验计算逻辑不变</li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <script>
         (function() {
-            // ============ 全局状态 ============
-            let currentCommand = "LS";
-            let currentSubCommand = "ave1";
-            let dataCount = 5;
-            let xData = [1, 2, 3, 4, 5];
-            let yData = [2.1, 3.9, 6.2, 8.1, 9.8];
-            let viscosityData = [{ t: 25.0, d: 1.20, v: 2.50 }];
-            let expansionData = [{ t: 10.0, dl: 0.024 }];
-            let tensionCalibrationData = [{ m: 0.500, u: 2.50 }];
-            let tensionMeasurementData = [{ du: 1.20 }];
-            let activeChart = null;
+            const overlay = document.getElementById('announceModal');
+            const openBtn = document.getElementById('openAnnounceBtn');
+            const closeBtn = document.getElementById('closeModalBtn');
 
-            // ============ DOM引用 ============
-            const $ = (sel) => document.querySelector(sel);
-            const $$ = (sel) => document.querySelectorAll(sel);
-
-            const mainCommandButtons = $$('.main-command-btn');
-            const subCommandButtons = $$('.sub-command-btn');
-            const subpanels = $$('.subpanel');
-            const dataCountInput = $('#data-count');
-            const xDataInput = $('#x-data');
-            const yDataInput = $('#y-data');
-            const yDataGroup = $('#y-data-group');
-            const powerKGroup = $('#power-k-group');
-            const powerKInput = $('#power-k');
-            const xLabel = $('#x-label');
-            const yLabel = $('#y-label');
-            const calculateBtn = $('#calculate-btn');
-            const clearBtn = $('#clear-btn');
-            const resultOutput = $('#result-output');
-            const viscosityDataInputs = $('#viscosity-data-inputs');
-            const expansionDataInputs = $('#expansion-data-inputs');
-            const tensionCalibrationInputs = $('#tension-calibration-inputs');
-            const tensionMeasurementInputs = $('#tension-measurement-inputs');
-
-            // ============ 工具函数 ============
-            function parseDataInput(input) {
-                const parts = input.replace(/，/g, ',').split(/[\s,;]+/);
-                const data = [];
-                for (let part of parts) {
-                    if (part.trim() === '') continue;
-                    const num = parseFloat(part);
-                    if (!isNaN(num)) data.push(num);
-                }
-                return data;
+            function openModal() {
+                overlay.classList.add('active');
+            }
+            function closeModal() {
+                overlay.classList.remove('active');
             }
 
-            function ave1(arr) {
-                const n = arr.length;
-                let sum = 0;
-                for (let i = 0; i < n; i++) sum += arr[i];
-                return { result: sum / n, details: { n, sum, calculation: `(${arr.map(v=>v.toFixed(4)).join(' + ')}) / ${n} = ${(sum/n).toFixed(4)}` } };
-            }
-
-            function ave12(arr) {
-                const n = arr.length;
-                let sum = 0;
-                let squares = [];
-                for (let i = 0; i < n; i++) { const sq = arr[i] * arr[i];
-                    squares.push(sq);
-                    sum += sq; }
-                return { result: sum / n, details: { n, squares, sum, calculation: `(${squares.map(v=>v.toFixed(4)).join(' + ')}) / ${n} = ${(sum/n).toFixed(4)}` } };
-            }
-
-            function ave2(x, y) {
-                const n = x.length;
-                let sum = 0;
-                let products = [];
-                for (let i = 0; i < n; i++) { const p = x[i] * y[i];
-                    products.push(p);
-                    sum += p; }
-                return { result: sum / n, details: { n, products, sum, calculation: `(${products.map(v=>v.toFixed(4)).join(' + ')}) / ${n} = ${(sum/n).toFixed(4)}` } };
-            }
-
-            function Ls0(x, y) {
-                const ax = ave1(x);
-                const ay = ave1(y);
-                const axy = ave2(x, y);
-                const ax2 = ave12(x);
-                const avex = ax.result;
-                const avey = ay.result;
-                const avexy = axy.result;
-                const avex2 = ax2.result;
-                const denom = avex2 - avex * avex;
-                const a = (avexy - avex * avey) / denom;
-                const b = avey - a * avex;
-                return { a, b, details: { avex, avey, avexy, avex2, denominator: denom,
-                        calculation: `a = (${avexy.toFixed(4)} - ${avex.toFixed(4)}×${avey.toFixed(4)}) / (${avex2.toFixed(4)} - ${avex.toFixed(4)}²) = ${a.toFixed(4)}`,
-                        calculation_b: `b = ${avey.toFixed(4)} - ${a.toFixed(4)}×${avex.toFixed(4)} = ${b.toFixed(4)}` } };
-            }
-
-            function LSR(x, y) {
-                const ax = ave1(x);
-                const ay = ave1(y);
-                const ax2 = ave12(x);
-                const ay2 = ave12(y);
-                const axy = ave2(x, y);
-                const avex = ax.result;
-                const avey = ay.result;
-                const avex2 = ax2.result;
-                const avey2 = ay2.result;
-                const avexy = axy.result;
-                const num = avexy - avex * avey;
-                const den = Math.sqrt((avex2 - avex * avex) * (avey2 - avey * avey));
-                const r = num / den;
-                return { result: r, details: { avex, avey, avex2, avey2, avexy, numerator: num, denominator: den,
-                        calculation: `r = ${num.toFixed(4)} / sqrt((${avex2.toFixed(4)}-${avex.toFixed(4)}²)×(${avey2.toFixed(4)}-${avey.toFixed(4)}²)) = ${r.toFixed(4)}` } };
-            }
-
-            function LS_LOG(x, y) {
-                const n = x.length;
-                const lnx = new Array(n);
-                const lny = new Array(n);
-                for (let i = 0; i < n; i++) { lnx[i] = Math.log(x[i]);
-                    lny[i] = Math.log(y[i]); }
-                const lsr = Ls0(lnx, lny);
-                const k = lsr.a;
-                const lnA = lsr.b;
-                const A = Math.exp(lnA);
-                return { k, A, details: { lnx, lny, k, lnA, A, calculation: `ln(y)=k·ln(x)+ln(A) → y=${A.toFixed(4)}·x^${k.toFixed(4)}` } };
-            }
-
-            function calculateViscosity(d, v, D, rho, rho0) {
-                const g = 9.794;
-                const K = 2.4;
-                const d_m = d * 1e-3;
-                const v_ms = v * 1e-2;
-                const D_m = D * 1e-3;
-                const rho_kg = rho * 1e3;
-                const rho0_kg = rho0 * 1e3;
-                return (rho_kg - rho0_kg) * g * d_m * d_m / (18 * v_ms * (1 + K * d_m / D_m));
-            }
-
-            function calculateExpansion(L0, data) {
-                const deltaT = data.map(d => d.t);
-                const deltaL = data.map(d => d.dl);
-                const lsr = Ls0(deltaT, deltaL);
-                const k = lsr.a;
-                const alpha = k / L0;
-                return { L0, k, alpha, lsResult: lsr, deltaT, deltaL,
-                    details: { equation: `ΔL = ${k.toFixed(6)}·ΔT`, calculation: `α = k/L₀ = ${k.toFixed(6)}/${L0.toFixed(2)} = ${alpha.toFixed(8)}` } };
-            }
-
-            function calculateSurfaceTension(calData, measData, g, Dout, Din) {
-                const m = calData.map(d => d.m);
-                const U = calData.map(d => d.u);
-                const mg = m.map(v => v * 1e-3 * g);
-                const lsr = Ls0(mg, U);
-                const k = lsr.a;
-                const deltaU = measData.map(d => d.du);
-                const avgDU = ave1(deltaU).result;
-                const Dout_m = Dout * 1e-3;
-                const Din_m = Din * 1e-3;
-                const alpha = (avgDU * 1e-3 * g) / (Math.PI * (Dout_m + Din_m) * k);
-                return { k, avgDeltaU: avgDU, Dout_mm: Dout, Din_mm: Din, Davg_mm: (Dout + Din) / 2, alpha, lsResult: lsr,
-                    details: { m, U, mg, deltaU, equation1: `U = ${k.toFixed(6)}·(m·g)`,
-                        equation2: `α = (${avgDU.toFixed(4)}×10⁻³×${g.toFixed(3)})/(π×${(Dout+Din).toFixed(2)}×10⁻³×${k.toFixed(6)}) = ${alpha.toFixed(8)}` } };
-            }
-
-            // ============ 数据行管理（已修复单位显示和删除按钮绑定）============
-            function createDataRow(fields, container, removeFnName) {
-                const row = document.createElement('div');
-                row.className = 'data-row';
-                let html = '';
-                fields.forEach(f => {
-                    html += `<input type="number" class="${f.cls}" placeholder="${f.placeholder}" step="${f.step || '0.1'}" value="${f.value || ''}">`;
-                    if (f.unit) html += `<span class="unit">${f.unit}</span>`;
-                });
-                html += `<button class="remove-btn" onclick="${removeFnName}(this)">×</button>`;
-                row.innerHTML = html;
-                container.appendChild(row);
-                const rows = container.querySelectorAll('.data-row');
-                if (rows.length > 1) {
-                    rows.forEach(r => {
-                        const btn = r.querySelector('.remove-btn');
-                        if (btn) btn.style.display = '';
-                    });
-                }
-            }
-
-            function updateViscosityData() {
-                viscosityData = [];
-                const rows = viscosityDataInputs.querySelectorAll('.data-row');
-                rows.forEach(row => {
-                    const tEl = row.querySelector('.t-input');
-                    const dEl = row.querySelector('.d-input');
-                    const vEl = row.querySelector('.v-input');
-                    const t = parseFloat(tEl?.value);
-                    const d = parseFloat(dEl?.value);
-                    const v = parseFloat(vEl?.value);
-                    if (!isNaN(t) && !isNaN(d) && !isNaN(v)) viscosityData.push({ t, d, v });
-                });
-            }
-
-            function updateExpansionData() {
-                expansionData = [];
-                const rows = expansionDataInputs.querySelectorAll('.data-row');
-                rows.forEach(row => {
-                    const tEl = row.querySelector('.t-input');
-                    const dlEl = row.querySelector('.dl-input');
-                    const t = parseFloat(tEl?.value);
-                    const dl = parseFloat(dlEl?.value);
-                    if (!isNaN(t) && !isNaN(dl)) expansionData.push({ t, dl });
-                });
-            }
-
-            function updateTensionCalibrationData() {
-                tensionCalibrationData = [];
-                const rows = tensionCalibrationInputs.querySelectorAll('.data-row');
-                rows.forEach(row => {
-                    const mEl = row.querySelector('.m-input');
-                    const uEl = row.querySelector('.u-input');
-                    const m = parseFloat(mEl?.value);
-                    const u = parseFloat(uEl?.value);
-                    if (!isNaN(m) && !isNaN(u)) tensionCalibrationData.push({ m, u });
-                });
-            }
-
-            function updateTensionMeasurementData() {
-                tensionMeasurementData = [];
-                const rows = tensionMeasurementInputs.querySelectorAll('.data-row');
-                rows.forEach(row => {
-                    const duEl = row.querySelector('.du-input');
-                    const du = parseFloat(duEl?.value);
-                    if (!isNaN(du)) tensionMeasurementData.push({ du });
-                });
-            }
-
-            // 添加行（带单位提示）
-            window.addViscosityRow = function() {
-                createDataRow([
-                    { cls: 't-input', placeholder: '温度 T', step: '0.1', value: '25.0', unit: '°C' },
-                    { cls: 'd-input', placeholder: '小球直径 d', step: '0.01', value: '1.20', unit: 'mm' },
-                    { cls: 'v-input', placeholder: '沉降速度 v', step: '0.01', value: '2.50', unit: 'cm/s' }
-                ], viscosityDataInputs, 'removeViscosityRow');
-            };
-            window.addExpansionRow = function() {
-                createDataRow([
-                    { cls: 't-input', placeholder: '温度变化 ΔT', step: '0.1', value: '10.0', unit: '°C' },
-                    { cls: 'dl-input', placeholder: '长度变化 ΔL', step: '0.0001', value: '0.024', unit: 'mm' }
-                ], expansionDataInputs, 'removeExpansionRow');
-            };
-            window.addTensionCalibrationRow = function() {
-                createDataRow([
-                    { cls: 'm-input', placeholder: '质量 m', step: '0.001', value: '0.500', unit: 'g' },
-                    { cls: 'u-input', placeholder: '电压 U', step: '0.01', value: '2.50', unit: 'mV' }
-                ], tensionCalibrationInputs, 'removeTensionCalibrationRow');
-            };
-            window.addTensionMeasurementRow = function() {
-                createDataRow([
-                    { cls: 'du-input', placeholder: '电压变化 δU', step: '0.01', value: '1.20', unit: 'mV' }
-                ], tensionMeasurementInputs, 'removeTensionMeasurementRow');
-            };
-
-            // 删除行（固定绑定，隐藏首行删除按钮逻辑已修正）
-            window.removeViscosityRow = function(btn) {
-                const row = btn.closest('.data-row');
-                if (viscosityDataInputs.children.length > 1) {
-                    row.remove();
-                    updateViscosityData();
-                }
-                const rows = viscosityDataInputs.querySelectorAll('.data-row');
-                if (rows.length === 1 && rows[0].querySelector('.remove-btn')) {
-                    rows[0].querySelector('.remove-btn').style.display = 'none';
-                }
-            };
-            window.removeExpansionRow = function(btn) {
-                const row = btn.closest('.data-row');
-                if (expansionDataInputs.children.length > 1) {
-                    row.remove();
-                    updateExpansionData();
-                }
-                const rows = expansionDataInputs.querySelectorAll('.data-row');
-                if (rows.length === 1 && rows[0].querySelector('.remove-btn')) {
-                    rows[0].querySelector('.remove-btn').style.display = 'none';
-                }
-            };
-            window.removeTensionCalibrationRow = function(btn) {
-                const row = btn.closest('.data-row');
-                if (tensionCalibrationInputs.children.length > 1) {
-                    row.remove();
-                    updateTensionCalibrationData();
-                }
-                const rows = tensionCalibrationInputs.querySelectorAll('.data-row');
-                if (rows.length === 1 && rows[0].querySelector('.remove-btn')) {
-                    rows[0].querySelector('.remove-btn').style.display = 'none';
-                }
-            };
-            window.removeTensionMeasurementRow = function(btn) {
-                const row = btn.closest('.data-row');
-                if (tensionMeasurementInputs.children.length > 1) {
-                    row.remove();
-                    updateTensionMeasurementData();
-                }
-                const rows = tensionMeasurementInputs.querySelectorAll('.data-row');
-                if (rows.length === 1 && rows[0].querySelector('.remove-btn')) {
-                    rows[0].querySelector('.remove-btn').style.display = 'none';
-                }
-            };
-
-            // ============ Chart.js 绘图 ============
-            function destroyChart() {
-                if (activeChart) { activeChart.destroy();
-                    activeChart = null; }
-                const oldCanvas = resultOutput.querySelector('canvas');
-                if (oldCanvas && oldCanvas.parentElement) oldCanvas.parentElement.remove();
-            }
-
-            function drawFitChart(xData, yData, a, b, xLabel, yLabel, title, fitLabel) {
-                destroyChart();
-                const container = document.createElement('div');
-                container.className = 'chart-container';
-                const canvas = document.createElement('canvas');
-                container.appendChild(canvas);
-                resultOutput.appendChild(container);
-                const ctx = canvas.getContext('2d');
-                const xMin = Math.min(...xData);
-                const xMax = Math.max(...xData);
-                const xFit = [xMin - (xMax - xMin) * 0.1, xMax + (xMax - xMin) * 0.1];
-                const yFit = xFit.map(x => a * x + b);
-                activeChart = new Chart(ctx, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: '原始数据',
-                            data: xData.map((x, i) => ({ x, y: yData[i] })),
-                            backgroundColor: '#4b6cb7',
-                            borderColor: '#4b6cb7',
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            order: 1
-                        }, {
-                            label: fitLabel || `拟合: y=${a.toFixed(4)}x+${b.toFixed(4)}`,
-                            data: [{ x: xFit[0], y: yFit[0] }, { x: xFit[1], y: yFit[1] }],
-                            type: 'line',
-                            borderColor: '#e74c3c',
-                            borderWidth: 2.5,
-                            borderDash: [6, 3],
-                            pointRadius: 0,
-                            fill: false,
-                            order: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            title: { display: true, text: title, font: { size: 15, weight: 'bold' } },
-                            legend: { position: 'bottom' },
-                            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: (${ctx.parsed.x.toFixed(4)}, ${ctx.parsed.y.toFixed(4)})` } }
-                        },
-                        scales: {
-                            x: { title: { display: true, text: xLabel }, grid: { color: '#eef' } },
-                            y: { title: { display: true, text: yLabel }, grid: { color: '#eef' } }
-                        }
+            if (openBtn) openBtn.addEventListener('click', openModal);
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        closeModal();
                     }
                 });
             }
-
-            // ============ 不确定度计算 ============
-            function calcViscosityUncertainty(etaValues, dValues, vValues, D, rho, rho0, deltaDInstr, deltaVInstr) {
-                const n = etaValues.length;
-                const avgEta = etaValues.reduce((a, b) => a + b, 0) / n;
-                let sumSq = 0;
-                etaValues.forEach(e => { sumSq += (e - avgEta) ** 2; });
-                const stdDev = n > 1 ? Math.sqrt(sumSq / (n - 1)) : 0;
-                const uA = n > 1 ? stdDev / Math.sqrt(n) : 0;
-                const g = 9.794;
-                const K = 2.4;
-                const D_m = D * 1e-3;
-                const rho_kg = rho * 1e3;
-                const rho0_kg = rho0 * 1e3;
-                const avgD = dValues.reduce((a, b) => a + b, 0) / n * 1e-3;
-                const avgV = vValues.reduce((a, b) => a + b, 0) / n * 1e-2;
-                const deltaD = deltaDInstr * 1e-3;
-                const deltaV = deltaVInstr * 1e-2;
-                const denom = 18 * avgV * (1 + K * avgD / D_m);
-                const dEta_dD = (rho_kg - rho0_kg) * g * (2 * avgD * denom - avgD * avgD * 18 * avgV * K / D_m) / (denom *
-                denom);
-                const dEta_dV = -(rho_kg - rho0_kg) * g * avgD * avgD * 18 * (1 + K * avgD / D_m) / (denom * denom);
-                const uB = Math.sqrt((dEta_dD * deltaD) ** 2 + (dEta_dV * deltaV) ** 2);
-                const uC = Math.sqrt(uA * uA + uB * uB);
-                return { avgEta, stdDev, uA, uB, uC, n,
-                    details: `A类: uA=s/√n=${stdDev.toFixed(6)}/√${n}=${uA.toFixed(6)}, B类: uB=√((∂η/∂d·Δd)²+(∂η/∂v·Δv)²)=${uB.toFixed(6)}, 合成: uC=√(uA²+uB²)=${uC.toFixed(6)}` };
-            }
-
-            function calcTensionUncertainty(measData, k, g, Dout, Din, deltaDUInstr) {
-                const n = measData.length;
-                const duVals = measData.map(d => d.du);
-                const avgDU = duVals.reduce((a, b) => a + b, 0) / n;
-                let sumSq = 0;
-                duVals.forEach(v => { sumSq += (v - avgDU) ** 2; });
-                const stdDevDU = n > 1 ? Math.sqrt(sumSq / (n - 1)) : 0;
-                const uA_DU = n > 1 ? stdDevDU / Math.sqrt(n) : 0;
-                const Dout_m = Dout * 1e-3;
-                const Din_m = Din * 1e-3;
-                const denom = Math.PI * (Dout_m + Din_m) * k;
-                const alpha = (avgDU * 1e-3 * g) / denom;
-                const uA_alpha = (uA_DU * 1e-3 * g) / denom;
-                const uB_alpha = (deltaDUInstr * 1e-3 * g) / denom;
-                const uC_alpha = Math.sqrt(uA_alpha * uA_alpha + uB_alpha * uB_alpha);
-                return { alpha, avgDU, stdDevDU, uA_DU, uA_alpha, uB_alpha, uC_alpha, n,
-                    details: `δU的A类: uA(δU)=s/√n=${stdDevDU.toFixed(4)}/√${n}=${uA_DU.toFixed(4)} mV, uA(α)=${uA_alpha.toFixed(8)}, uB(α)=${uB_alpha.toFixed(8)}, uC(α)=${uC_alpha.toFixed(8)}` };
-            }
-
-            // ============ 结果显示 ============
-            function displayResult(title, results, equation = null) {
-                resultOutput.innerHTML = '';
-                destroyChart();
-                const titleEl = document.createElement('h3');
-                titleEl.className = 'result-title';
-                titleEl.textContent = title;
-                resultOutput.appendChild(titleEl);
-                if (equation) {
-                    const eqEl = document.createElement('div');
-                    eqEl.className = 'result-equation';
-                    eqEl.textContent = equation;
-                    resultOutput.appendChild(eqEl);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && overlay && overlay.classList.contains('active')) {
+                    closeModal();
                 }
-                results.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'result-item';
-                    div.innerHTML =
-                        `<h4>${item.title}</h4><div class="result-value ${item.class||''}">${item.value}</div>${item.detail?`<div class="result-detail">${item.detail}</div>`:''}`;
-                    resultOutput.appendChild(div);
+            });
+
+            // ---------- 分页导航 ----------
+            const pageSections = Array.from(document.querySelectorAll('.nav-page'));
+            const pageDots = Array.from(document.querySelectorAll('.pagination .page-btn'));
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const TOTAL_PAGES = pageSections.length;
+            let currentPage = 1;
+
+            function showPage(n) {
+                currentPage = Math.min(Math.max(n, 1), TOTAL_PAGES);
+                pageSections.forEach(function(sec) {
+                    sec.classList.toggle('active', Number(sec.dataset.page) === currentPage);
                 });
-            }
-
-            function displayDataTable(xData, yData, a, b, xName, yName) {
-                const container = document.createElement('div');
-                container.className = 'table-container';
-                container.innerHTML =
-                    `<h4 style="margin-top:16px;">拟合数据与残差</h4><table><thead><tr><th>序号</th><th>${xName}</th><th>${yName}</th><th>拟合值 ŷ</th><th>残差</th><th>残差²</th></tr></thead><tbody></tbody></table>`;
-                const tbody = container.querySelector('tbody');
-                let sse = 0;
-                for (let i = 0; i < xData.length; i++) {
-                    const x = xData[i];
-                    const y = yData[i];
-                    const yFit = a * x + b;
-                    const res = y - yFit;
-                    const resSq = res * res;
-                    sse += resSq;
-                    const row = document.createElement('tr');
-                    row.innerHTML =
-                        `<td>${i+1}</td><td>${x.toFixed(4)}</td><td>${y.toFixed(4)}</td><td>${yFit.toFixed(4)}</td><td>${res.toFixed(4)}</td><td>${resSq.toFixed(4)}</td>`;
-                    tbody.appendChild(row);
-                }
-                const footerRow = document.createElement('tr');
-                footerRow.style.cssText = 'font-weight:bold;background:#f0f0f0;';
-                footerRow.innerHTML = `<td colspan="5">残差平方和 (SSE)</td><td>${sse.toFixed(4)}</td>`;
-                tbody.appendChild(footerRow);
-                resultOutput.appendChild(container);
-            }
-
-            function addUncertaintyBox(title, items) {
-                const box = document.createElement('div');
-                box.className = 'uncertainty-box';
-                box.innerHTML = `<h4>📐 ${title}</h4>`;
-                items.forEach(item => {
-                    box.innerHTML +=
-                        `<div style="margin:4px 0;"><strong>${item.label}:</strong> <span style="color:#2c3e50;font-weight:600;">${item.value}</span>${item.detail?` <span style="color:#888;font-size:0.82rem;">${item.detail}</span>`:''}</div>`;
+                pageDots.forEach(function(dot) {
+                    dot.classList.toggle('active', Number(dot.dataset.goto) === currentPage);
                 });
-                resultOutput.appendChild(box);
+                if (prevBtn) prevBtn.disabled = currentPage === 1;
+                if (nextBtn) nextBtn.disabled = currentPage === TOTAL_PAGES;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // ============ UI更新 ============
-            function updateUIForCommand() {
-                if (currentCommand === "LS") {
-                    if (currentSubCommand === "ave1" || currentSubCommand === "ave12") {
-                        yDataGroup.classList.add('hidden');
-                        xLabel.textContent = "数据 (x):";
-                    } else {
-                        yDataGroup.classList.remove('hidden');
-                        xLabel.textContent = "自变量数据 (x):";
-                        yLabel.textContent = "因变量数据 (y):";
-                    }
-                    powerKGroup.classList.toggle('hidden', currentSubCommand !== "LS^k");
-                    const labels = { ave1: '计算平均值', ave12: '计算平方平均值', ave2: '计算乘积平均值', LS: '最小二乘法拟合',
-                        LS_LOG: '幂函数拟合', 'LS^k': '指定幂次拟合' };
-                    calculateBtn.textContent = labels[currentSubCommand] || '计算';
-                } else if (currentCommand === "viscosity") {
-                    calculateBtn.textContent = '💧 计算粘度 + η-T拟合';
-                } else if (currentCommand === "expansion") {
-                    calculateBtn.textContent = '📏 计算线胀系数 + ΔL-T拟合';
-                } else if (currentCommand === "tension") {
-                    calculateBtn.textContent = '🫧 计算表面张力 + U-mg拟合';
-                }
-                clearBtn.textContent = '🗑️ 清空当前数据';
-            }
-
-            // ============ 主计算 ============
-            function calculate() {
-                resultOutput.innerHTML = '';
-                destroyChart();
-                if (currentCommand === "LS") {
-                    updateDataCount();
-                    const parsedX = parseDataInput(xDataInput.value);
-                    const parsedY = parseDataInput(yDataInput.value);
-                    xData = parsedX.length >= dataCount ? parsedX.slice(0, dataCount) : [...parsedX, ...Array(Math.max(0,
-                        dataCount - parsedX.length)).fill(0).map((_, i) => (parsedX.length + i + 1))];
-                    yData = parsedY.length >= dataCount ? parsedY.slice(0, dataCount) : [...parsedY, ...Array(Math.max(0,
-                        dataCount - parsedY.length)).fill(0).map((_, i) => (xData[parsedY.length + i] || 1) * 2 + 0.1)];
-                    xData = xData.slice(0, dataCount);
-                    yData = yData.slice(0, dataCount);
-                    const n = dataCount;
-                    if (currentSubCommand === "ave1") {
-                        const r = ave1(xData);
-                        displayResult("平均值计算", [{ title: "数据个数 n", value: n, detail: "" }, { title: "数据总和",
-                            value: r.details.sum.toFixed(4), detail: r.details.calculation }, { title: "平均值 ave1",
-                            value: r.result.toFixed(4),
-                            detail: `总和/n = ${r.details.sum.toFixed(4)}/${n} = ${r.result.toFixed(4)}` }]);
-                    } else if (currentSubCommand === "ave12") {
-                        const r = ave12(xData);
-                        displayResult("平方平均值计算", [{ title: "数据个数 n", value: n, detail: "" }, { title: "平方值",
-                            value: r.details.squares.map(v => v.toFixed(4)).join(", "), detail: "" }, { title: "平方和",
-                            value: r.details.sum.toFixed(4), detail: r.details.calculation }, { title: "平方平均值 ave12",
-                            value: r.result.toFixed(4),
-                            detail: `平方和/n = ${r.details.sum.toFixed(4)}/${n} = ${r.result.toFixed(4)}` }]);
-                    } else if (currentSubCommand === "ave2") {
-                        const r = ave2(xData, yData);
-                        displayResult("乘积平均值计算", [{ title: "数据个数 n", value: n, detail: "" }, { title: "乘积值",
-                            value: r.details.products.map(v => v.toFixed(4)).join(", "), detail: "" }, { title: "乘积和",
-                            value: r.details.sum.toFixed(4), detail: r.details.calculation }, { title: "乘积平均值 ave2",
-                            value: r.result.toFixed(4),
-                            detail: `乘积和/n = ${r.details.sum.toFixed(4)}/${n} = ${r.result.toFixed(4)}` }]);
-                    } else if (currentSubCommand === "LS") {
-                        const lsr = Ls0(xData, yData);
-                        const rr = LSR(xData, yData);
-                        displayResult("最小二乘法线性拟合", [{ title: "数据个数 n", value: n, detail: "" }, { title: "avex",
-                            value: lsr.details.avex.toFixed(4), detail: "" }, { title: "avey", value: lsr.details.avey
-                                .toFixed(4), detail: "" }, { title: "avex²", value: lsr.details.avex2.toFixed(4),
-                            detail: "" }, { title: "avexy", value: lsr.details.avexy.toFixed(4), detail: "" }, { title: "斜率 a",
-                            value: lsr.a.toFixed(4), detail: lsr.details.calculation }, { title: "截距 b", value: lsr.b
-                                .toFixed(4), detail: lsr.details.calculation_b }, { title: "相关系数 r", value: rr.result
-                                .toFixed(4), detail: rr.details.calculation,
-                            class: Math.abs(rr.result) > 0.8 ? "success" : Math.abs(rr.result) > 0.5 ? "" : "warning" }],
-                            `y = ${lsr.a.toFixed(4)}x + ${lsr.b.toFixed(4)}`);
-                        displayDataTable(xData, yData, lsr.a, lsr.b, 'x', 'y');
-                        drawFitChart(xData, yData, lsr.a, lsr.b, 'x', 'y', '最小二乘法线性拟合',
-                            `拟合: y=${lsr.a.toFixed(4)}x+${lsr.b.toFixed(4)}`);
-                    } else if (currentSubCommand === "LS_LOG") {
-                        const r = LS_LOG(xData, yData);
-                        displayResult("幂函数拟合 y=A·x^k", [{ title: "数据个数 n", value: n, detail: "" }, { title: "ln(x)",
-                            value: r.details.lnx.map(v => v.toFixed(4)).join(", "), detail: "" }, { title: "ln(y)",
-                            value: r.details.lny.map(v => v.toFixed(4)).join(", "), detail: "" }, { title: "幂指数 k",
-                            value: r.k.toFixed(4), detail: "" }, { title: "ln(A)", value: r.details.lnA.toFixed(4),
-                            detail: "" }, { title: "系数 A", value: r.A.toFixed(4),
-                            detail: `A=e^(${r.details.lnA.toFixed(4)})=${r.A.toFixed(4)}` }],
-                            `y = ${r.A.toFixed(4)}·x^${r.k.toFixed(4)}`);
-                    } else if (currentSubCommand === "LS^k") {
-                        const k = parseFloat(powerKInput.value) || 2;
-                        const xT = xData.map(v => Math.pow(v, k));
-                        const lsr = Ls0(xT, yData);
-                        displayResult(`指定幂次拟合 y=a·x^${k}+b`, [{ title: "数据个数 n", value: n, detail: "" }, { title: "幂次 k",
-                            value: k.toFixed(4), detail: "" }, { title: "x^k", value: xT.map(v => v.toFixed(4)).join(
-                                ", "), detail: "" }, { title: "系数 a", value: lsr.a.toFixed(4),
-                            detail: lsr.details.calculation }, { title: "系数 b", value: lsr.b.toFixed(4),
-                            detail: lsr.details.calculation_b }], `y = ${lsr.a.toFixed(4)}·x^${k} + ${lsr.b.toFixed(4)}`);
-                    }
-                } else if (currentCommand === "viscosity") {
-                    updateViscosityData();
-                    const D = parseFloat($('#D').value);
-                    const rho = parseFloat($('#rho').value);
-                    const rho0 = parseFloat($('#rho0').value);
-                    const deltaDInstr = parseFloat($('#delta-d-instr').value) || 0.01;
-                    const deltaVInstr = parseFloat($('#delta-v-instr').value) || 0.05;
-                    if (isNaN(D) || isNaN(rho) || isNaN(rho0)) { alert('请填写所有常数参数！'); return; }
-                    if (viscosityData.length === 0) { alert('请输入至少一组数据！'); return; }
-                    const results = [];
-                    const dVals = [];
-                    const vVals = [];
-                    viscosityData.forEach((item, i) => {
-                        const eta = calculateViscosity(item.d, item.v, D, rho, rho0);
-                        results.push({ index: i + 1, t: item.t, d: item.d, v: item.v, eta });
-                        dVals.push(item.d);
-                        vVals.push(item.v);
-                    });
-                    const etaValues = results.map(r => r.eta);
-                    const avgEta = etaValues.reduce((a, b) => a + b, 0) / etaValues.length;
-                    const uncResult = calcViscosityUncertainty(etaValues, dVals, vVals, D, rho, rho0, deltaDInstr,
-                    deltaVInstr);
-                    const resultItems = results.map(r => ({ title: `测量${r.index}: T=${r.t.toFixed(1)}°C, d=${r.d.toFixed(2)}mm, v=${r.v.toFixed(2)}cm/s`,
-                        value: `η = ${r.eta.toFixed(6)} Pa·s`, detail: '' }));
-                    resultItems.push({ title: "平均粘度 η_avg", value: `${avgEta.toFixed(6)} Pa·s`,
-                        detail: `(${etaValues.map(v=>v.toFixed(6)).join(' + ')}) / ${etaValues.length} = ${avgEta.toFixed(6)}`,
-                        class: "success" });
-                    displayResult("💧 液体粘度计算结果", resultItems,
-                        `η = (ρ-ρ₀)·g·d² / [18·v·(1+K·d/D)]，平均值 η = ${avgEta.toFixed(6)} Pa·s`);
-                    addUncertaintyBox('粘度η的不确定度分析', [
-                        { label: 'A类不确定度 uA(η)', value: uncResult.uA.toFixed(8) + ' Pa·s',
-                            detail: `s=${uncResult.stdDev.toFixed(8)}, n=${uncResult.n}` },
-                        { label: 'B类不确定度 uB(η)', value: uncResult.uB.toFixed(8) + ' Pa·s',
-                            detail: `Δd=${deltaDInstr}mm, Δv=${deltaVInstr}cm/s` },
-                        { label: '合成不确定度 uC(η)', value: uncResult.uC.toFixed(8) + ' Pa·s',
-                            detail: 'uC=√(uA²+uB²)' },
-                        { label: '相对不确定度', value: (uncResult.uC / avgEta * 100).toFixed(4) + '%',
-                            detail: 'uC/η×100%' },
-                        { label: '结果表达', value: `η = (${avgEta.toFixed(6)} ± ${uncResult.uC.toFixed(8)}) Pa·s`,
-                            detail: uncResult.details }
-                    ]);
-                    const hasTempVariation = new Set(results.map(r => r.t)).size > 1;
-                    if (hasTempVariation && results.length >= 2) {
-                        const tVals = results.map(r => r.t);
-                        const lsr = Ls0(tVals, etaValues);
-                        const rr = LSR(tVals, etaValues);
-                        const fitTitle = document.createElement('h4');
-                        fitTitle.style.cssText = 'margin-top:16px;color:#2c3e50;';
-                        fitTitle.textContent = '📈 η-T 最小二乘法拟合结果';
-                        resultOutput.appendChild(fitTitle);
-                        const fitItems = [
-                            { title: '拟合斜率 a', value: lsr.a.toFixed(8),
-                                detail: 'η = a·T + b' },
-                            { title: '拟合截距 b', value: lsr.b.toFixed(8), detail: '' },
-                            { title: '相关系数 r', value: rr.result.toFixed(4),
-                                detail: rr.details.calculation,
-                                class: Math.abs(rr.result) > 0.8 ? 'success' : Math.abs(rr.result) > 0.5 ? '' :
-                                    'warning' }
-                        ];
-                        fitItems.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'result-item';
-                            div.innerHTML =
-                                `<h4>${item.title}</h4><div class="result-value ${item.class||''}">${item.value}</div>${item.detail?`<div class="result-detail">${item.detail}</div>`:''}`;
-                            resultOutput.appendChild(div);
-                        });
-                        displayDataTable(tVals, etaValues, lsr.a, lsr.b, 'T (°C)', 'η (Pa·s)');
-                        drawFitChart(tVals, etaValues, lsr.a, lsr.b, '温度 T (°C)', '粘度 η (Pa·s)', 'η-T 拟合图像',
-                            `η = ${lsr.a.toFixed(6)}·T + ${lsr.b.toFixed(6)}`);
-                    } else if (results.length >= 2) {
-                        const infoEl = document.createElement('div');
-                        infoEl.className = 'instructions';
-                        infoEl.style.marginTop = '12px';
-                        infoEl.innerHTML =
-                            '<p>💡 所有数据温度相同，无法进行η-T拟合。如需拟合，请输入不同温度的数据。</p>';
-                        resultOutput.appendChild(infoEl);
-                    }
-                } else if (currentCommand === "expansion") {
-                    updateExpansionData();
-                    const L0 = parseFloat($('#L0').value);
-                    if (isNaN(L0) || L0 <= 0) { alert('请输入有效的原始长度L₀！'); return; }
-                    if (expansionData.length < 2) { alert('请输入至少两组数据！'); return; }
-                    const result = calculateExpansion(L0, expansionData);
-                    const rItems = [{ title: "原始长度 L₀", value: `${L0.toFixed(2)} mm`, detail: '' }, { title: "数据组数",
-                        value: expansionData.length, detail: '' }];
-                    expansionData.forEach((item, i) => { rItems.push({ title: `数据${i+1}`, value: `ΔT=${item.t.toFixed(2)}°C, ΔL=${item.dl.toFixed(4)}mm`,
-                            detail: '' }); });
-                    rItems.push({ title: "拟合斜率 k", value: result.k.toFixed(8), detail: 'ΔL = k·ΔT' }, { title: "线胀系数 α",
-                        value: result.alpha.toFixed(8), detail: result.details.calculation, class: "success" });
-                    displayResult("📏 固体线胀系数计算结果", rItems,
-                        `α = k/L₀ = ${result.alpha.toFixed(8)} /°C`);
-                    displayDataTable(result.deltaT, result.deltaL, result.k, result.lsResult.b, 'ΔT (°C)', 'ΔL (mm)');
-                    drawFitChart(result.deltaT, result.deltaL, result.k, result.lsResult.b, '温度变化 ΔT (°C)',
-                        '长度变化 ΔL (mm)', 'ΔL-T 拟合图像',
-                        `ΔL = ${result.k.toFixed(6)}·ΔT + ${result.lsResult.b.toFixed(6)}`);
-                } else if (currentCommand === "tension") {
-                    updateTensionCalibrationData();
-                    updateTensionMeasurementData();
-                    const g = parseFloat($('#gravity').value);
-                    const Dout = parseFloat($('#D-out').value);
-                    const Din = parseFloat($('#D-in').value);
-                    const deltaDUInstr = parseFloat($('#delta-du-instr').value) || 0.05;
-                    if (isNaN(g) || isNaN(Dout) || isNaN(Din)) { alert('请填写所有参数！'); return; }
-                    if (tensionCalibrationData.length < 2) { alert('标定数据需要至少两组！'); return; }
-                    if (tensionMeasurementData.length === 0) { alert('请输入至少一组测量数据！'); return; }
-                    const result = calculateSurfaceTension(tensionCalibrationData, tensionMeasurementData, g, Dout,
-                    Din);
-                    const uncT = calcTensionUncertainty(tensionMeasurementData, result.k, g, Dout, Din, deltaDUInstr);
-                    const rItems = [
-                        { title: "重力加速度 g", value: `${g.toFixed(3)} m/s²`, detail: '' },
-                        { title: "外径 D外", value: `${Dout.toFixed(2)} mm`, detail: '' },
-                        { title: "内径 D内", value: `${Din.toFixed(2)} mm`, detail: '' },
-                        { title: "平均直径", value: `${result.Davg_mm.toFixed(2)} mm`,
-                            detail: `(${Dout.toFixed(2)}+${Din.toFixed(2)})/2` },
-                        { title: "标定数据组数", value: tensionCalibrationData.length, detail: '' }
-                    ];
-                    tensionCalibrationData.forEach((item, i) => { rItems.push({ title: `标定${i+1}`,
-                            value: `m=${item.m.toFixed(3)}g, U=${item.u.toFixed(2)}mV`,
-                            detail: `F=m·g=${(item.m*1e-3*g).toFixed(6)}N` }); });
-                    rItems.push({ title: "灵敏度 k", value: result.k.toFixed(8), detail: 'U = k·(m·g)' });
-                    rItems.push({ title: "测量数据组数", value: tensionMeasurementData.length, detail: '' });
-                    tensionMeasurementData.forEach((item, i) => { rItems.push({ title: `测量${i+1}`,
-                        value: `δU = ${item.du.toFixed(2)} mV`, detail: '' }); });
-                    rItems.push({ title: "平均δU", value: `${result.avgDeltaU.toFixed(4)} mV`, detail: '' }, { title: "表面张力系数 α",
-                        value: result.alpha.toFixed(8), detail: result.details.equation2, class: "success" });
-                    displayResult("🫧 表面张力系数计算结果", rItems,
-                        `α = (δU·g) / (π·(D外+D内)·k) = ${result.alpha.toFixed(8)} N/m`);
-                    addUncertaintyBox('表面张力系数α的不确定度分析', [
-                        { label: 'A类不确定度 uA(α)', value: uncT.uA_alpha.toFixed(8) + ' N/m',
-                            detail: `来自δU的A类: uA(δU)=${uncT.uA_DU.toFixed(4)}mV` },
-                        { label: 'B类不确定度 uB(α)', value: uncT.uB_alpha.toFixed(8) + ' N/m',
-                            detail: `Δ(δU)=${deltaDUInstr}mV` },
-                        { label: '合成不确定度 uC(α)', value: uncT.uC_alpha.toFixed(8) + ' N/m',
-                            detail: 'uC=√(uA²+uB²)' },
-                        { label: '相对不确定度', value: (uncT.uC_alpha / result.alpha * 100).toFixed(4) + '%',
-                            detail: 'uC/α×100%' },
-                        { label: '结果表达',
-                            value: `α = (${result.alpha.toFixed(8)} ± ${uncT.uC_alpha.toFixed(8)}) N/m`,
-                            detail: uncT.details }
-                    ]);
-                    const mgVals = tensionCalibrationData.map(d => d.m * 1e-3 * g);
-                    const uVals = tensionCalibrationData.map(d => d.u);
-                    displayDataTable(mgVals, uVals, result.k, result.lsResult.b, 'm·g (N)', 'U (mV)');
-                    drawFitChart(mgVals, uVals, result.k, result.lsResult.b, 'm·g (N)', 'U (mV)', 'U-mg 拟合图像（灵敏度标定）',
-                        `U = ${result.k.toFixed(6)}·(m·g) + ${result.lsResult.b.toFixed(6)}`);
-                }
-            }
-
-            function updateDataCount() {
-                dataCount = parseInt(dataCountInput.value) || 5;
-                if (dataCount < 2) dataCount = 2;
-                if (dataCount > 100) dataCount = 100;
-                dataCountInput.value = dataCount;
-            }
-
-            function clearCurrentData() {
-                destroyChart();
-                if (currentCommand === "LS") {
-                    xDataInput.value = "";
-                    yDataInput.value = "";
-                    dataCountInput.value = "5";
-                    dataCount = 5;
-                } else if (currentCommand === "viscosity") {
-                    viscosityDataInputs.innerHTML = '';
-                    window.addViscosityRow();
-                    updateViscosityData();
-                } else if (currentCommand === "expansion") {
-                    expansionDataInputs.innerHTML = '';
-                    window.addExpansionRow();
-                    updateExpansionData();
-                } else if (currentCommand === "tension") {
-                    tensionCalibrationInputs.innerHTML = '';
-                    tensionMeasurementInputs.innerHTML = '';
-                    window.addTensionCalibrationRow();
-                    window.addTensionMeasurementRow();
-                    updateTensionCalibrationData();
-                    updateTensionMeasurementData();
-                }
-                resultOutput.innerHTML =
-                    '<p style="color:#999;text-align:center;padding-top:40px;">✅ 数据已清空，请重新输入数据并点击"开始计算"</p>';
-            }
-
-            // ============ 事件绑定 ============
-            mainCommandButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    mainCommandButtons.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentCommand = this.getAttribute('data-cmd');
-                    subpanels.forEach(p => p.classList.add('hidden'));
-                    const target = document.getElementById(`${currentCommand}-subpanel`);
-                    if (target) target.classList.remove('hidden');
-                    if (currentCommand !== "LS") {
-                        $$('.sub-command-btn').forEach(b => b.classList.remove('active'));
-                    } else {
-                        const firstSub = document.querySelector('.sub-command-btn[data-subcmd="ave1"]');
-                        if (firstSub) firstSub.classList.add('active');
-                        currentSubCommand = "ave1";
-                    }
-                    updateUIForCommand();
+            pageDots.forEach(function(dot) {
+                dot.addEventListener('click', function() {
+                    showPage(Number(dot.dataset.goto));
                 });
             });
-            subCommandButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (currentCommand === "LS") {
-                        subCommandButtons.forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        currentSubCommand = this.getAttribute('data-subcmd');
-                        updateUIForCommand();
-                    }
-                });
+            if (prevBtn) prevBtn.addEventListener('click', function() { showPage(currentPage - 1); });
+            if (nextBtn) nextBtn.addEventListener('click', function() { showPage(currentPage + 1); });
+            document.addEventListener('keydown', function(e) {
+                const tag = (e.target && e.target.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+                if (e.key === 'ArrowLeft') showPage(currentPage - 1);
+                if (e.key === 'ArrowRight') showPage(currentPage + 1);
             });
-            calculateBtn.addEventListener('click', calculate);
-            clearBtn.addEventListener('click', clearCurrentData);
-            dataCountInput.addEventListener('change', updateDataCount);
 
-            // ============ 初始化 ============
-            updateUIForCommand();
+            showPage(1);
         })();
     </script>
+    <script src="feedback.js?v=6.5.7" defer></script>
 </body>
 </html>

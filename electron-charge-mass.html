@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>电子荷质比 e/m · 8组实测记录与详细计算过程</title>
+<style>
+:root{--primary:#4b6cb7;--ink:#26374e;--muted:#64748b;--border:#dbe4f0}*{box-sizing:border-box}body{margin:0 auto;padding:18px;max-width:1440px;background:#f3f6fb;color:var(--ink);font:15px/1.75 'Segoe UI','Microsoft YaHei',sans-serif}.header{text-align:center;color:white;padding:24px 18px;border-radius:16px;background:linear-gradient(135deg,#4b6cb7,#1a2a4a)}h1{font-size:1.5rem;margin:0 0 7px}.header a{color:white}h2{font-size:1.18rem;margin:0 0 14px;border-bottom:2px solid var(--primary);padding-bottom:8px}h3{font-size:1rem;margin:12px 0}.card{background:white;border-radius:14px;padding:22px;margin:18px 0;box-shadow:0 5px 22px #25365009;min-width:0}.note{color:var(--muted);font-size:.9rem}.rule{padding:12px 16px;background:#edf3ff;border-left:4px solid var(--primary);border-radius:8px;margin:12px 0}.formula{font-family:'Cambria Math','Times New Roman','Microsoft YaHei',serif;font-size:1.16rem;padding:12px;background:#f5f8fe;border:1px solid var(--border);border-radius:8px;text-align:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.field label{display:block;font-weight:600;margin:0 0 5px}input,select,button{font:inherit}input[type=number],input[type=text],select{padding:9px;border:1px solid #cdd8e7;border-radius:7px;background:#fbfcff;width:100%;color:var(--ink)}input:focus,select:focus,button:focus-visible{outline:3px solid #c5d6f9;outline-offset:1px}button{cursor:pointer;border:1px solid #c7d5e7;border-radius:8px;padding:9px 15px;background:white;color:var(--ink)}button.primary{background:#278356;color:white;border-color:#278356}button:disabled{opacity:.5;cursor:not-allowed}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.table-scroll{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{padding:9px;border:1px solid var(--border);text-align:center}th{background:#f0f4fb;font-weight:600}#measurement-table{min-width:1180px;table-layout:fixed}#measurement-table th:first-child{width:140px}#measurement-table input{min-width:90px;text-align:center;padding:7px 4px}#measurement-table .computed{color:#236697;background:#f4f9ff;overflow-wrap:anywhere}.unit{font-weight:400;color:var(--muted)}.status{padding:10px 14px;border-radius:8px;background:#f2f7ff;margin:12px 0}.error{color:#9b3232;background:#fff0ee}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.metric{border:1px solid var(--border);border-left:4px solid var(--primary);padding:12px;border-radius:8px}.metric strong{display:block;font-size:1.12rem;margin:5px 0}.report{white-space:pre-wrap;overflow-wrap:anywhere;font:16px/1.95 'Cambria Math','Times New Roman','SimSun',serif;color:#1f2937;margin:0}.report-title{text-align:center}details{border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-top:15px}summary{font-weight:600;color:var(--primary);cursor:pointer}.obs-table{min-width:850px}.obs-table input{min-width:140px}.inline-check{display:inline-flex;align-items:center;gap:8px;margin:0 16px 6px 0}#validation:empty{display:none}.report-tools{border-top:1px solid var(--border);padding-top:14px;margin-top:16px}#copy-status{white-space:pre-wrap}.method{margin:5px 0}ul{padding-left:1.5em}@media(max-width:620px){body{padding:10px}.card{padding:15px}h1{font-size:1.18rem}.formula{font-size:1rem}.report{font-size:14px}}@media print{body{max-width:none;padding:0;background:white;font-size:11pt}.header,.entry-card,.screen-only,#lab-image-import,#lab-feedback{display:none!important}.card{margin:0;padding:0;box-shadow:none;border-radius:0}.report{font-size:11pt;line-height:1.7}.report-title{display:block!important}#result-card>h2{display:none}.metrics{margin-bottom:12pt;grid-template-columns:1fr 1fr}.metric{padding:6pt}.report-tools{display:none}.report-section{break-inside:avoid}pre{orphans:3;widows:3}#validation{display:none}}
+</style>
+</head>
+<body>
+<header class="header"><h1>🧲 电子荷质比 e/m · 磁偏转法</h1><a href="index.html">← 返回主页</a><div>按课堂要求：固定 U 测 4 组 I，固定 I 测 4 组 U，共 8 组</div></header>
+<main>
+<div id="experiment-inputs">
+<section class="card entry-card">
+<h2>① 实验原理与固定条件</h2>
+<p class="note">以课堂照片为准，教材第 186～190 页作辅助。本页求的是电子荷质比 e/m（元电荷大小与电子质量之比），单位 C·kg⁻¹。</p>
+<div class="formula">e/m = 9.88 × 10<sup>6</sup> · U / (D² I²)，D = (D₂ − D₁) × 10<sup>−3</sup> m</div>
+<div class="rule">D₁、D₂ 按 <b>mm</b> 录入；公式中的 D 必须用 <b>m</b>。电压用 V，电流换成 A 后计算。采用课堂及教材式（3-3-8）的近似系数 9.88×10⁶，最终 e/m 保留 <b>4 位有效数字</b>，取平均前保留计算精度。</div>
+<div class="grid">
+<div class="field"><label for="fixed-U">前 4 组固定加速电压 U₀ <span class="unit">V</span></label><input type="number" id="fixed-U" step="any" min="0" placeholder="填写实际固定电压"></div>
+<div class="field"><label for="fixed-I">后 4 组固定励磁电流 I₀ <span class="unit current-unit">A</span></label><input type="number" id="fixed-I" class="current-input" step="any" min="0" placeholder="填写实际固定电流"></div>
+<div class="field"><label for="current-unit">电流录入单位</label><select id="current-unit"><option value="A">A（安培）</option><option value="mA">mA（毫安）</option></select><div class="note">切换单位自动换算已填电流。</div></div>
+<div class="field"><label for="reference">相对误差参考值 <span class="unit">C·kg⁻¹</span></label><input type="number" id="reference" value="1.759e11" step="any" min="0"><div class="note">教材为 1.759×10¹¹；可按教师要求改，留空则不算相对误差。</div></div>
+</div>
+<details><summary>原理、测量要点与注意事项</summary><p>电子在加速电压 U 下满足 ½mv²=eU；当 v⊥B 时，evB=mv²/r，因此 e/m=2U/(B²r²)=8U/(B²D²)。本仪器每个线圈 N=140 匝，线圈半径 0.140 m，亥姆霍兹线圈磁场 B≈9.00×10⁻⁴I T，得到上述课堂公式。</p><p>测量前将电子轨迹调成闭合圆；将标尺调到轨迹直径处，上下移动寻找最大直径，再记录对应左右端 D₁、D₂，注意对齐及按课堂要求估读。切换偏转方向、磁场方向前先将对应旋钮调至最小；实际仪器操作以教师要求为准。</p></details>
+</section>
+<section class="card entry-card">
+<h2>② 8 组实验数据（对应课堂记录表、教材表 3-3-1）</h2>
+<p class="note">前 4 组只改变电流，后 4 组只改变电压。手机上可横向滚动表格；D₂ 应大于 D₁，可填写负的尺坐标。</p>
+<div class="table-scroll"><table id="measurement-table"><thead id="measurement-head"></thead><tbody id="measurement-body"></tbody></table></div>
+<div id="progress" class="status" role="status">已完成 0 / 8 组。</div>
+<div class="buttons"><button type="button" id="calculate-btn" class="primary">计算并生成详细过程</button><button type="button" id="example-btn">填充演示数据（非实测）</button><button type="button" id="clear-btn">清空测量数据</button></div>
+</section>
+<section class="card entry-card">
+<h2>③ 观察记录（按实际现象填写，可选）</h2>
+<p class="note">对应照片里的电场与磁场观察内容。未填写的现象不会由程序伪造成实测记录；下方可查看理论参考。</p>
+<h3>电场影响：初始电子束水平向左</h3>
+<div class="table-scroll"><table class="obs-table"><thead><tr><th>偏转电压方向</th><th>实际偏转方向</th><th>加大 U偏，偏转角如何变化</th><th>加大 U阳，偏转角如何变化</th></tr></thead><tbody id="electric-observations"></tbody></table></div>
+<h3>磁场影响：偏转电压调至 0 并断开，改变电流、阳极电压及出射方向</h3>
+<div class="table-scroll"><table class="obs-table"><thead><tr><th>轨迹类型</th><th>实际出射方向与 B 的关系</th><th>增大励磁电流 I 的变化</th><th>增大阳极电压 U阳的变化</th></tr></thead><tbody id="magnetic-observations"></tbody></table></div>
+<details><summary>查看理论解释参考（不会自动作为观察结果写入报告）</summary><p>电场中电子受力指向正极板：“上正”时向上偏转，“下正”时向下偏转；其余条件不变，增大偏转电压使偏转程度增大，增大加速电压使偏转角减小。</p><p>v⊥B 时为圆轨迹；v 与 B 斜交时为螺旋线；v∥B（或反平行）时为直线。固定出射方向与加速电压，增大 I 会增大 B，使圆半径、螺旋线半径与螺距减小；固定 I 与出射方向，增大 U 会提高速度，使相应半径与螺距增大。平行时不受磁力偏转。</p><p>螺旋线：r=mv⊥/(eB)，T=2πm/(eB)，h=v∥T。以上是理论关系，请以你实际观察到的现象记录。</p></details>
+</section>
+<section class="card entry-card"><h2>④ 过程输出设置</h2><label class="inline-check"><input type="checkbox" id="include-principle" checked>包含原理推导</label><label class="inline-check"><input type="checkbox" id="include-observations" checked>包含已填写的观察记录</label><label class="inline-check"><input type="checkbox" id="include-analysis" checked>包含误差来源分析参考</label></section>
+</div>
+<section class="card" id="result-card"><h2>⑤ 测量结果与可抄写计算过程</h2><div id="validation" role="alert"></div><div id="metrics" class="metrics"></div><h2 class="report-title" hidden>电子荷质比的测定 · 数据处理</h2><pre id="report" class="report">补齐 8 组实测数据后，点击“计算并生成详细过程”。</pre><div class="report-tools screen-only"><div class="buttons"><button type="button" id="copy-btn" disabled>复制完整过程</button><button type="button" id="download-btn" disabled>下载过程 TXT</button><button type="button" id="print-btn" disabled>打印／保存 PDF</button></div><p id="copy-status" class="note" role="status"></p></div></section>
+</main>
+<script>
+(() => {
+    'use strict';
+    const $=selector=>document.querySelector(selector),K=9.88e6;
+    const superscript=value=>String(value).split('').map(ch=>({'-':'⁻','+':'','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'}[ch]??ch)).join('');
+    const sci=(value,digits=4)=>{if(!Number.isFinite(value))return '—';if(value===0)return '0';const [mantissa,exponent]=value.toExponential(digits-1).split('e');return mantissa+'×10'+superscript(Number(exponent));};
+    const plain=value=>Number.isFinite(value)?(value===0?'0':Math.abs(value)>=1e8||Math.abs(value)<1e-6?sci(value,10):String(Number(value.toPrecision(12)))):'—';
+    const literal=id=>$('#'+id).value.trim().replace(/e([+-]?\d+)$/i,(_,exponent)=>'×10'+superscript(Number(exponent)));
+    const read=id=>{const raw=$('#'+id).value.trim();return raw===''?NaN:Number(raw);};
+    const currentFactor=()=>$('#current-unit').value==='mA'?.001:1;
+    const mean=values=>values.reduce((sum,value)=>sum+value/values.length,0);
+    const fields=Array.from({length:8},(_,i)=>({index:i+1,variable:i<4?'I':'U',id:'g'+(i+1)}));
+    let previousUnit='A',reportReady=false,isExample=false;
+    const head=$('#measurement-head'),body=$('#measurement-body');
+    head.innerHTML='<tr><th rowspan="2">测量项目</th><th colspan="4">固定 U = <span id="header-U">—</span> V，改变电流 I</th><th colspan="4">固定 I = <span id="header-I">—</span> <span class="current-unit">A</span>，改变电压 U</th></tr><tr>'+fields.map((field,i)=>'<th><label for="'+field.id+'-'+field.variable+'">'+field.variable+'<sub>'+(i%4+1)+'</sub> ('+(i<4?'<span class="current-unit">A</span>':'V')+')</label><input type="number" step="any" min="0" id="'+field.id+'-'+field.variable+'" '+(i<4?'class="current-input"':'')+' aria-label="第'+(i+1)+'组'+(i<4?'励磁电流 I':'加速电压 U')+'"></th>').join('')+'</tr>';
+    for(const [key,label] of [['D1','左端读数 D₁ / mm'],['D2','右端读数 D₂ / mm']]){
+        const tr=document.createElement('tr');tr.innerHTML='<th scope="row">'+label+'</th>'+fields.map(f=>'<td><input type="number" step="any" id="'+f.id+'-'+key+'" aria-label="第'+f.index+'组'+label+'"></td>').join('');body.append(tr);
+    }
+    for(const [key,label] of [['D','D₂ − D₁ / mm'],['q','e/m / C·kg⁻¹']]){const tr=document.createElement('tr');tr.innerHTML='<th scope="row">'+label+'</th>'+fields.map(f=>'<td class="computed" id="'+f.id+'-'+key+'">—</td>').join('');body.append(tr);}
+    const averageRow=document.createElement('tr');averageRow.innerHTML='<th>8 组平均 e/m</th><td class="computed" id="table-average" colspan="8">等待 8 组完整数据</td>';body.append(averageRow);
+    const observations=[];
+    function observationRow(container,key,title,labels){const tr=document.createElement('tr');tr.innerHTML='<th scope="row">'+title+'</th>';labels.forEach((label,i)=>{const td=document.createElement('td'),input=document.createElement('input');input.type='text';input.id=key+'-'+i;input.maxLength=300;input.placeholder='填写实际观察';input.setAttribute('aria-label',title+'：'+label);td.append(input);tr.append(td);observations.push({id:input.id,title,label});});$(container).append(tr);}
+    for(const [key,title] of [['electric-up','上正'],['electric-down','下正']])observationRow('#electric-observations',key,title,['偏转方向','增大偏转电压','增大阳极电压']);
+    for(const [key,title] of [['mag-circle','圆轨迹'],['mag-helix','螺旋线（半径、螺距）'],['mag-line','直线']])observationRow('#magnetic-observations',key,title,['出射方向与磁场关系','增大励磁电流','增大阳极电压']);
+    function calculateRows(){
+        const rows=[],errors=[],factor=currentFactor(),fixedU=read('fixed-U'),fixedI=read('fixed-I')*factor;
+        if(!(fixedU>0)||!Number.isFinite(fixedU))errors.push({id:'fixed-U',text:'请填写前 4 组共同使用的正加速电压 U₀。'});
+        if(!(fixedI>0)||!Number.isFinite(fixedI))errors.push({id:'fixed-I',text:'请填写后 4 组共同使用的正励磁电流 I₀。'});
+        for(const field of fields){const U=field.variable==='I'?fixedU:read(field.id+'-U'),I=field.variable==='I'?read(field.id+'-I')*factor:fixedI,D1=read(field.id+'-D1'),D2=read(field.id+'-D2');
+            const row={...field,U,I,D1,D2,Dmm:D2-D1,D:(D2-D1)/1000,q:NaN};
+            if(!(U>0)||!Number.isFinite(U))errors.push({id:field.variable==='U'?field.id+'-U':'fixed-U',text:'第 '+field.index+' 组：加速电压须完整填写且大于 0。'});
+            if(!(I>0)||!Number.isFinite(I))errors.push({id:field.variable==='I'?field.id+'-I':'fixed-I',text:'第 '+field.index+' 组：励磁电流须完整填写且大于 0。'});
+            if(!Number.isFinite(D1)||!Number.isFinite(D2))errors.push({id:!Number.isFinite(D1)?field.id+'-D1':field.id+'-D2',text:'第 '+field.index+' 组：请补齐两端尺读数 D₁、D₂（mm）。'});
+            else if(!(row.Dmm>0))errors.push({id:field.id+'-D2',text:'第 '+field.index+' 组：D₂ 必须大于 D₁，请核对左右端读数；不会自动取绝对值。'});
+            if([U,I,row.D].every(v=>Number.isFinite(v)&&v>0)){row.q=K*U/(row.D*row.D*I*I);if(!Number.isFinite(row.q)||row.q<=0){row.q=NaN;errors.push({id:field.id+'-D2',text:'第 '+field.index+' 组：结果超出可计算范围，请核对数值和单位。'});}}
+            rows.push(row);
+        }
+        return {rows,errors};
+    }
+    function invalidate(){reportReady=false;$('#metrics').replaceChildren();$('#report').textContent='数据已修改，请重新点击“计算并生成详细过程”。';$('#validation').replaceChildren();$('.report-title').hidden=true;$('#copy-status').textContent='';for(const id of ['copy-btn','download-btn','print-btn'])$('#'+id).disabled=true;}
+    function preview(){const {rows}=calculateRows();let count=0;for(const row of rows){$('#'+row.id+'-D').textContent=Number.isFinite(row.Dmm)&&row.Dmm>0?plain(row.Dmm):'—';const cell=$('#'+row.id+'-q');cell.textContent=sci(row.q);if(Number.isFinite(row.q)){cell.dataset.value=row.q;count++;}else delete cell.dataset.value;}
+        $('#header-U').textContent=Number.isFinite(read('fixed-U'))?literal('fixed-U'):'—';$('#header-I').textContent=Number.isFinite(read('fixed-I'))?literal('fixed-I'):'—';$('#progress').textContent='已完成 '+count+' / 8 组。'+(isExample?' 当前为演示数据，不能作为实测记录。':'');
+        const avg=$('#table-average');avg.textContent=count===8?sci(mean(rows.map(r=>r.q)))+' C·kg⁻¹':'等待 8 组完整数据';if(count===8)avg.dataset.value=mean(rows.map(r=>r.q));else delete avg.dataset.value;
+    }
+    $('#experiment-inputs').addEventListener('input',()=>{preview();invalidate();});
+    for(const id of ['include-principle','include-observations','include-analysis'])$('#'+id).addEventListener('change',invalidate);
+    $('#current-unit').addEventListener('change',()=>{const next=$('#current-unit').value,ratio=(previousUnit==='mA'?.001:1)/(next==='mA'?.001:1),inputs=[...document.querySelectorAll('.current-input')].filter(input=>input.value!=='');const converted=inputs.map(input=>Number(input.value)*ratio);if(converted.some(v=>!Number.isFinite(v))){$('#current-unit').value=previousUnit;alert('数值过大，无法切换单位。');return;}inputs.forEach((input,i)=>{input.value=Number(converted[i].toPrecision(14)).toString();});previousUnit=next;document.querySelectorAll('.current-unit').forEach(span=>span.textContent=next);preview();invalidate();});
+    function metric(label,value,id,raw){const box=document.createElement('div');box.className='metric';const title=document.createElement('span'),strong=document.createElement('strong');title.textContent=label;strong.textContent=value;if(id){strong.dataset.result=id;strong.dataset.value=raw;}box.append(title,strong);$('#metrics').append(box);}
+    function generate(){preview();const {rows,errors}=calculateRows(),referenceRaw=$('#reference').value.trim(),reference=referenceRaw===''?null:read('reference');if(reference!==null&&(!Number.isFinite(reference)||reference<=0))errors.push({id:'reference',text:'参考值须为正数；若不需要相对误差，可留空。'});
+        invalidate();if(errors.length){const list=document.createElement('ul');for(const error of errors){const li=document.createElement('li');li.textContent=error.text;list.append(li);}$('#validation').className='status error';$('#validation').append(list);$('#report').textContent='数据尚未齐全或有无效读数，未生成完整 8 组报告。';return;}
+        $('#validation').className='status';$('#validation').textContent=isExample?'以下仅为构造的演示数据计算过程，不能作为实测报告。':'8 组完整数据已计算，结果按 4 位有效数字表示。';
+        const avgA=mean(rows.slice(0,4).map(r=>r.q)),avgB=mean(rows.slice(4).map(r=>r.q)),average=mean(rows.map(r=>r.q)),relative=reference===null?null:Math.abs(average-reference)/reference*100;
+        metric('固定 U 的 4 组平均',sci(avgA)+' C·kg⁻¹','mean-A',avgA);metric('固定 I 的 4 组平均',sci(avgB)+' C·kg⁻¹','mean-B',avgB);metric('8 组总平均',sci(average)+' C·kg⁻¹','mean-all',average);metric('相对误差',relative===null?'未指定参考值':plain(Number(relative.toPrecision(4)))+' %','relative-error',relative??'');
+        const unit=$('#current-unit').value,lines=['电子荷质比的测定——数据处理',isExample?'【演示数据，非实测，不可直接作为测量记录】':'','一、实验条件与测量式','前 4 组：固定 U₀ = '+literal('fixed-U')+' V，改变励磁电流。','后 4 组：固定 I₀ = '+literal('fixed-I')+' '+unit+' = '+plain(rows[4].I)+' A，改变加速电压。','线圈参数：N = 140 匝，r线圈 = 0.140 m；B ≈ 9.00×10⁻⁴I T。','采用课堂近似系数 K = 9.88×10⁶；式中 D 用 m、I 用 A、U 用 V。',''];
+        if($('#include-principle').checked)lines.push('二、原理推导','电子加速：½mv² = eU。','磁力提供向心力：evB = mv²/r，且 r = D/2。','消去 v：e/m = 2U/(B²r²) = 8U/(B²D²)。','代入 B ≈ 9.00×10⁻⁴I，得到','e/m ≈ 9.88×10⁶ U/(D²I²)  C·kg⁻¹。','这里 e 为电子电荷量的大小。','');
+        lines.push('各组计算（每组先算 e/m，再求平均）');
+        for(const row of rows){const uId=row.index<=4?'fixed-U':row.id+'-U',iId=row.index<=4?row.id+'-I':'fixed-I';const sub=String(row.index).split('').map(ch=>'₀₁₂₃₄₅₆₇₈₉'[Number(ch)]).join('');lines.push('第 '+row.index+' 组（'+(row.index<=4?'固定 U，改变 I':'固定 I，改变 U')+'）：','U = '+literal(uId)+' V；I = '+literal(iId)+' '+unit+' = '+plain(row.I)+' A。','D = D₂ − D₁ = '+literal(row.id+'-D2')+' − ('+literal(row.id+'-D1')+') = '+plain(row.Dmm)+' mm = '+plain(row.D)+' m。','(e/m)'+sub+' = 9.88×10⁶ × '+literal(uId)+' / [('+plain(row.D)+')² × ('+plain(row.I)+')²]','          = '+sci(row.q)+' C·kg⁻¹。','');}
+        const guards=list=>list.map(r=>(r.q/1e11).toFixed(7)).join(' + ');
+        lines.push('平均值（保留计算保护位，避免逐组舍入后再平均）','固定 U：q̄₁ = (q₁ + q₂ + q₃ + q₄)/4','      = ('+guards(rows.slice(0,4))+')/4 × 10¹¹','      = '+sci(avgA)+' C·kg⁻¹。','固定 I：q̄₂ = (q₅ + q₆ + q₇ + q₈)/4','      = ('+guards(rows.slice(4))+')/4 × 10¹¹','      = '+sci(avgB)+' C·kg⁻¹。','全部 8 组：q̄ = (q₁ + q₂ + ⋯ + q₈)/8','      = ('+guards(rows)+')/8 × 10¹¹','      = '+sci(average)+' C·kg⁻¹。','说明：各组和最终结果显示 4 位有效数字；平均值由内部未舍入值计算。','');
+        if(reference!==null)lines.push('相对误差','参考值 q₀ = '+literal('reference')+' C·kg⁻¹。','E = |q̄ − q₀|/q₀ × 100%','  = |'+sci(average,8)+' − '+sci(reference,8)+'| / ('+sci(reference,8)+') × 100%','  = '+plain(Number(relative.toPrecision(4)))+'%。','');
+        else lines.push('未指定参考值，本次未计算相对误差。','');
+        lines.push('测量结论','本次 8 组测得电子荷质比平均值 e/m = '+sci(average)+' C·kg⁻¹。'+(relative===null?'':'与所用参考值的相对误差为 '+plain(Number(relative.toPrecision(4)))+'%。'),'');
+        if($('#include-observations').checked){const filled=observations.filter(item=>$('#'+item.id).value.trim()!=='');lines.push('观察记录（使用手动填写的实际现象）');if(!filled.length)lines.push('观察记录未填写，请根据实际实验补充。');else for(const item of filled)lines.push(item.title+'：'+item.label+'——'+$('#'+item.id).value.trim());lines.push('');}
+        if($('#include-analysis').checked)lines.push('误差来源分析参考（请结合实际实验修改）','1. 电子束有宽度，边缘定位、视差及未测到最大直径会引入 D 的误差。e/m∝D⁻²，D 偏小会使计算结果偏大。','2. 电压、电流读数波动及仪表误差会影响结果。e/m∝U/I²，U 偏大使结果偏大，I 偏大使结果偏小。','3. v 与 B 不垂直时会产生螺旋线；外界磁场、线圈磁场不均匀也会影响轨迹。应调成闭合圆后测量。');
+        $('#report').textContent=lines.filter((line,i)=>line!==''||i!==1).join('\n');$('.report-title').hidden=false;reportReady=true;for(const id of ['copy-btn','download-btn','print-btn'])$('#'+id).disabled=false;
+    }
+    $('#calculate-btn').addEventListener('click',generate);
+    $('#example-btn').addEventListener('click',()=>{if([...document.querySelectorAll('#measurement-table input,#fixed-U,#fixed-I')].some(input=>input.value!=='')&&!confirm('演示数据会替换当前测量数值，继续吗？'))return;$('#current-unit').value='A';previousUnit='A';document.querySelectorAll('.current-unit').forEach(span=>span.textContent='A');$('#fixed-U').value=160;$('#fixed-I').value=1.25;$('#reference').value='1.759e11';for(const field of fields){const i=field.index-1,U=i<4?160:[120,140,160,180][i-4],I=i<4?[1.1,1.2,1.3,1.4][i]:1.25,target=[1.75,1.77,1.76,1.78,1.74,1.76,1.75,1.77][i]*1e11,D=Math.sqrt(K*U/target)/I*1000,D1=[20,22,18,21,19,20,23,18][i];$('#'+field.id+'-'+field.variable).value=i<4?I:U;$('#'+field.id+'-D1').value=D1;$('#'+field.id+'-D2').value=(D1+D).toFixed(1);}isExample=true;preview();invalidate();$('#report').textContent='已填入构造的演示数据。点击生成可查看演示计算，实际实验请换成自己的读数。';});
+    $('#clear-btn').addEventListener('click',()=>{if(!confirm('清空固定 U、I 和 8 组测量读数？观察记录及参考值会保留。'))return;document.querySelectorAll('#measurement-table input,#fixed-U,#fixed-I').forEach(input=>input.value='');isExample=false;preview();invalidate();});
+    $('#copy-btn').addEventListener('click',async()=>{if(!reportReady)return;try{if(!navigator.clipboard?.writeText)throw Error();await navigator.clipboard.writeText($('#report').textContent);$('#copy-status').textContent='完整过程已复制。';}catch{const selection=getSelection(),range=document.createRange();range.selectNodeContents(document.querySelector('#report + [data-lab-math-view]')||$('#report'));selection.removeAllRanges();selection.addRange(range);$('#copy-status').textContent='已选中计算过程，请按 Ctrl+C 复制，或使用 TXT 下载。';}});
+    $('#download-btn').addEventListener('click',()=>{if(!reportReady)return;const blob=new Blob(['\uFEFF'+$('#report').textContent],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='电子荷质比_详细计算过程.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+    $('#print-btn').addEventListener('click',()=>{if(reportReady)window.print();});
+    preview();
+})();
+
+</script>
+<script src="ai-import.js?v=6.5.4" defer></script><script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body></html>

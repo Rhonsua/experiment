@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>霍尔传感器实验模块 · 优化版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: var(--card);
+            padding: 12px 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            background: #e8ecf4;
+            color: #3a4f7a;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        .tab-btn:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 380px;
+            min-width: 300px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .results-panel {
+            flex: 2 1 550px;
+            min-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .section-label {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.9rem;
+            margin: 10px 0 6px;
+        }
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .input-row input {
+            width: 85px;
+            padding: 7px 6px;
+            border: 1.5px solid #dde;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            background: #fafbfc;
+            text-align: center;
+            transition: 0.25s;
+        }
+        .input-row input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
+            background: #fff;
+        }
+        .input-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+            white-space: nowrap;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .add-btn {
+            background: #28a745;
+            color: #fff;
+        }
+        .add-btn:hover {
+            background: #218838;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+        }
+        .remove-btn:hover {
+            background: #e04848;
+        }
+        .reset-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.25s;
+        }
+        .calculate-btn:hover {
+            background: #1e8c4a;
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            border-left: 4px solid var(--primary);
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            flex: 1;
+            overflow-y: visible;
+            margin-bottom: 16px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        .result-equation {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 12px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 16px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        /* 新增：表格容器 */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+        table.data-table {
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            width: 100%;
+            margin: 10px 0;
+        }
+        table.data-table th,
+        table.data-table td {
+            padding: 7px 9px;
+            text-align: center;
+            border: 1px solid #dde;
+        }
+        table.data-table th {
+            background: var(--primary);
+            color: #fff;
+        }
+        .value-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .value-row input {
+            width: 75px;
+            padding: 6px 4px;
+            font-size: 0.85rem;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'Courier New', 'PingFang SC', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🧲 霍尔传感器实验模块</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+
+    <div class="tab-bar" id="tab-bar">
+        <button class="tab-btn active" data-tab="1">1️⃣ B-X 分布</button>
+        <button class="tab-btn" data-tab="2">2️⃣ 开关输出特性</button>
+        <button class="tab-btn" data-tab="3">3️⃣ U-I 特性拟合</button>
+        <button class="tab-btn" data-tab="4">4️⃣ 转速测量</button>
+    </div>
+
+    <div class="container">
+        <div class="control-panel" id="control-panel"></div>
+        <div class="results-panel">
+            <div id="result-output" class="result-output">
+                <p style="color:#999; text-align:center; padding-top:30px;">👈 请选择功能并输入数据</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+            const $$ = sel => document.querySelectorAll(sel);
+            let currentTab = '1';
+            let activeChart = null;
+
+            function destroyChart() {
+                if (activeChart) { activeChart.destroy(); activeChart = null; }
+                $('#chart-container-box').innerHTML = '';
+            }
+
+            function createChartContainer(title) {
+                destroyChart();
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                box.innerHTML = `<h4>📈 ${title}</h4>`;
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                chartDiv.appendChild(canvas);
+                box.appendChild(chartDiv);
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.onclick = () => {
+                    const tmp = document.createElement('canvas');
+                    tmp.width = canvas.width;
+                    tmp.height = canvas.height;
+                    const tctx = tmp.getContext('2d');
+                    tctx.fillStyle = '#ffffff';
+                    tctx.fillRect(0, 0, tmp.width, tmp.height);
+                    tctx.drawImage(canvas, 0, 0);
+                    const a = document.createElement('a');
+                    a.download = `霍尔传感器_${title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g,'_')}.png`;
+                    a.href = tmp.toDataURL('image/png');
+                    a.click();
+                };
+                box.appendChild(btn);
+                $('#chart-container-box').appendChild(box);
+                return canvas;
+            }
+
+            const ave = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+            function linearFit(x, y) {
+                const n = x.length;
+                const ax = ave(x), ay = ave(y);
+                const axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / n;
+                const ax2 = x.reduce((s, v) => s + v * v, 0) / n;
+                const den = ax2 - ax * ax;
+                if (Math.abs(den) < 1e-15) return { a: 0, b: ay, r2: 0 };
+                const a = (axy - ax * ay) / den;
+                const b = ay - a * ax;
+                const ay2 = ave(y.map(v => v * v));
+                const r = (axy - ax * ay) / Math.sqrt(Math.max(1e-20, (ax2 - ax * ax) * (ay2 - ay * ay)));
+                return { a, b, r2: r * r };
+            }
+
+            function switchTab(tabId) {
+                currentTab = tabId;
+                $$('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+                destroyChart();
+                $('#result-output').innerHTML = '<p style="color:#999; text-align:center; padding-top:30px;">👈 请选择功能并输入数据</p>';
+                renderControlPanel(tabId);
+            }
+
+            $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+            function renderControlPanel(tabId) {
+                const panel = $('#control-panel');
+                panel.innerHTML = '';
+                if (tabId === '1') renderBXControl(panel);
+                else if (tabId === '2') renderSwitchControl(panel);
+                else if (tabId === '3') renderIUControl(panel);
+                else if (tabId === '4') renderSpeedControl(panel);
+            }
+
+            // ---------- 功能1：B-X 分布 ----------
+            function renderBXControl(panel) {
+                panel.innerHTML = `
+                    <h3 class="panel-title">📋 磁感应强度分布 (B-X)</h3>
+                    <div class="instructions"><p>输入圆柱形磁钢轴线上的距离 X (mm) 与磁感应强度 B (mT)</p></div>
+                    <div id="bx-data-rows"></div>
+                    <div class="btn-row">
+                        <button class="btn-sm add-btn" id="bx-add-row">+ 添加行</button>
+                        <button class="btn-sm remove-btn" id="bx-del-row">- 删除末行</button>
+                        <button class="btn-sm reset-btn" id="bx-reset">↺ 默认数据</button>
+                    </div>
+                    <button class="calculate-btn" id="bx-calc">🚀 绘制分布图</button>
+                `;
+                const defaultX = Array.from({length: 26}, (_, i) => i);
+                const defaultB = [120,115,108,98,82,60,38,20,10,5,2];
+                let bxData = defaultX.map((x,i)=>({x,b:defaultB[i]}));
+                function renderRows() {
+                    const container = $('#bx-data-rows');
+                    container.innerHTML = '';
+                    bxData.forEach((row,idx)=>{
+                        const div = document.createElement('div');
+                        div.className = 'value-row';
+                        div.innerHTML = `<span>X<sub>${idx+1}</sub></span><input type="number" class="bx-x" value="${row.x}" step="0.1"><span class="unit">mm</span><span>B<sub>${idx+1}</sub></span><input type="number" class="bx-b" value="${row.b}" step="0.1"><span class="unit">mT</span>`;
+                        container.appendChild(div);
+                    });
+                }
+                function readData() {
+                    const xs = [...$$('.bx-x')].map(inp=>parseFloat(inp.value));
+                    const bs = [...$$('.bx-b')].map(inp=>parseFloat(inp.value));
+                    return xs.map((x,i)=>({x,b:bs[i]})).filter(d=>!isNaN(d.x)&&!isNaN(d.b));
+                }
+                renderRows();
+                document.getElementById('bx-add-row').onclick = ()=>{ bxData.push({x:bxData[bxData.length-1].x+1, b:bxData[bxData.length-1].b*0.8}); renderRows(); };
+                document.getElementById('bx-del-row').onclick = ()=>{ if(bxData.length>2){bxData.pop(); renderRows();} };
+                document.getElementById('bx-reset').onclick = ()=>{ bxData = defaultX.map((x,i)=>({x,b:defaultB[i]})); renderRows(); };
+                document.getElementById('bx-calc').onclick = ()=>{
+                    const data = readData();
+                    if(data.length<2) return alert('至少需要两组数据');
+                    data.sort((a,b)=>a.x-b.x);
+                    const maxB = Math.max(...data.map(d=>d.b));
+                    const maxIdx = data.findIndex(d=>d.b===maxB);
+                    let html = '<h4 style="margin-bottom:8px;">B-X 数据表</h4>';
+                    html += '<div class="table-container"><table class="data-table"><tr><th>X (mm)</th><th>B (mT)</th></tr>';
+                    data.forEach(d=>html+=`<tr><td>${d.x.toFixed(1)}</td><td>${d.b.toFixed(1)}</td></tr>`);
+                    html+='</table></div>';
+                    
+                    const detail = `【测量原理】将霍尔传感器沿圆柱形磁钢轴线移动，记录不同距离 X 对应的磁感应强度 B。\n\n【步骤1】记录原始数据：共 ${data.length} 组 (X, B) 数据点。\n【步骤2】按距离 X 从小到大排序，以距离为横坐标、磁感应强度为纵坐标绘制散点图。\n【步骤3】通过平滑曲线连接数据点，观察磁钢轴线上 B 随距离衰减的规律。\n【步骤4】轴线中心最大磁感应强度约为 <span class="result-line">${maxB.toFixed(1)} mT</span>，出现在 X = <span class="result-line">${data[maxIdx].x.toFixed(1)} mm</span> 处。`;
+                    html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}</div>`;
+                    $('#result-output').innerHTML = html;
+                    
+                    const canvas = createChartContainer('磁感应强度 B-X 分布');
+                    new Chart(canvas.getContext('2d'), {
+                        type:'scatter',
+                        data:{datasets:[{label:'测量点',data:data.map(d=>({x:d.x,y:d.b})),backgroundColor:'#4b6cb7',pointRadius:5,showLine:true,borderColor:'#4b6cb7',borderWidth:2,tension:0.3}]},
+                        options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'距离 X (mm)'}},y:{title:{display:true,text:'磁感应强度 B (mT)'}}}}
+                    });
+                };
+            }
+
+            // ---------- 功能2：开关输出特性 (B-U 图，带方向箭头) ----------
+            function renderSwitchControl(panel) {
+                panel.innerHTML = `
+                    <h3 class="panel-title">📋 开关传感器输出特性 (B-U)</h3>
+                    <div class="instructions"><p>输入磁感应强度增大和减小方向的参数，绘制滞回曲线。箭头指示跳变方向。</p></div>
+                    <h4 style="margin:12px 0 6px; color:#e74c3c;">⬆️ 磁感应强度增大方向</h4>
+                    <div class="input-row"><label>初始 B (mT)</label><input id="inc-b0" type="number" value="0" step="0.1"></div>
+                    <div class="input-row"><label>初始输出 U (V)</label><input id="inc-v0" type="number" value="0" step="0.1"></div>
+                    <div class="input-row"><label>转变 B (mT)</label><input id="inc-bs" type="number" value="50" step="0.1"></div>
+                    <div class="input-row"><label>转变后输出 U (V)</label><input id="inc-v1" type="number" value="5" step="0.1"></div>
+                    <h4 style="margin:12px 0 6px; color:#2980b9;">⬇️ 磁感应强度减小方向</h4>
+                    <div class="input-row"><label>初始 B (mT)</label><input id="dec-b0" type="number" value="100" step="0.1"></div>
+                    <div class="input-row"><label>初始输出 U (V)</label><input id="dec-v0" type="number" value="5" step="0.1"></div>
+                    <div class="input-row"><label>转变 B (mT)</label><input id="dec-bs" type="number" value="30" step="0.1"></div>
+                    <div class="input-row"><label>转变后输出 U (V)</label><input id="dec-v1" type="number" value="0" step="0.1"></div>
+                    <button class="calculate-btn" id="sw-calc">🚀 绘制特性曲线</button>
+                `;
+                document.getElementById('sw-calc').onclick = ()=>{
+                    const inc_b0 = +$('#inc-b0').value, inc_v0 = +$('#inc-v0').value, inc_bs = +$('#inc-bs').value, inc_v1 = +$('#inc-v1').value;
+                    const dec_b0 = +$('#dec-b0').value, dec_v0 = +$('#dec-v0').value, dec_bs = +$('#dec-bs').value, dec_v1 = +$('#dec-v1').value;
+                    if([inc_b0,inc_v0,inc_bs,inc_v1,dec_b0,dec_v0,dec_bs,dec_v1].some(isNaN)) return alert('请填写所有参数');
+
+                    const incData = [
+                        {x:inc_b0, y:inc_v0},
+                        {x:inc_bs, y:inc_v0},
+                        {x:inc_bs, y:inc_v1},
+                        {x:dec_b0, y:inc_v1}
+                    ];
+                    const decData = [
+                        {x:dec_b0, y:dec_v0},
+                        {x:dec_bs, y:dec_v0},
+                        {x:dec_bs, y:dec_v1},
+                        {x:inc_b0, y:dec_v1}
+                    ];
+                    const incArrowPoint = {x: inc_bs, y: (inc_v0 + inc_v1) / 2};
+                    const decArrowPoint = {x: dec_bs, y: (dec_v0 + dec_v1) / 2};
+                    const incRotation = inc_v1 > inc_v0 ? 0 : 180;
+                    const decRotation = dec_v1 > dec_v0 ? 0 : 180;
+
+                    let html = '<h4>开关输出特性参数</h4>';
+                    html += `<div class="result-item"><p><strong style="color:#e74c3c;">增大方向：</strong>初始 B = ${inc_b0} mT / U = ${inc_v0} V → 转变 B = <span class="result-line">${inc_bs} mT</span> / U = <span class="result-line">${inc_v1} V</span></p></div>`;
+                    html += `<div class="result-item"><p><strong style="color:#2980b9;">减小方向：</strong>初始 B = ${dec_b0} mT / U = ${dec_v0} V → 转变 B = <span class="result-line">${dec_bs} mT</span> / U = <span class="result-line">${dec_v1} V</span></p></div>`;
+                    
+                    const detail = `【测量原理】开关型霍尔传感器在磁感应强度达到阈值时输出电平发生跳变，正向和反向阈值不同，形成滞回。\n\n【步骤1】设置增大方向参数：从初始B=${inc_b0}mT开始，输出U=${inc_v0}V；当B增大至<span class="result-line">${inc_bs}mT</span>时，输出跳变为<span class="result-line">${inc_v1}V</span>。\n【步骤2】设置减小方向参数：从初始B=${dec_b0}mT开始，输出U=${dec_v0}V；当B减小至<span class="result-line">${dec_bs}mT</span>时，输出跳变为<span class="result-line">${dec_v1}V</span>。\n【步骤3】绘制B-U曲线：横轴为磁感应强度B，纵轴为输出电压U。使用阶梯线连接各点，并在跳变位置添加方向箭头。\n【步骤4】分析滞回特性：增大和减小方向的跳变阈值不同，体现了传感器的磁滞效应。`;
+                    html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}</div>`;
+                    $('#result-output').innerHTML = html;
+
+                    const canvas = createChartContainer('开关输出特性 (B-U 滞回曲线)');
+                    new Chart(canvas.getContext('2d'), {
+                        type:'line',
+                        data:{datasets:[
+                            {label:'B增大',data:incData,borderColor:'#e74c3c',backgroundColor:'transparent',borderWidth:3,stepped:true,pointRadius:4,pointBackgroundColor:'#e74c3c'},
+                            {label:'B减小',data:decData,borderColor:'#2980b9',backgroundColor:'transparent',borderWidth:3,stepped:true,pointRadius:4,pointBackgroundColor:'#2980b9'},
+                            {label:'增大跳变方向',data:[incArrowPoint],type:'scatter',backgroundColor:'#e74c3c',borderColor:'#e74c3c',pointStyle:'triangle',pointRadius:12,rotation:incRotation,showLine:false,order:1},
+                            {label:'减小跳变方向',data:[decArrowPoint],type:'scatter',backgroundColor:'#2980b9',borderColor:'#2980b9',pointStyle:'triangle',pointRadius:12,rotation:decRotation,showLine:false,order:1}
+                        ]},
+                        options:{
+                            responsive:true,maintainAspectRatio:false,
+                            scales:{
+                                x:{type:'linear',title:{display:true,text:'磁感应强度 B (mT)'},ticks:{stepSize:10,callback:val=>val.toFixed(0)}},
+                                y:{title:{display:true,text:'输出电压 U (V)'},min:Math.min(inc_v0,inc_v1,dec_v0,dec_v1)-0.5,max:Math.max(inc_v0,inc_v1,dec_v0,dec_v1)+0.5,ticks:{stepSize:1}}
+                            },
+                            plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,filter:item=>!item.text.includes('跳变方向')}}}
+                        }
+                    });
+                };
+            }
+
+            // ---------- 功能3：U-I 特性拟合 ----------
+            function renderIUControl(panel) {
+                panel.innerHTML = `
+                    <h3 class="panel-title">📋 大电流 U-I 拟合</h3>
+                    <div class="instructions"><p>输入电流 I (A) 与电压 U (V)，线性拟合并计算 r²</p></div>
+                    <div id="iu-data-rows"></div>
+                    <div class="btn-row">
+                        <button class="btn-sm add-btn" id="iu-add-row">+ 添加行</button>
+                        <button class="btn-sm remove-btn" id="iu-del-row">- 删除末行</button>
+                        <button class="btn-sm reset-btn" id="iu-reset">↺ 默认</button>
+                    </div>
+                    <button class="calculate-btn" id="iu-calc">🚀 计算并绘图</button>
+                `;
+                const defI = [0.02,0.04,0.06,0.08,0.10,0.12,0.14,0.16,0.18,0.20,0.22,0.24,0.26,0.28,0.30,0.32,0.34,0.36,0.38,0.40], defU = [0.22,0.44,0.66,0.88,1.1,1.32,];
+                let iuData = defI.map((v,i)=>({i:v,u:defU[i]}));
+                function renderRows() {
+                    const c = $('#iu-data-rows'); c.innerHTML = '';
+                    iuData.forEach((r,i)=>{
+                        const d = document.createElement('div'); d.className='value-row';
+                        d.innerHTML = `<span>I<sub>${i+1}</sub></span><input type="number" class="iu-i" value="${r.i}" step="0.01"><span class="unit">A</span><span>U<sub>${i+1}</sub></span><input type="number" class="iu-u" value="${r.u}" step="0.01"><span class="unit">V</span>`;
+                        c.appendChild(d);
+                    });
+                }
+                renderRows();
+                document.getElementById('iu-add-row').onclick = ()=>{ const l=iuData[iuData.length-1]; iuData.push({i:l.i+0.5,u:l.u+0.22}); renderRows(); };
+                document.getElementById('iu-del-row').onclick = ()=>{ if(iuData.length>2){iuData.pop(); renderRows();} };
+                document.getElementById('iu-reset').onclick = ()=>{ iuData = defI.map((v,i)=>({i:v,u:defU[i]})); renderRows(); };
+                document.getElementById('iu-calc').onclick = ()=>{
+                    const is=[],us=[];
+                    $$('.iu-i').forEach(inp=>is.push(+inp.value));
+                    $$('.iu-u').forEach(inp=>us.push(+inp.value));
+                    const data = is.map((v,i)=>({i:v,u:us[i]})).filter(d=>!isNaN(d.i)&&!isNaN(d.u));
+                    if(data.length<2) return alert('至少需要两组数据');
+                    data.sort((a,b)=>a.i-b.i);
+                    const fit = linearFit(data.map(d=>d.i), data.map(d=>d.u));
+                    const yPred = data.map(d => fit.a * d.i + fit.b);
+                    const sse = yPred.reduce((s,yp,i)=> s + (data[i].u - yp)**2, 0);
+                    
+                    let html = `<h4>U-I 拟合结果</h4>`;
+                    html += `<div class="result-equation">U = ${fit.a.toFixed(4)}·I + ${fit.b.toFixed(4)}</div>`;
+                    html += `<div class="result-item"><h4>斜率 (电阻)</h4><div class="result-value">${fit.a.toFixed(4)} Ω</div></div>`;
+                    html += `<div class="result-item"><h4>截距</h4><div class="result-value">${fit.b.toFixed(4)} V</div></div>`;
+                    html += `<div class="result-item"><h4>相关系数 r²</h4><div class="result-value success">${fit.r2.toFixed(6)}</div></div>`;
+                    
+                    // 残差分析表
+                    html += '<div class="table-container"><h4>拟合残差表</h4><table class="data-table"><tr><th>序号</th><th>I (A)</th><th>U (V)</th><th>拟合值 (V)</th><th>残差</th><th>残差²</th></tr>';
+                    data.forEach((d,i)=>{
+                        const res = d.u - yPred[i];
+                        const res2 = res * res;
+                        html += `<tr><td>${i+1}</td><td>${d.i.toFixed(4)}</td><td>${d.u.toFixed(4)}</td><td>${yPred[i].toFixed(6)}</td><td>${res.toExponential(3)}</td><td>${res2.toExponential(3)}</td></tr>`;
+                    });
+                    html += `<tr style="font-weight:bold;background:#f0f0f0;"><td colspan="5">SSE</td><td>${sse.toExponential(4)}</td></tr>`;
+                    html += '</table></div>';
+                    
+                    const detail = `【测量原理】通过霍尔传感器测量大电流导线周围的磁场，间接得到电流 I 与霍尔电压 U 的关系，理论上呈线性。\n\n【步骤1】记录多组 (I, U) 数据，共 ${data.length} 组。\n【步骤2】使用最小二乘法进行线性拟合：U = a·I + b。\n  ΣI = ${is.reduce((a,b)=>a+b,0).toFixed(3)}, ΣU = ${us.reduce((a,b)=>a+b,0).toFixed(3)}\n  Σ(I·U) = ${data.reduce((s,d)=>s+d.i*d.u,0).toFixed(3)}, Σ(I²) = ${data.reduce((s,d)=>s+d.i*d.i,0).toFixed(3)}\n  斜率 a = <span class="result-line">${fit.a.toFixed(6)}</span>, 截距 b = <span class="result-line">${fit.b.toFixed(6)}</span>\n  相关系数 r² = <span class="result-line">${fit.r2.toFixed(6)}</span>\n【步骤3】斜率 a 即为待测电阻值，截距 b 为系统误差。\n【步骤4】残差分析：SSE = ${sse.toExponential(4)}，表明拟合优度。`;
+                    html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}</div>`;
+                    $('#result-output').innerHTML = html;
+                    
+                    const canvas = createChartContainer('U-I 特性曲线');
+                    const xMin=Math.min(...data.map(d=>d.i)), xMax=Math.max(...data.map(d=>d.i));
+                    new Chart(canvas.getContext('2d'), {
+                        type:'scatter',
+                        data:{datasets:[
+                            {label:'测量数据',data:data.map(d=>({x:d.i,y:d.u})),backgroundColor:'#4b6cb7',pointRadius:5},
+                            {label:`拟合直线`,data:[{x:xMin,y:fit.a*xMin+fit.b},{x:xMax,y:fit.a*xMax+fit.b}],type:'line',borderColor:'#e74c3c',borderWidth:2,pointRadius:0}
+                        ]},
+                        options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'电流 I (A)'}},y:{title:{display:true,text:'电压 U (V)'}}}}
+                    });
+                };
+            }
+
+            // ---------- 功能4：转速测量 ----------
+            function renderSpeedControl(panel) {
+                panel.innerHTML = `
+                    <h3 class="panel-title">📋 转速测量</h3>
+                    <div class="instructions"><p>输入脉冲周期 T (秒) 和传感器距离 (默认5mm)，计算转速 (RPM)</p></div>
+                    <div class="input-row"><label>传感器距离 (mm)</label><input id="speed-dist" type="number" value="5" step="0.1"></div>
+                    <div id="speed-t-rows"></div>
+                    <div class="btn-row">
+                        <button class="btn-sm add-btn" id="speed-add">+ 添加周期</button>
+                        <button class="btn-sm remove-btn" id="speed-del">- 删除末项</button>
+                        <button class="btn-sm reset-btn" id="speed-reset">↺ 默认</button>
+                    </div>
+                    <button class="calculate-btn" id="speed-calc">🚀 计算转速</button>
+                `;
+                const defT = [0.10,0.10,0.11,0.10,0.09,0.10,0.10,0.11];
+                let tVals = [...defT];
+                function renderT() {
+                    const c=$('#speed-t-rows'); c.innerHTML='';
+                    tVals.forEach((t,i)=>{
+                        const d=document.createElement('div'); d.className='value-row';
+                        d.innerHTML=`<span>T<sub>${i+1}</sub></span><input type="number" class="speed-t" value="${t}" step="0.001"><span class="unit">s</span>`;
+                        c.appendChild(d);
+                    });
+                }
+                renderT();
+                document.getElementById('speed-add').onclick = ()=>{ tVals.push(tVals[tVals.length-1]||0.1); renderT(); };
+                document.getElementById('speed-del').onclick = ()=>{ if(tVals.length>1){tVals.pop(); renderT();} };
+                document.getElementById('speed-reset').onclick = ()=>{ tVals=[...defT]; renderT(); };
+                document.getElementById('speed-calc').onclick = ()=>{
+                    const dist = +$('#speed-dist').value;
+                    const periods = [...$$('.speed-t')].map(inp=>+inp.value).filter(v=>!isNaN(v)&&v>0);
+                    if(!periods.length) return alert('请输入至少一个周期');
+                    const rpms = periods.map(t=>60/t);
+                    const avgRpm = ave(rpms);
+                    
+                    let html = `<h4>转速计算结果 (距离=${dist}mm)</h4>`;
+                    html += '<div class="table-container"><table class="data-table"><tr><th>序号</th><th>T (s)</th><th>RPM</th></tr>';
+                    rpms.forEach((r,i)=>html+=`<tr><td>${i+1}</td><td>${periods[i].toFixed(3)}</td><td>${r.toFixed(1)}</td></tr>`);
+                    html+=`</table></div>`;
+                    html += `<div class="result-item"><h4>平均转速</h4><div class="result-value success">${avgRpm.toFixed(1)} RPM</div></div>`;
+                    
+                    const detail = `【测量原理】转轮上粘贴磁钢，开关型霍尔传感器每经过一个磁钢输出一个脉冲。周期 T 为相邻脉冲的时间间隔，转速 N = 60 / T (RPM)。\n\n【步骤1】设定传感器与转轮距离 d = ${dist}mm，确保可靠触发。\n【步骤2】记录连续 ${periods.length} 个脉冲周期 T：${periods.map(t=>t.toFixed(3)).join('、')} s。\n【步骤3】计算各周期对应转速：${rpms.map(r=>r.toFixed(1)).join('、')} RPM。\n【步骤4】计算平均转速：<span class="result-line">${avgRpm.toFixed(1)} RPM</span>，反映电机转速稳定性。`;
+                    html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}</div>`;
+                    $('#result-output').innerHTML = html;
+                    
+                    const canvas = createChartContainer('转速分布');
+                    new Chart(canvas.getContext('2d'), {
+                        type:'bar',
+                        data:{labels:rpms.map((_,i)=>`#${i+1}`),datasets:[{label:'RPM',data:rpms,backgroundColor:'#4b6cb7'}]},
+                        options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'转速 (RPM)'}}}}
+                    });
+                };
+            }
+
+            switchTab('1');
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

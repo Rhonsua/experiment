@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>磁阻效应 · ΔR/R vs B 拟合（R值输入+自动计算）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 380px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2 1 700px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        .input-group.checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group.checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+        }
+        .input-group.checkbox-group label {
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+        }
+        .data-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .data-row input {
+            flex: 1 1 80px;
+            padding: 8px 6px;
+            font-size: 0.9rem;
+        }
+        .data-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+            white-space: nowrap;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 30px;
+            text-align: center;
+        }
+        .add-btn {
+            padding: 9px 18px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 14px;
+            font-size: 0.9rem;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .calculate-btn:hover {
+            background: #1e8c4a;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        .result-equation {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th,
+        td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #dde;
+        }
+        th {
+            background: var(--primary);
+            color: #fff;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 350px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .info-badge {
+            background: #e8f4fc;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+            border-left: 4px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+    <h2>🧲 磁阻效应 · ΔR/R vs B 拟合（输入R值，自动计算ΔR/R）</h2>
+    <a href="index.html" style="color:#fff;">← 返回主页</a>
+</div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="input-group">
+                <label>低场/高场临界值 B<sub>c</sub> (T)</label>
+                <input type="number" id="Bc" value="60" step="1">
+            </div>
+            <div class="input-group checkbox-group">
+                <input type="checkbox" id="lowForceOrigin">
+                <label for="lowForceOrigin">低场拟合强制过原点 (ΔR/R = k·B²)</label>
+            </div>
+            <h4>📊 实验数据 (B, R)</h4>
+            <div class="info-badge">
+                💡 第一组数据的 R 值将作为参考值 R₀，<br>
+                自动计算 ΔR/R = (R - R₀) / R₀
+            </div>
+            <div id="data-inputs"></div>
+            <button class="add-btn" onclick="addRow()">+ 添加数据行</button>
+            <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤与图表）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+            const resultOutput = $('#result-output');
+            const chartContainerBox = $('#chart-container-box');
+            let activeCharts = [];
+
+            function ave(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+            function Ls0(x, y) {
+                const n = x.length;
+                const ax = ave(x),
+                    ay = ave(y);
+                const axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / n;
+                const ax2 = x.reduce((s, v) => s + v * v, 0) / n;
+                const a = (axy - ax * ay) / (ax2 - ax * ax);
+                return { a, b: ay - a * ax };
+            }
+
+            function LSR(x, y) {
+                const ax = ave(x),
+                    ay = ave(y);
+                const ax2 = ave(x.map(v => v * v)),
+                    ay2 = ave(y.map(v => v * v)),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length;
+                const denom = Math.sqrt((ax2 - ax * ax) * (ay2 - ay * ay));
+                return denom === 0 ? 0 : (axy - ax * ay) / denom;
+            }
+
+            function destroyCharts() {
+                activeCharts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                activeCharts = [];
+                chartContainerBox.innerHTML = '';
+            }
+
+            function createDownloadButton(canvas, filenamePrefix) {
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = `${filenamePrefix}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    link.click();
+                });
+                return btn;
+            }
+
+            // 综合拟合图（连接所有数据点 + 高场拟合）
+            function drawCombinedChart(lowData, highData, lowA, lowB, highA, highBval, Bc, R0) {
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h4>📈 综合拟合图（数据点连线 + 高场拟合）</h4>`;
+
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                chartBox.appendChild(container);
+
+                chartBox.appendChild(createDownloadButton(canvas, '综合拟合_连线'));
+                chartContainerBox.appendChild(chartBox);
+
+                const ctx = canvas.getContext('2d');
+                const allData = [...lowData, ...highData];
+                const datasets = [];
+
+                // 所有数据点（连线）
+                if (allData.length > 0) {
+                    datasets.push({
+                        label: '全部数据 (连线)',
+                        data: allData.map(p => ({ x: p.B, y: p.dRR })),
+                        backgroundColor: '#4b6cb7',
+                        borderColor: '#4b6cb7',
+                        borderWidth: 1.5,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#4b6cb7',
+                        showLine: true,
+                        tension: 0,
+                    });
+                }
+
+                // 高场拟合线
+                if (highA !== null && highData.length >= 2) {
+                    const maxB = Math.max(...allData.map(p => p.B));
+                    const minB = Math.min(...allData.map(p => p.B));
+                    const margin = (maxB - minB) * 0.05 || 0.02;
+                    const startB = Math.max(Bc, minB - margin);
+                    const endB = maxB + margin;
+                    
+                    const fitData = [];
+                    const N = 100;
+                    for (let i = 0; i <= N; i++) {
+                        const b = Bc + (i / N) * (endB - Bc);
+                        fitData.push({ x: b, y: highA * b + highBval });
+                    }
+                    
+                    datasets.push({
+                        label: `高场拟合 ΔR/R=${highA.toFixed(6)}·B+${highBval.toFixed(6)}`,
+                        data: fitData,
+                        type: 'line',
+                        borderColor: '#e74c3c',
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        fill: false,
+                        borderDash: [8, 4],
+                    });
+                }
+
+                // 低场拟合线（如果有）
+                if (lowA !== null && lowData.length >= 2) {
+                    const curve = [];
+                    const N = 60;
+                    for (let i = 0; i <= N; i++) {
+                        const b = (i / N) * Bc;
+                        curve.push({ x: b, y: lowA * b * b + lowB });
+                    }
+                    datasets.push({
+                        label: `低场拟合 ΔR/R=${lowA.toFixed(6)}B²${lowB >= 0 ? '+' : ''}${lowB.toFixed(6)}`,
+                        data: curve,
+                        type: 'line',
+                        borderColor: '#27ae60',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        fill: false,
+                    });
+                }
+
+                // Bc垂直线
+                if (Bc > 0) {
+                    const yAll = allData.map(p => p.dRR);
+                    const yMin = Math.min(...yAll, 0);
+                    const yMax = Math.max(...yAll) * 1.1;
+                    datasets.push({
+                        label: `Bc=${Bc} T`,
+                        data: [{ x: Bc, y: yMin }, { x: Bc, y: yMax }],
+                        type: 'line',
+                        borderColor: '#888',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false,
+                    });
+                }
+
+                const chart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: `磁阻效应 · R₀ = ${R0.toFixed(6)}` },
+                            legend: { position: 'top' },
+                        },
+                        scales: {
+                            x: { 
+                                title: { display: true, text: 'B (T)' }, 
+                                min: 0,
+                            },
+                            y: { 
+                                title: { display: true, text: 'ΔR/R' },
+                            },
+                        },
+                    },
+                });
+                activeCharts.push(chart);
+            }
+
+            // 高场线性拟合图（单独展示）
+            function drawHighFieldChart(xd, yd, k, m, Bc, title, R0) {
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h4>📈 高场线性拟合（单独展示）</h4>`;
+
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                chartBox.appendChild(container);
+
+                chartBox.appendChild(createDownloadButton(canvas, '高场拟合_单独'));
+                chartContainerBox.appendChild(chartBox);
+
+                const ctx = canvas.getContext('2d');
+                const xMin = Math.min(...xd);
+                const xMax = Math.max(...xd);
+                const margin = (xMax - xMin) * 0.1 || 0.05;
+                const lineStart = Math.max(Bc, xMin - margin);
+                const lineEnd = xMax + margin;
+
+                const chart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: '高场数据 (B>Bc)',
+                                data: xd.map((x, i) => ({ x, y: yd[i] })),
+                                backgroundColor: '#2ecc71',
+                                pointRadius: 6,
+                                pointBorderColor: '#27ae60',
+                                pointBorderWidth: 2,
+                            },
+                            {
+                                label: `拟合 ΔR/R=${k.toFixed(6)}·B+${m.toFixed(6)}`,
+                                data: [
+                                    { x: lineStart, y: k * lineStart + m },
+                                    { x: lineEnd, y: k * lineEnd + m },
+                                ],
+                                type: 'line',
+                                borderColor: '#e74c3c',
+                                borderWidth: 3,
+                                pointRadius: 0,
+                                fill: false,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { display: true, text: `${title} · R₀ = ${R0.toFixed(6)}` },
+                            legend: { position: 'top' },
+                        },
+                        scales: {
+                            x: { 
+                                title: { display: true, text: 'B (T)' }, 
+                                min: Bc * 0.9,
+                            },
+                            y: { 
+                                title: { display: true, text: 'ΔR/R' },
+                            },
+                        },
+                    },
+                });
+                activeCharts.push(chart);
+            }
+
+            function displayTable(xd, yd, yPred, xn, yn, title) {
+                const cont = document.createElement('div');
+                cont.className = 'table-container';
+                cont.innerHTML = `<h4>${title}</h4><table><thead><tr><th>序号</th><th>${xn}</th><th>${yn}</th><th>拟合值</th><th>残差</th><th>残差²</th></tr></thead><tbody></tbody></table>`;
+                const tbody = cont.querySelector('tbody');
+                let sse = 0;
+                for (let i = 0; i < xd.length; i++) {
+                    const yf = yPred[i],
+                        res = yd[i] - yf,
+                        res2 = res * res;
+                    sse += res2;
+                    tbody.innerHTML += `<tr><td>${i+1}</td><td>${xd[i].toFixed(4)}</td><td>${yd[i].toFixed(6)}</td><td>${yf.toFixed(6)}</td><td>${res.toExponential(3)}</td><td>${res2.toExponential(3)}</td></tr>`;
+                }
+                tbody.innerHTML += `<tr style="font-weight:bold;background:#f0f0f0;"><td colspan="5">SSE</td><td>${sse.toExponential(4)}</td></tr>`;
+                resultOutput.appendChild(cont);
+            }
+
+            function addDetailBox(title, content) {
+                const box = document.createElement('div');
+                box.className = 'detail-box';
+                box.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(box);
+            }
+
+            window.addRow = function() {
+                const cont = $('#data-inputs');
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                row.innerHTML = `<input type="number" class="B-input" placeholder="B (T)" value="10" step="1"><span class="unit">T</span><input type="number" class="R-input" placeholder="R" value="0.001" step="0.0001"><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+                cont.appendChild(row);
+            };
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+                const Bc = parseFloat($('#Bc').value) || 60;
+                const lowForceOrigin = document.getElementById('lowForceOrigin').checked;
+                const rows = document.querySelectorAll('#data-inputs .data-row');
+                const rawData = [];
+                rows.forEach(r => {
+                    const B = parseFloat(r.querySelector('.B-input').value);
+                    const R = parseFloat(r.querySelector('.R-input').value);
+                    if (!isNaN(B) && !isNaN(R)) rawData.push({ B, R });
+                });
+                if (rawData.length < 3) return alert('至少需要3组数据');
+                rawData.sort((a, b) => a.B - b.B);
+                
+                // 以第一组R值为R0
+                const R0 = rawData[0].R;
+                if (R0 === 0) return alert('第一组R值不能为0');
+                
+                // 计算 ΔR/R
+                const data = rawData.map(p => ({
+                    B: p.B,
+                    R: p.R,
+                    dRR: (p.R - R0) / R0
+                }));
+
+                const low = data.filter(p => p.B <= Bc);
+                const high = data.filter(p => p.B > Bc);
+
+                let detail = `【参数】临界磁场 Bc = ${Bc} T\n`;
+                detail += `【参考值】R₀ = ${R0.toFixed(6)}\n`;
+                detail += `【低场拟合模式】${lowForceOrigin ? '强制过原点 (ΔR/R = k·B²)' : '包含截距 (ΔR/R = a·B² + b)'}\n`;
+                detail += `【数据】共 ${data.length} 组 (低场 ${low.length}, 高场 ${high.length})\n\n`;
+
+                // 显示原始数据转换表
+                detail += `【数据转换】\n`;
+                detail += `  序号  B(T)    R        ΔR/R\n`;
+                data.forEach((p, i) => {
+                    detail += `  ${i+1}    ${p.B.toFixed(2)}    ${p.R.toFixed(6)}    ${p.dRR.toFixed(6)}\n`;
+                });
+                detail += `\n`;
+
+                let lowA = null,
+                    lowB = null;
+                let highA = null,
+                    highBval = null;
+
+                // 低场拟合
+                if (low.length >= 2) {
+                    const B2 = low.map(p => p.B * p.B);
+                    const y = low.map(p => p.dRR);
+                    if (lowForceOrigin) {
+                        const sumX2 = B2.reduce((s, x) => s + x * x, 0); // X = B²，分母为 ΣX² = ΣB⁴
+                        const sumXY = B2.reduce((s, x, i) => s + x * y[i], 0);
+                        lowA = sumXY / sumX2;
+                        lowB = 0;
+                        const yPred = B2.map(x => lowA * x);
+                        const ssRes = y.reduce((s, yi, i) => s + (yi - yPred[i]) ** 2, 0);
+                        const ssTot = y.reduce((s, yi) => s + (yi - ave(y)) ** 2, 0);
+                        const R2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+                        detail += `【低场拟合】ΔR/R = k·B² (强制过原点)\n`;
+                        detail += `  k = <span class="result-line">${lowA.toFixed(8)}</span>\n`;
+                        detail += `  决定系数 R² = <span class="result-line">${R2.toFixed(6)}</span>\n\n`;
+                    } else {
+                        const ls = Ls0(B2, y);
+                        lowA = ls.a;
+                        lowB = ls.b;
+                        const r = LSR(B2, y);
+                        detail += `【低场拟合】ΔR/R = a·B² + b\n`;
+                        detail += `  a = <span class="result-line">${lowA.toFixed(8)}</span>, b = <span class="result-line">${lowB.toFixed(8)}</span>\n`;
+                        detail += `  相关系数 r = ${r.toFixed(6)}, R² = ${(r*r).toFixed(6)}\n\n`;
+                    }
+                }
+
+                // 高场线性拟合
+                if (high.length >= 2) {
+                    const B_high = high.map(p => p.B);
+                    const y_high = high.map(p => p.dRR);
+                    const ls = Ls0(B_high, y_high);
+                    highA = ls.a;
+                    highBval = ls.b;
+                    const r = LSR(B_high, y_high);
+                    detail += `【高场线性拟合】ΔR/R = k·B + m\n`;
+                    detail += `  k = <span class="result-line">${highA.toFixed(8)}</span>\n`;
+                    detail += `  m = <span class="result-line">${highBval.toFixed(8)}</span>\n`;
+                    detail += `  相关系数 r = ${r.toFixed(6)}, R² = ${(r*r).toFixed(6)}\n\n`;
+                } else if (high.length < 2) {
+                    detail += `【高场数据不足】需要至少2个高场数据点进行线性拟合\n\n`;
+                }
+
+                let html = `<h3 class="result-title">磁阻效应拟合结果</h3>`;
+                html += `<p style="margin-bottom:12px;color:#555;">参考值 R₀ = ${R0.toFixed(6)}，ΔR/R = (R - R₀)/R₀</p>`;
+                resultOutput.innerHTML = html;
+
+                // 显示高场拟合结果（重点）
+                if (high.length >= 2 && highA !== null) {
+                    const y_high = high.map(p => p.dRR);
+                    const yPred = high.map(p => highA * p.B + highBval);
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <h4>🔴 高场线性拟合 (B > ${Bc} T) - 重点</h4>
+                        <div class="result-equation">ΔR/R = ${highA.toFixed(8)}·B + ${highBval.toFixed(8)}</div>
+                        <p style="margin-top:8px;color:#555;">斜率 k = ${highA.toFixed(8)}，截距 m = ${highBval.toFixed(8)}</p>
+                    `;
+                    resultOutput.appendChild(item);
+                    displayTable(high.map(p => p.B), y_high, yPred, 'B (T)', 'ΔR/R', '高场拟合残差表');
+                    drawHighFieldChart(high.map(p => p.B), y_high, highA, highBval, Bc, '高场线性拟合 (B > Bc)', R0);
+                }
+
+                // 低场结果（如果有）
+                if (low.length >= 2 && lowA !== null) {
+                    const y = low.map(p => p.dRR);
+                    const yPred = low.map(p => lowA * p.B * p.B + lowB);
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `<h4>低场拟合 (B ≤ ${Bc} T)</h4><div class="result-equation">ΔR/R = ${lowA.toFixed(8)}·B² ${lowB >= 0 ? '+' : ''} ${lowB.toFixed(8)}</div>`;
+                    resultOutput.appendChild(item);
+                    displayTable(low.map(p => p.B), y, yPred, 'B (T)', 'ΔR/R', '低场拟合残差表');
+                }
+
+                // 综合图（连接所有数据点 + 高场拟合）
+                drawCombinedChart(low, high, lowA, lowB, highA, highBval, Bc, R0);
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+            // 初始化示例数据（R值）
+            (function init() {
+                const sample = [
+                    [0, 0.0002],
+                    [10, 0.0008],
+                    [20, 0.0019],
+                    [30, 0.0034],
+                    [40, 0.0053],
+                    [50, 0.0075],
+                    [60, 0.0120],
+                    [70, 0.0168],
+                    [100, 0.0301],
+                    [150, 0.0452],
+                    [200, 0.0610],
+                    [250, 0.0780],
+                    [300, 0.0950],
+                    [350, 0.1120],
+                    [400, 0.1290],
+                    [450, 0.1460],
+                    [500, 0.1630],
+                ];
+                const cont = $('#data-inputs');
+                sample.forEach(([B, R]) => {
+                    const row = document.createElement('div');
+                    row.className = 'data-row';
+                    row.innerHTML = `<input type="number" class="B-input" value="${B}" step="1"><span class="unit">T</span><input type="number" class="R-input" value="${R}" step="0.0001"><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+                    cont.appendChild(row);
+                });
+            })();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

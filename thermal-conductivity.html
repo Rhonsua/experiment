@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导热系数的测定 · 稳态平板法（含冷却速率拟合与不确定度）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 4px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        .del-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .formula-line {
+            background: #f4f7fb;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #2c3f55;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🌡️ 导热系数的测定 · 稳态平板法（含冷却速率拟合）</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <b>原理：</b>dQ = −λ(dT/dz)dSdt（式 2-9-1）；稳态时下铜盘散热速率 = 样品传热速率<br>
+                <b>核心公式：</b>λ = mc·(2h_P+R_P)/(2h_P+2R_P)·(1/πR²)·h/(T₁−T₂)·(dT/dt)|<sub>T₂</sub>（式 2-9-4）
+            </div>
+
+            <div class="sub-title"><span>① 样品几何尺寸</span><span class="hint">h ≪ D，热量沿垂直方向传导</span></div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>样品厚度 h <span class="unit">mm</span></label>
+                    <input type="number" id="s-h" value="8.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>样品半径 R <span class="unit">mm</span></label>
+                    <input type="number" id="s-R" value="65.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>样品直径 D <span class="unit">mm</span></label>
+                    <input type="text" id="s-D" value="130.00" readonly style="background:#f0f2f5;color:#667;">
+                </div>
+            </div>
+
+            <div class="sub-title"><span>② 下铜盘 P 的参数</span><span class="hint">m 约 0.8 kg，c = 0.385 kJ/(kg·K)</span></div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>质量 m <span class="unit">g</span></label>
+                    <input type="number" id="p-m" value="800.0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>半径 R_P <span class="unit">mm</span></label>
+                    <input type="number" id="p-R" value="65.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>厚度 h_P <span class="unit">mm</span></label>
+                    <input type="number" id="p-h" value="7.00" step="0.01">
+                </div>
+            </div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>比热容 c <span class="unit">J/(kg·K)</span></label>
+                    <input type="number" id="p-c" value="385" step="1">
+                </div>
+                <div class="input-group">
+                    <label>热电偶灵敏度 a <span class="unit">mV/K</span></label>
+                    <input type="number" id="tc-a" value="0.0400" step="0.0001">
+                </div>
+            </div>
+            <div class="badge-note">铜-康铜热电偶：冷端 0 ℃ 时约 0.04 mV/K（100 ℃ 对应约 4.0 mV）。可直接用电动势代表温度。</div>
+
+            <div class="sub-title"><span>③ 稳态读数（T₁ / T₂）</span><span class="hint">T₂ 在 3 min 内不变即达稳态</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>U₁（上盘 A）<span class="unit">mV</span></label>
+                    <input type="number" id="U1" value="2.0000" step="0.0001">
+                </div>
+                <div class="input-group">
+                    <label>U₂（下盘 P）<span class="unit">mV</span></label>
+                    <input type="number" id="U2" value="1.2000" step="0.0001">
+                </div>
+            </div>
+
+            <div class="sub-title"><span>④ 冷却曲线数据（移去样品后自然冷却）</span><span class="hint">每 20 s 读一次</span></div>
+            <div id="cool-table"></div>
+
+            <div class="sub-title"><span>⑤ 仪器误差（用于不确定度）</span><span class="hint">填 0 表示该项不计</span></div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>Δh <span class="unit">mm</span></label>
+                    <input type="number" id="u-h" value="0.02" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>ΔR <span class="unit">mm</span></label>
+                    <input type="number" id="u-R" value="0.02" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Δm <span class="unit">g</span></label>
+                    <input type="number" id="u-m" value="0.2" step="0.1">
+                </div>
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>ΔU <span class="unit">mV</span></label>
+                    <input type="number" id="u-U" value="0.01" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>Δc <span class="unit">J/(kg·K)</span></label>
+                    <input type="number" id="u-c" value="5" step="1">
+                </div>
+                <div class="input-group">
+                    <label>对比材料 λ 参考 <span class="unit">W/(m·K)</span></label>
+                    <input type="number" id="lam-ref" value="0.1097" step="0.0001">
+                </div>
+            </div>
+            <div class="badge-note">附录参考值：纯铜 398、纯铝 236、铝合金 107、硬铝 146、橡皮 0.13~0.23、电木 0.23、木丝纤维板 0.048、软木板 0.044~0.079 W/(m·K)。当前参考值 0.1097 与演示数据自洽，测真实样品时请按材料手册填写。</div>
+
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="clear-btn" class="ghost-btn">清空冷却数据</button>
+            </div>
+        </div>
+
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const ave = a => a.reduce((x, y) => x + y, 0) / a.length;
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+            function fmt(v, d) {
+                if (!isFinite(v)) return '—';
+                if (v === 0) return '0';
+                const a = Math.abs(v);
+                if (a >= 1e6 || a < 1e-4) return v.toExponential(3);
+                return v.toFixed(d === undefined ? (a >= 1000 ? 1 : a >= 100 ? 2 : 4) : d);
+            }
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(b);
+            }
+
+            // ---------- 冷却数据表 ----------
+            const MAX_COOL_ROWS = 200;
+            function updateCoolCount() {
+                const count = document.querySelectorAll('#cool-table tbody tr').length;
+                $('#data-count').value = count;
+                $('#cool-count-note').textContent = `当前 ${count} 组，共 ${count * 2} 个冷却数据输入项；图片识别会读取全部已建行。`;
+            }
+            function coolRow(r) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td><input type="number" class="in-t" step="any" aria-label="冷却时间 t (s)"></td>` +
+                    `<td><input type="number" class="in-U" step="any" aria-label="冷却电压 U (mV)"></td>` +
+                    `<td><button type="button" class="del-btn" aria-label="删除该行">×</button></td>`;
+                tr.querySelector('.in-t').value = r.t;
+                tr.querySelector('.in-U').value = r.U;
+                tr.querySelector('.del-btn').addEventListener('click', () => {
+                    if (tr.parentNode.rows.length > 5) { tr.remove(); updateCoolCount(); }
+                    else alert('二次拟合至少需要 5 个数据点');
+                });
+                return tr;
+            }
+            function appendCoolRow(body) {
+                const last = body.lastElementChild;
+                const raw = last?.querySelector('.in-t').value;
+                const previous = raw !== '' && raw !== undefined ? Number(raw) : NaN;
+                body.appendChild(coolRow({t: Number.isFinite(previous) ? previous + 20 : body.rows.length * 20, U:''}));
+            }
+            function buildCoolTable() {
+                const box = $('#cool-table');
+                box.innerHTML = `<div class="badge-note"><label for="data-count">冷却数据组数（5～200）：</label>
+                    <input type="number" id="data-count" min="5" max="200" step="1" value="27" style="width:80px">
+                    <button type="button" class="mini-add" id="resize-cool">调整行数</button>
+                    <button type="button" class="mini-add" id="demo-cool">填充冷却示例</button>
+                    <p id="cool-count-note" aria-live="polite"></p><p>默认 27 组。照片超过 27 组时，先增加行数再拖入图片；新增行保留原有读数。示例不是实测数据。</p></div>`;
+                const table = document.createElement('table'); table.className = 'mini';
+                table.innerHTML = `<thead><tr><th style="width:38%">t (s)</th><th style="width:44%">U (mV)</th><th style="width:18%"></th></tr></thead><tbody></tbody>`;
+                const body = table.querySelector('tbody');
+                for (let i=0;i<27;i++) appendCoolRow(body);
+                box.appendChild(table);
+                const add = document.createElement('button'); add.type = 'button'; add.className = 'mini-add'; add.id='add-cool'; add.textContent = '+ 添加数据点（间隔 20 s）';
+                add.addEventListener('click', () => {
+                    if(body.rows.length>=MAX_COOL_ROWS)return alert('最多支持 200 组冷却数据。');
+                    appendCoolRow(body); updateCoolCount();
+                });
+                box.appendChild(add);
+                $('#resize-cool').addEventListener('click',()=>{
+                    const raw=$('#data-count').value, count=Number(raw);
+                    if(raw===''||!Number.isInteger(count)||count<5||count>MAX_COOL_ROWS)return alert('请输入 5～200 的整数行数。');
+                    const removed=[...body.rows].slice(count);
+                    if(removed.some(tr=>tr.querySelector('.in-U').value!=='')&&!confirm('缩减行数会删除末尾已有电压读数，继续吗？'))return;
+                    removed.forEach(tr=>tr.remove());
+                    while(body.rows.length<count)appendCoolRow(body);
+                    updateCoolCount();
+                });
+                $('#demo-cool').addEventListener('click',()=>{
+                    if(!confirm('用构造的冷却示例覆盖当前冷却表？实际实验请填写自己的读数。'))return;
+                    body.replaceChildren();
+                    for(let i=0;i<27;i++)body.appendChild(coolRow({t:247+i*20,U:(.072+(1.337-.072)*Math.exp(-i*20/1309)).toFixed(4)}));
+                    updateCoolCount();
+                });
+                updateCoolCount();
+            }
+            buildCoolTable();
+            function readCool() {
+                const out = [];
+                document.querySelectorAll('#cool-table tbody tr').forEach(tr => {
+                    const t = parseFloat(tr.querySelector('.in-t').value);
+                    const U = parseFloat(tr.querySelector('.in-U').value);
+                    if (isFinite(t) && isFinite(U)) out.push({ t, U });
+                });
+                out.sort((a, b) => a.t - b.t);
+                return out;
+            }
+
+            // 试样直径与半径联动
+            function syncD() {
+                const R = parseFloat($('#s-R').value);
+                $('#s-D').value = isFinite(R) ? (R * 2).toFixed(2) : '';
+            }
+            $('#s-R').addEventListener('input', syncD);
+            syncD();
+
+            // 二次最小二乘拟合：y = a0 + a1 x + a2 x²
+            function quadFit(pts) {
+                const n = pts.length;
+                if (n < 3) return null;
+                let S1 = 0, S2 = 0, S3 = 0, S4 = 0, T0 = 0, T1 = 0, T2 = 0;
+                pts.forEach(p => {
+                    const x = p.t, y = p.U;
+                    S1 += x; S2 += x * x; S3 += x ** 3; S4 += x ** 4;
+                    T0 += y; T1 += x * y; T2 += x * x * y;
+                });
+                const M = [[n, S1, S2, T0], [S1, S2, S3, T1], [S2, S3, S4, T2]];
+                for (let c = 0; c < 3; c++) {
+                    let piv = c;
+                    for (let r = c + 1; r < 3; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+                    if (Math.abs(M[piv][c]) < 1e-12) return null;
+                    [M[c], M[piv]] = [M[piv], M[c]];
+                    for (let r = 0; r < 3; r++) {
+                        if (r === c) continue;
+                        const f = M[r][c] / M[c][c];
+                        for (let k = c; k < 4; k++) M[r][k] -= f * M[c][k];
+                    }
+                }
+                const a0 = M[0][3] / M[0][0], a1 = M[1][3] / M[1][1], a2 = M[2][3] / M[2][2];
+                // 拟合质量
+                let sse = 0, my = ave(pts.map(p => p.U)), sst = 0;
+                pts.forEach(p => { const f = a0 + a1 * p.t + a2 * p.t * p.t; sse += (p.U - f) ** 2; sst += (p.U - my) ** 2; });
+                return { a0, a1, a2, r2: sst > 0 ? 1 - sse / sst : 1, residual: n > 3 ? Math.sqrt(sse / (n - 3)) : NaN, n };
+            }
+            // 在 U = U2 处求 dU/dt
+            // 先用 U₂ 两侧的相邻两点线性插值给出稳健的初值，再用牛顿法在二次拟合上精化
+            function slopeAtU(fit, U2, pts) {
+                let t0 = pts && pts.length ? ave(pts.map(p => p.t)) : 0;
+                if (pts && pts.length >= 2) {
+                    const s = pts.slice().sort((p, q) => p.t - q.t);
+                    for (let i = 0; i < s.length - 1; i++) {
+                        const A = s[i], B = s[i + 1];
+                        if ((A.U - U2) * (B.U - U2) <= 0) {
+                            const w = Math.abs(B.U - A.U) < 1e-15 ? 0.5 : (U2 - A.U) / (B.U - A.U);
+                            t0 = A.t + w * (B.t - A.t);
+                            break;
+                        }
+                    }
+                }
+                let t = t0;
+                for (let k = 0; k < 200; k++) {
+                    const f = fit.a0 + fit.a1 * t + fit.a2 * t * t - U2;
+                    const df = fit.a1 + 2 * fit.a2 * t;
+                    if (Math.abs(df) < 1e-15) break;
+                    const step = f / df;
+                    t -= step;
+                    if (Math.abs(step) < 1e-9) break;
+                }
+                // 若牛顿法把根推离数据区间太远，退回插值结果
+                if (!isFinite(t) || (pts && pts.length && (t < pts[0].t - 1e4 || t > pts[pts.length - 1].t + 1e4))) t = t0;
+                return { t, dUdt: fit.a1 + 2 * fit.a2 * t };
+            }
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const h = (parseFloat($('#s-h').value) || 0) / 1000;      // m
+                const Rs = (parseFloat($('#s-R').value) || 0) / 1000;     // m
+                const mKg = (parseFloat($('#p-m').value) || 0) / 1000;    // kg
+                const Rp = (parseFloat($('#p-R').value) || 0) / 1000;     // m
+                const hp = (parseFloat($('#p-h').value) || 0) / 1000;     // m
+                const c = parseFloat($('#p-c').value) || 0;               // J/(kg·K)
+                const a = parseFloat($('#tc-a').value) || 0;              // mV/K
+                const U1 = parseFloat($('#U1').value);
+                const U2 = parseFloat($('#U2').value);
+                const lamRef = parseFloat($('#lam-ref').value);
+
+                if (!(h > 0) || !(Rs > 0)) return alert('请填写样品厚度 h 与半径 R');
+                if (!(mKg > 0) || !(c > 0)) return alert('请填写下铜盘质量 m 与比热容 c');
+                if (!isFinite(U1) || !isFinite(U2)) return alert('请填写稳态读数 U₁、U₂');
+
+                const warnings = [];
+                const T1 = a > 0 ? U1 / a : U1;
+                const T2 = a > 0 ? U2 / a : U2;
+                const dT = T1 - T2;
+                if (!(dT > 0)) {
+                    return alert('T₁ 必须大于 T₂（热量由高温侧传向低温侧），请检查 U₁、U₂ 的对应关系。');
+                }
+                if (h / (2 * Rs) > 0.2) {
+                    warnings.push(`样品厚度与直径之比 h/D = ${num(h / (2 * Rs), 4)} 偏大；实验要求 h≪D，否则侧面散热不可忽略，式 (2-9-3) 的面积修正将不准确。`);
+                }
+
+                // 面积修正因子（式 2-9-3 的第二个因子）
+                const corr = (2 * hp + Rp) / (2 * hp + 2 * Rp);
+
+                // ---------- 冷却速率 ----------
+                const cool = readCool();
+                if (cool.length < 5) {
+                    resultOutput.innerHTML = `<h3 class="result-title">导热系数计算结果</h3>
+                        <div class="warn-msg">冷却数据不足：二次拟合至少需要 5 组 (t, U) 数据，当前 ${cool.length} 组。</div>`;
+                    return;
+                }
+                const fitAll = quadFit(cool);
+                if (!fitAll) return alert('冷却数据无法拟合，请检查是否有重复的 t 值');
+                // 取离 U2 最近的 5 点做局部二次拟合（文档要求"选取邻近 T2 的测量数据求冷却速率"）
+                const near = cool.map((p, i) => ({ i, d: Math.abs(p.U - U2) }))
+                    .sort((x, y) => x.d - y.d).slice(0, 5).map(o => o.i).sort((x, y) => x - y);
+                const sel = near.map(i => cool[i]);
+                const fit = quadFit(sel) || fitAll;
+                const hit = slopeAtU(fit, U2, sel);
+                const dUdt = hit.dUdt;                       // mV/s（应为负）
+                if (!(dUdt < 0)) {
+                    warnings.push('在 U₂ 处拟合得到的冷却曲线斜率为正（温度在上升），请检查冷却数据是否为"移去样品后自然降温"的过程。');
+                }
+                const dTdt = a > 0 ? dUdt / a : dUdt;        // K/s
+
+                // ---------- 式 (2-9-3) 散热速率 ----------
+                const heatRate = -mKg * c * dTdt;            // W（稳态下铜盘的散热速率）
+                const heatRateCorr = heatRate * corr;        // 面积修正后的样品传热速率
+
+                // ---------- 式 (2-9-4) 导热系数 ----------
+                const A = Math.PI * Rs * Rs;
+                const lam = mKg * c * corr * (1 / A) * (h / dT) * (-dTdt);
+                const gradient = dT / h;                     // K/m
+
+                // ---------- 不确定度 ----------
+                const uh = (parseFloat($('#u-h').value) || 0) / 1000;
+                const uR = (parseFloat($('#u-R').value) || 0) / 1000;
+                const um = (parseFloat($('#u-m').value) || 0) / 1000;
+                const uU = parseFloat($('#u-U').value) || 0;
+                const uc = parseFloat($('#u-c').value) || 0;
+
+                // λ = m·c·corr·(1/(πR²))·(h/ΔT)·|dT/dt|
+                // 相对不确定度各项（忽略 corr 的弱依赖）
+                const rel = {
+                    m: um / mKg,
+                    c: uc / c,
+                    R: 2 * uR / Rs,
+                    h: uh / h,
+                    dT: (a > 0 ? Math.sqrt(2) * uU / a : Math.sqrt(2) * uU) / dT,
+                    slope: (() => {
+                        // 斜率的不确定度由拟合残差估计：σ(slope) ≈ s/√Sxx（局部窗口）
+                        const n = sel.length;
+                        const mt = ave(sel.map(p => p.t));
+                        const Sxx = sel.reduce((s, p) => s + (p.t - mt) ** 2, 0);
+                        const sres = fit.residual;
+                        if (!isFinite(sres) || Sxx <= 0) return 0;
+                        const ss = sres / Math.sqrt(Sxx);
+                        return Math.abs(ss / dUdt);      // dU/dt 的相对不确定度
+                    })()
+                };
+                const ur = Math.sqrt(Object.values(rel).reduce((s, v) => s + v * v, 0));
+                const uLam = ur * lam;
+
+                // ---------- 结果面板 ----------
+                let html = `<h3 class="result-title">导热系数测定结果</h3>`;
+                if (warnings.length) html += warnings.map(w => `<div class="warn-msg">⚠️ ${w}</div>`).join('');
+
+                html += `<div class="result-item"><h4>① 稳态温度差 <span class="tag exp">式 2-9-1</span></h4>
+                    <div class="result-value">T₁ − T₂ = ${num(dT, 3)} K</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    U₁=${num(U1, 4)} mV → T₁=${num(T1, 2)} ℃；U₂=${num(U2, 4)} mV → T₂=${num(T2, 2)} ℃（a=${num(a, 4)} mV/K）<br>
+                    温度梯度 (T₁−T₂)/h = ${fmt(gradient)} K/m</div></div>`;
+
+                html += `<div class="result-item"><h4>② T₂ 处的冷却速率 <span class="tag exp">作图法</span></h4>
+                    <div class="result-value">dT/dt|<sub>T₂</sub> = ${num(dTdt, 6)} K/s = ${num(dTdt * 60, 4)} K/min</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    由邻近 T₂ 的 ${sel.length} 点二次拟合求导（t=${sel[0].t}~${sel[sel.length - 1].t} s），
+                    拟合得 dU/dt = ${num(dUdt, 6)} mV/s<br>
+                    选点时刻 t* = ${num(hit.t, 1)} s 处 U = U₂</div></div>`;
+
+                html += `<div class="result-item"><h4>③ 铜盘散热速率 <span class="tag theory">式 2-9-2 / 2-9-3</span></h4>
+                    <div class="result-value">dQ/dt = ${num(heatRate, 4)} W</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    dQ/dt = −mc·dT/dt = ${num(mKg, 3)}×${num(c, 0)}×${num(-dTdt, 6)} = ${num(heatRate, 4)} W<br>
+                    面积修正因子 (2h_P+R_P)/(2h_P+2R_P) = ${num(corr, 6)} → 修正后 ${num(heatRateCorr, 4)} W</div></div>`;
+
+                html += `<div class="result-equation">λ = ${num(lam, 4)} W/(m·K)</div>`;
+
+                if (isFinite(lamRef) && lamRef > 0) {
+                    const dev = (lam - lamRef) / lamRef * 100;
+                    html += `<div class="result-item"><h4>④ 与参考值比较 <span class="tag err">偏差</span></h4>
+                        <div class="result-value">${num(dev, 2)} %</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">参考 λ = ${num(lamRef, 4)} W/(m·K)（附录：橡皮 0.13~0.23、电木 0.23、软木 0.044~0.079）</div></div>`;
+                }
+
+                html += `<div class="uncertainty-box"><h4>📐 不确定度分析</h4>
+                    <div style="font-size:0.85rem;">
+                        λ = mc·(2h_P+R_P)/(2h_P+2R_P)·(1/πR²)·h/(T₁−T₂)·|dT/dt|<sub>T₂</sub>，
+                        相对不确定度 u<sub>r</sub> = √Σ(∂lnλ/∂xᵢ·u<sub>xᵢ</sub>)²
+                    </div>
+                    <table>
+                        <thead><tr><th>来源</th><th>相对贡献</th><th>占总方差比例</th></tr></thead>
+                        <tbody>
+                            <tr><td>Δm/m</td><td>${sci(rel.m, 3)}</td><td>${num(rel.m ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                            <tr><td>Δc/c</td><td>${sci(rel.c, 3)}</td><td>${num(rel.c ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                            <tr><td>2ΔR/R</td><td>${sci(rel.R, 3)}</td><td>${num(rel.R ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                            <tr><td>Δh/h</td><td>${sci(rel.h, 3)}</td><td>${num(rel.h ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                            <tr><td>√2·ΔU/ΔT</td><td>${sci(rel.dT, 3)}</td><td>${num(rel.dT ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                            <tr><td>冷却速率拟合（A 类）</td><td>${sci(rel.slope, 3)}</td><td>${num(rel.slope ** 2 / (ur ** 2) * 100, 2)} %</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top:8px;font-weight:700;">
+                        u<sub>r</sub>(λ) = ${sci(ur, 4)}（${num(ur * 100, 3)}%）<br>
+                        u(λ) = u<sub>r</sub>·λ = ${fmt(uLam)} W/(m·K)<br>
+                        λ = (${num(lam, 4)} ± ${num(uLam, 4)}) W/(m·K)
+                    </div>
+                    ${(rel.dT > rel.slope && rel.dT > rel.h)
+                        ? `<div style="margin-top:8px;font-size:0.82rem;color:#9a7d0a;">💡 主要误差来自<b>温差 ΔT 的测量</b>：可提高 T₁ 与 T₂ 的读数分辨力，或增大样品的温度梯度。</div>`
+                        : (rel.slope >= rel.dT && rel.slope > rel.h
+                            ? `<div style="margin-top:8px;font-size:0.82rem;color:#9a7d0a;">💡 主要误差来自<b>冷却速率的拟合</b>：可取更多邻近 T₂ 的数据点、或用更小的时间间隔读数。</div>`
+                            : '')}
+                </div>`;
+
+                resultOutput.innerHTML = html;
+
+                // ---------- 图 1：冷却曲线 + T₂ 处切线 ----------
+                const xMin = Math.min(...cool.map(p => p.t)), xMax = Math.max(...cool.map(p => p.t));
+                const curve = [];
+                for (let i = 0; i <= 80; i++) {
+                    const t = xMin + (xMax - xMin) * i / 80;
+                    curve.push({ x: t, y: fitAll.a0 + fitAll.a1 * t + fitAll.a2 * t * t });
+                }
+                const tanHalf = (xMax - xMin) * 0.22;
+                const tanPts = [
+                    { x: hit.t - tanHalf, y: U2 - dUdt * tanHalf },
+                    { x: hit.t + tanHalf, y: U2 + dUdt * tanHalf }
+                ];
+                addChartBox('📈 图1 · 下铜盘冷却曲线 T–t（切线斜率即 T₂ 处冷却速率）', () => ({
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '实测冷却数据',
+                            data: cool.map(p => ({ x: p.t, y: p.U })),
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 5,
+                            showLine: false,
+                            order: 1
+                        }, {
+                            label: `二次拟合（R²=${num(fitAll.r2, 6)}）`,
+                            data: curve,
+                            borderColor: '#27ae60',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            showLine: true,
+                            order: 0
+                        }, {
+                            label: `T₂ 处切线（dU/dt=${num(dUdt, 6)} mV/s）`,
+                            data: tanPts,
+                            borderColor: '#e74c3c',
+                            borderWidth: 2.5,
+                            borderDash: [7, 4],
+                            pointRadius: 0,
+                            showLine: true,
+                            order: 0
+                        }, {
+                            label: `稳态 U₂ = ${num(U2, 4)} mV`,
+                            data: [{ x: xMin, y: U2 }, { x: xMax, y: U2 }],
+                            borderColor: '#8e44ad',
+                            borderWidth: 1.5,
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            showLine: true,
+                            order: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: c => `${c.dataset.label}: t=${num(c.parsed.x, 0)} s, U=${num(c.parsed.y, 5)} mV`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 't (s)' } },
+                            y: { title: { display: true, text: 'U (mV)  ∝ 温度' } }
+                        }
+                    }
+                }), '导热系数_冷却曲线');
+
+                // ---------- 图 2：拟合残差 ----------
+                const resid = cool.map(p => ({ x: p.t, y: p.U - (fitAll.a0 + fitAll.a1 * p.t + fitAll.a2 * p.t * p.t) }));
+                addChartBox('📉 图2 · 拟合残差（检视冷却数据的质量）', () => ({
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '残差 = 实测 − 拟合',
+                            data: resid,
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 5,
+                            showLine: false
+                        }, {
+                            label: '零线',
+                            data: [{ x: xMin, y: 0 }, { x: xMax, y: 0 }],
+                            borderColor: '#b0bec5',
+                            borderWidth: 1.5,
+                            borderDash: [6, 4],
+                            pointRadius: 0,
+                            showLine: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } },
+                        scales: {
+                            x: { title: { display: true, text: 't (s)' } },
+                            y: { title: { display: true, text: '残差 (mV)' } }
+                        }
+                    }
+                }), '导热系数_拟合残差');
+
+                // ---------- 详细过程 ----------
+                let detail = `【原理公式】\n`;
+                detail += `  热传导定律： dQ = −λ(dT/dz)·dS·dt                        (2-9-1)\n`;
+                detail += `  铜盘散热速率： dQ/dt|T₂ = −mc·(dT/dt)|T₂                  (2-9-2)\n`;
+                detail += `  面积修正（稳态时上表面被样品覆盖）：\n`;
+                detail += `    (dQ/dt)修正 = −mc(dT/dt)·(πR_P²+2πR_P h_P)/(2πR_P²+2πR_P h_P)   (2-9-3)\n`;
+                detail += `  导热系数：\n`;
+                detail += `    λ = −mc·(2h_P+R_P)/(2h_P+2R_P)·(1/πR²)·h/(T₁−T₂)·(dT/dt)|T₂     (2-9-4)\n\n`;
+
+                detail += `【仪器与试样】\n`;
+                detail += `  样品：h = ${num(h * 1000, 2)} mm, R = ${num(Rs * 1000, 2)} mm（D = ${num(2 * Rs * 1000, 2)} mm）\n`;
+                detail += `  下铜盘 P：m = ${num(mKg * 1000, 1)} g, R_P = ${num(Rp * 1000, 2)} mm, h_P = ${num(hp * 1000, 2)} mm, c = ${num(c, 0)} J/(kg·K)\n`;
+                detail += `  热电偶灵敏度 a = ${num(a, 4)} mV/K（冷端 0 ℃，故可直接用电动势必代表温度）\n`;
+                detail += `  mc = ${num(mKg, 4)} × ${num(c, 0)} = ${num(mKg * c, 2)} J/K\n\n`;
+
+                detail += `【① 稳态温度与温度梯度】\n`;
+                detail += `  U₁ = ${num(U1, 4)} mV → T₁ = U₁/a = ${num(T1, 3)} ℃\n`;
+                detail += `  U₂ = ${num(U2, 4)} mV → T₂ = U₂/a = ${num(T2, 3)} ℃\n`;
+                detail += `  ΔT = T₁ − T₂ = ${num(dT, 4)} K\n`;
+                detail += `  温度梯度 (T₁−T₂)/h = ${num(dT, 4)}/${num(h, 5)} = <span class="result-line">${fmt(gradient)} K/m</span>\n`;
+                detail += `  （稳态时样品内温度线性分布，故可用 (T₁−T₂)/h 表示 dT/dz）\n\n`;
+
+                detail += `【② 冷却速率（作图法）】\n`;
+                detail += `  共 ${cool.length} 组冷却数据，t = ${xMin} ~ ${xMax} s\n`;
+                detail += `  全部数据二次拟合：U = ${num(fitAll.a0, 6)} + ${num(fitAll.a1, 8)}t + ${num(fitAll.a2, 10)}t², R² = ${num(fitAll.r2, 8)}\n`;
+                detail += `  选取邻近 T₂ 的 ${sel.length} 点：t = ${sel.map(p => p.t).join(', ')} s\n`;
+                detail += `  局部二次拟合：U = ${num(fit.a0, 6)} + ${num(fit.a1, 8)}t + ${num(fit.a2, 10)}t²\n`;
+                detail += `  解 U(t) = U₂ = ${num(U2, 4)} mV 得 t* = <span class="result-line">${num(hit.t, 2)} s</span>\n`;
+                detail += `  dU/dt|t* = a₁ + 2a₂t* = ${num(fit.a1, 8)} + 2×(${num(fit.a2, 10)})×${num(hit.t, 2)}\n`;
+                detail += `           = <span class="result-line">${num(dUdt, 8)} mV/s</span>\n`;
+                detail += `  换算为温度冷却速率：dT/dt = (dU/dt)/a = ${num(dUdt, 8)}/${num(a, 4)}\n`;
+                detail += `           = <span class="result-line">${num(dTdt, 8)} K/s = ${num(dTdt * 60, 5)} K/min</span>\n`;
+                detail += `  （负号表示降温；文档要求描绘 T–t 曲线并在 T₂ 处取切线斜率，此处用二次拟合求导代替作图）\n\n`;
+
+                detail += `【③ 散热速率（式 2-9-2、2-9-3）】\n`;
+                detail += `  −mc(dT/dt) = ${num(mKg, 4)} × ${num(c, 0)} × ${num(-dTdt, 8)} = ${num(heatRate, 5)} W\n`;
+                detail += `  面积修正因子 = (2h_P+R_P)/(2h_P+2R_P)\n`;
+                detail += `    = (2×${num(hp, 5)}+${num(Rp, 5)})/(2×${num(hp, 5)}+2×${num(Rp, 5)})\n`;
+                detail += `    = ${num(2 * hp + Rp, 6)}/${num(2 * hp + 2 * Rp, 6)} = <span class="result-line">${num(corr, 6)}</span>\n`;
+                detail += `  修正后传热速率 = ${num(heatRate, 5)} × ${num(corr, 6)} = ${num(heatRateCorr, 5)} W\n`;
+                detail += `  （稳态时上表面被样品覆盖，散热面积由 2πR_P²+2πR_P h_P 减为 πR_P²+2πR_P h_P）\n\n`;
+
+                detail += `【④ 导热系数（式 2-9-4）】\n`;
+                detail += `  λ = mc·(2h_P+R_P)/(2h_P+2R_P)·(1/πR²)·h/(T₁−T₂)·|dT/dt|\n`;
+                detail += `    = ${num(mKg * c, 2)} × ${num(corr, 6)} × (1/(π×${num(Rs, 5)}²)) × (${num(h, 5)}/${num(dT, 4)}) × ${num(-dTdt, 8)}\n`;
+                detail += `  各项：\n`;
+                detail += `    mc            = ${num(mKg * c, 2)} J/K\n`;
+                detail += `    1/(πR²)       = 1/${num(A, 6)} = ${num(1 / A, 4)} m⁻²\n`;
+                detail += `    h/ΔT          = ${num(h / dT, 8)} m/K\n`;
+                detail += `    |dT/dt|       = ${num(-dTdt, 8)} K/s\n`;
+                detail += `  λ = <span class="result-line">${num(lam, 6)} W/(m·K)</span>\n`;
+                if (isFinite(lamRef) && lamRef > 0) {
+                    detail += `  与参考值 ${num(lamRef, 4)} W/(m·K) 的偏差 = ${num((lam - lamRef) / lamRef * 100, 3)} %\n`;
+                }
+                detail += `\n`;
+
+                detail += `【⑤ 不确定度】\n`;
+                detail += `  λ ∝ m·c·h·|dT/dt| / (R²·ΔT)，故各项相对贡献为：\n`;
+                detail += `    Δm/m     = ${num(um * 1000, 4)}g/${num(mKg * 1000, 1)}g = ${sci(rel.m, 4)}   （${num(rel.m ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `    Δc/c     = ${num(uc, 2)}/${num(c, 0)} = ${sci(rel.c, 4)}   （${num(rel.c ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `    2ΔR/R    = 2×${num(uR * 1000, 3)}mm/${num(Rs * 1000, 2)}mm = ${sci(rel.R, 4)}   （${num(rel.R ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `    Δh/h     = ${num(uh * 1000, 3)}mm/${num(h * 1000, 2)}mm = ${sci(rel.h, 4)}   （${num(rel.h ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `    ΔT 项    = √2·ΔU/ΔT = √2×${num(uU, 3)}/${num(dT, 3)} = ${sci(rel.dT, 4)}   （${num(rel.dT ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `       （T₁、T₂ 各含 ΔU，故乘 √2）\n`;
+                detail += `    冷却速率项（拟合残差，A 类）= ${sci(rel.slope, 4)}   （${num(rel.slope ** 2 / ur ** 2 * 100, 2)}%）\n`;
+                detail += `  合成：u_r = √Σ(...)² = <span class="result-line">${sci(ur, 6)}</span>（${num(ur * 100, 3)}%）\n`;
+                detail += `  u(λ) = ${sci(ur, 6)} × ${num(lam, 6)} = <span class="result-line">${num(uLam, 8)} W/(m·K)</span>\n\n`;
+
+                detail += `【测量结果表示】\n`;
+                detail += `  λ = (${num(lam, 4)} ± ${num(uLam, 4)}) W/(m·K)，u_r = ${num(ur * 100, 3)}%\n\n`;
+                detail += `【讨论与注意】\n`;
+                detail += `  1) 稳态的判据：T₂ 的读数在 3 min 内不变，且加热功率与散热速率相等；\n`;
+                detail += `  2) 铜板与样品表面须紧密接触，否则空气层热阻会使温度梯度测量偏小；\n`;
+                detail += `  3) 样品必须满足 h≪D，使侧面积远小于平板面积，侧面散热可忽略；\n`;
+                detail += `  4) 测金属（或陶瓷）时 T₁、T₂ 为稳态时样品上下两面的温度，\n`;
+                detail += `     此时散热盘温度为 T₃，冷却速率应在 T₃ 处取值：\n`;
+                detail += `       λ = mc·(ΔT/Δt)|T₃ · h/(T₁−T₂) · 1/(πR²)\n`;
+                detail += `  5) 热电偶冷端须浸于冰水混合物（0 ℃），测 T₂ 时需把热电偶移下来读数；\n`;
+                detail += `  6) 冷却数据应取邻近 T₂ 的一段，区间过长会使二次拟合偏离实际曲线。\n`;
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            $('#calculate-btn').addEventListener('click', calculate);
+            $('#clear-btn').addEventListener('click', () => {
+                if (!confirm('确定清空冷却曲线数据吗？')) return;
+                document.querySelectorAll('#cool-table tbody tr').forEach(tr => {
+                    tr.querySelector('.in-t').value = '';
+                    tr.querySelector('.in-U').value = '';
+                });
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>等厚干涉 · 牛顿环 & 劈尖</title>
+    <style>
+        :root {
+            --bg: #f5f7fa; --card: #fff; --primary: #4b6cb7; --success: #27ae60; --danger: #ff6b6b;
+            --text: #2c3e50; --border: #e9ecef; --shadow: 0 4px 16px rgba(0,0,0,0.07); --radius: 14px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: #333; font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.6; padding: 16px; max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%); color: #fff; border-radius: var(--radius); margin-bottom: 20px; }
+        .header a { color: #fff; text-decoration: underline; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .control-panel { flex: 1 1 400px; background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+        .results-panel { flex: 2 1 550px; background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+        .panel-title { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 15px; border-bottom: 2.5px solid var(--primary); padding-bottom: 8px; }
+        .sub-command-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .sub-command-btn { padding: 8px 14px; background: #f0f2f6; color: #555; border: 1.5px solid #dde; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+        .sub-command-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; font-weight: 600; color: var(--text); font-size: 0.9rem; margin-bottom: 4px; }
+        .input-group .unit { font-size: 0.8rem; color: #888; margin-left: 6px; }
+        input { width: 100%; padding: 10px; border: 1.5px solid #dde; border-radius: 8px; font-size: 0.95rem; background: #fafbfc; }
+        .data-row { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .data-row input { flex: 1 1 50px; min-width: 45px; padding: 8px 4px; font-size: 0.85rem; }
+        .data-row .unit { font-size: 0.7rem; color: #888; }
+        .remove-btn { background: var(--danger); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+        .add-btn { padding: 9px 18px; background: #28a745; color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 14px; }
+        .calculate-btn { width: 100%; padding: 14px; background: var(--success); color: #fff; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .result-output { background: #fafbfc; border-radius: 10px; padding: 18px; min-height: 300px; max-height: 800px; overflow-y: auto; border: 1px solid var(--border); }
+        .result-title { color: var(--text); font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
+        .result-item { margin-bottom: 10px; padding: 10px 14px; background: #fff; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .result-value { font-size: 1.1rem; font-weight: 700; }
+        .result-value.success { color: #1e8c4a; }
+        .result-equation { font-size: 1.2rem; font-weight: 700; text-align: center; padding: 14px; background: #e8f4fc; border-radius: 8px; margin: 12px 0; }
+        .table-container { overflow-x: auto; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: center; border: 1px solid #dde; }
+        th { background: var(--primary); color: #fff; }
+        .uncertainty-box { background: #fffdf0; border: 1.5px solid #e8d44d; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+        .detail-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; margin-top: 14px; font-family: 'Consolas', 'PingFang SC', monospace; font-size: 0.88rem; line-height: 1.8; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+        .detail-box h4 { color: var(--primary); margin-bottom: 8px; }
+        .detail-box .result-line { color: #1e8c4a; font-weight: 700; }
+        .newton-group { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 12px; background: #fafbfd; position: relative; }
+        .newton-group .group-header { font-weight: 600; color: #4b6cb7; margin-bottom: 6px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="header"><h2>🌈 等厚干涉 · 牛顿环 & 劈尖</h2><a href="index.html">← 返回主页</a></div>
+<div class="container">
+    <div class="control-panel">
+        <h3 class="panel-title">📋 选择模块</h3>
+        <div class="sub-command-buttons">
+            <button class="sub-command-btn active" data-module="newton">🔘 牛顿环曲率半径</button>
+            <button class="sub-command-btn" data-module="wedge">📐 劈尖干涉测细丝直径</button>
+        </div>
+        <!-- 牛顿环模块 -->
+        <div id="newton-panel">
+            <div class="input-group"><label>波长 λ <span class="unit">nm</span></label><input type="number" id="lambda" value="589.3" step="0.1"></div>
+            <div class="input-group"><label>直径测量误差 ΔD <span class="unit">mm</span></label><input type="number" id="delta-D-newton" value="0.01" step="0.001"></div>
+            <h4>📊 环级数据（每组输入m环与n环）</h4>
+            <div id="newton-data-inputs"></div>
+            <button class="add-btn" onclick="addNewtonGroup()">+ 添加一组</button>
+        </div>
+        <!-- 劈尖模块 -->
+        <div id="wedge-panel" class="hidden">
+            <div class="input-group"><label>劈尖总长度 L <span class="unit">mm</span></label><input type="number" id="wedge-L" value="50.0" step="0.1"></div>
+            <div class="input-group"><label>L 不确定度 ΔL <span class="unit">mm</span></label><input type="number" id="delta-L-wedge" value="0.05" step="0.01"></div>
+            <div class="input-group"><label>条纹间隔数 k</label><input type="number" id="stripe-interval" value="10" step="1"></div>
+            <div class="input-group"><label>坐标读数误差 Δx_inst <span class="unit">mm</span></label><input type="number" id="delta-x-instr" value="0.02" step="0.01"></div>
+            <h4>📌 第一组条纹位置 (mm)</h4>
+            <div id="wedge-group1-inputs"></div>
+            <button class="add-btn" onclick="addWedgePos(1)">+ 添加第一组位置</button>
+            <h4>📌 第二组条纹位置 (mm)</h4>
+            <div id="wedge-group2-inputs"></div>
+            <button class="add-btn" onclick="addWedgePos(2)">+ 添加第二组位置</button>
+        </div>
+        <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+    </div>
+    <div class="results-panel">
+        <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+        <div id="result-output" class="result-output"><p style="color:#999;text-align:center;padding-top:40px;">👆 请选择模块并输入数据</p></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const $ = sel => document.querySelector(sel);
+        const resultOutput = $('#result-output');
+        let currentModule = 'newton';
+
+        function ave(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+        // 牛顿环相关
+        let newtonGroupCounter = 0;
+        window.addNewtonGroup = function() {
+            const cont = $('#newton-data-inputs');
+            const div = document.createElement('div');
+            div.className = 'newton-group';
+            div.innerHTML = `
+                <div class="group-header">📌 第${++newtonGroupCounter}组</div>
+                <div class="data-row">
+                    <input type="number" class="m-input" placeholder="环级 m" value="20" step="1"><span class="unit">m</span>
+                    <input type="number" class="lm-input" placeholder="左 m (mm)" value="15.234" step="0.001"><span class="unit">左</span>
+                    <input type="number" class="rm-input" placeholder="右 m (mm)" value="9.826" step="0.001"><span class="unit">右</span>
+                </div>
+                <div class="data-row">
+                    <input type="number" class="n-input" placeholder="环级 n" value="16" step="1"><span class="unit">n</span>
+                    <input type="number" class="ln-input" placeholder="左 n (mm)" value="14.112" step="0.001"><span class="unit">左</span>
+                    <input type="number" class="rn-input" placeholder="右 n (mm)" value="10.948" step="0.001"><span class="unit">右</span>
+                </div>
+                <button class="remove-btn" style="position:absolute;top:8px;right:8px;" onclick="this.closest('.newton-group').remove()">×</button>
+            `;
+            cont.appendChild(div);
+        };
+
+        // 劈尖相关
+        window.addWedgePos = function(grp) {
+            const cont = grp === 1 ? $('#wedge-group1-inputs') : $('#wedge-group2-inputs');
+            const row = document.createElement('div');
+            row.className = 'data-row';
+            const cls = grp === 1 ? 'pos1-input' : 'pos2-input';
+            row.innerHTML = `<input type="number" class="${cls}" placeholder="位置 mm" value="5.000" step="0.001"><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+            cont.appendChild(row);
+        };
+
+        // 模块切换
+        document.querySelectorAll('.sub-command-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sub-command-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentModule = this.dataset.module;
+                $('#newton-panel').classList.toggle('hidden', currentModule !== 'newton');
+                $('#wedge-panel').classList.toggle('hidden', currentModule !== 'wedge');
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 已切换模块，请点击“开始计算”</p>';
+            });
+        });
+
+        // 计算主函数
+        function calculate() {
+            resultOutput.innerHTML = '';
+            if (currentModule === 'newton') calculateNewton();
+            else calculateWedge();
+        }
+
+        function calculateNewton() {
+            const lam_nm = parseFloat($('#lambda').value);
+            const deltaD = parseFloat($('#delta-D-newton').value) || 0.01;
+            if (isNaN(lam_nm)) return alert('请输入波长');
+            const lam = lam_nm * 1e-6; // 转为mm
+            const groups = [];
+            document.querySelectorAll('#newton-data-inputs .newton-group').forEach(g => {
+                const m = parseInt(g.querySelector('.m-input').value);
+                const lm = parseFloat(g.querySelector('.lm-input').value);
+                const rm = parseFloat(g.querySelector('.rm-input').value);
+                const n = parseInt(g.querySelector('.n-input').value);
+                const ln = parseFloat(g.querySelector('.ln-input').value);
+                const rn = parseFloat(g.querySelector('.rn-input').value);
+                if (!isNaN(m) && !isNaN(lm) && !isNaN(rm) && !isNaN(n) && !isNaN(ln) && !isNaN(rn)) {
+                    groups.push({ m, lm, rm, n, ln, rn });
+                }
+            });
+            if (groups.length === 0) return alert('请至少添加一组有效数据');
+
+            let detail = `【实验参数】λ = ${lam_nm} nm = ${lam} mm， 直径误差 ΔD = ${deltaD} mm\n\n`;
+            detail += `【公式】R = (Dm² - Dn²) / [4λ(m-n)]\n\n`;
+            const results = [];
+            groups.forEach((g, idx) => {
+                const Dm = Math.abs(g.lm - g.rm);
+                const Dn = Math.abs(g.ln - g.rn);
+                const dmn = g.m - g.n;
+                if (dmn <= 0) return alert(`第${idx+1}组环级差必须为正`);
+                const R = (Dm*Dm - Dn*Dn) / (4 * lam * dmn);
+                results.push({ ...g, Dm, Dn, R });
+                detail += `【第${idx+1}组】 m=${g.m}, n=${g.n}\n`;
+                detail += `  左m=${g.lm}, 右m=${g.rm} → Dm = |${g.lm}-${g.rm}| = ${Dm.toFixed(4)} mm\n`;
+                detail += `  左n=${g.ln}, 右n=${g.rn} → Dn = |${g.ln}-${g.rn}| = ${Dn.toFixed(4)} mm\n`;
+                detail += `  Dm²-Dn² = ${(Dm*Dm).toFixed(4)} - ${(Dn*Dn).toFixed(4)} = ${(Dm*Dm-Dn*Dn).toFixed(4)} mm²\n`;
+                detail += `  分母 = 4×${lam}×${dmn} = ${(4*lam*dmn).toFixed(8)} mm\n`;
+                detail += `  R = ${(Dm*Dm-Dn*Dn).toFixed(4)} / ${(4*lam*dmn).toFixed(8)} = <span class="result-line">${R.toFixed(2)}</span> mm\n\n`;
+            });
+
+            const Rvals = results.map(r => r.R);
+            const avgR = ave(Rvals);
+            const nG = Rvals.length;
+            let stdR = 0;
+            if (nG > 1) stdR = Math.sqrt(Rvals.reduce((s, r) => s + (r - avgR)**2, 0) / (nG - 1));
+            const uA = nG > 1 ? stdR / Math.sqrt(nG) : 0;
+
+            // B类不确定度：针对每组计算灵敏度然后平均
+            let sumSens = 0;
+            results.forEach(r => {
+                const denom = 4 * lam * (r.m - r.n);
+                const sens = Math.sqrt((2*r.Dm/denom * deltaD)**2 + (-2*r.Dn/denom * deltaD)**2);
+                sumSens += sens;
+            });
+            const uB = sumSens / results.length;
+            const uC = Math.sqrt(uA*uA + uB*uB);
+
+            detail += `【不确定度分析】\n`;
+            detail += `  所有R值: [${Rvals.map(v=>v.toFixed(2)).join(', ')}] mm\n`;
+            detail += `  平均 R̄ = ${avgR.toFixed(2)} mm\n`;
+            detail += `  标准差 s = ${stdR.toFixed(4)} mm\n`;
+            detail += `  uA = s/√n = ${uA.toFixed(4)} mm\n`;
+            detail += `  各组灵敏度合成 uB = ${uB.toFixed(4)} mm\n`;
+            detail += `  uC = √(uA²+uB²) = ${uC.toFixed(4)} mm\n`;
+            detail += `  相对不确定度 = ${(uC/avgR*100).toFixed(3)}%\n`;
+            detail += `  结果表达: R = (${avgR.toFixed(2)} ± ${uC.toFixed(4)}) mm`;
+
+            // 构建HTML输出
+            let html = `<h3 class="result-title">牛顿环曲率半径计算结果</h3>`;
+            html += `<div class="result-equation">R = (Dm² - Dn²) / [4λ(m-n)]</div>`;
+            html += `<table><tr><th>组</th><th>m</th><th>n</th><th>Dm(mm)</th><th>Dn(mm)</th><th>R(mm)</th></tr>`;
+            results.forEach((r, i) => html += `<tr><td>${i+1}</td><td>${r.m}</td><td>${r.n}</td><td>${r.Dm.toFixed(4)}</td><td>${r.Dn.toFixed(4)}</td><td>${r.R.toFixed(2)}</td></tr>`);
+            html += `</table>`;
+            html += `<div class="result-item"><h4>平均曲率半径 R̄</h4><div class="result-value success">${avgR.toFixed(2)} mm</div></div>`;
+            html += `<div class="uncertainty-box"><h4>📐 不确定度</h4>
+                <div>uA = ${uA.toFixed(4)} mm</div><div>uB = ${uB.toFixed(4)} mm</div>
+                <div>uC = ${uC.toFixed(4)} mm</div>
+                <div>相对不确定度 = ${(uC/avgR*100).toFixed(3)}%</div>
+                <div><strong>R = (${avgR.toFixed(2)} ± ${uC.toFixed(4)}) mm</strong></div></div>`;
+            resultOutput.innerHTML = html;
+            const detailBox = document.createElement('div');
+            detailBox.className = 'detail-box';
+            detailBox.innerHTML = `<h4>📝 详细计算过程</h4>${detail}`;
+            resultOutput.appendChild(detailBox);
+        }
+
+        function calculateWedge() {
+            const L = parseFloat($('#wedge-L').value);
+            const dL = parseFloat($('#delta-L-wedge').value) || 0.05;
+            const interval = parseInt($('#stripe-interval').value);
+            const dX_inst = parseFloat($('#delta-x-instr').value) || 0.02;
+            const lam_nm = 589.3; // 固定钠光波长
+            const lam = lam_nm * 1e-6; // mm
+            if (isNaN(L) || isNaN(interval) || interval <= 0) return alert('请输入有效参数');
+
+            const pos1 = [];
+            document.querySelectorAll('#wedge-group1-inputs .pos1-input').forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v)) pos1.push(v);
+            });
+            const pos2 = [];
+            document.querySelectorAll('#wedge-group2-inputs .pos2-input').forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v)) pos2.push(v);
+            });
+            if (pos1.length === 0 || pos2.length === 0) return alert('每组至少输入一个位置');
+
+            const avg1 = ave(pos1);
+            const avg2 = ave(pos2);
+            const deltaX = Math.abs(avg2 - avg1) / interval;
+            const d = (lam * L) / (2 * deltaX);
+
+            // 不确定度计算
+            const s1 = pos1.length > 1 ? Math.sqrt(pos1.reduce((s,x)=>s+(x-avg1)**2,0)/(pos1.length-1)) : 0;
+            const s2 = pos2.length > 1 ? Math.sqrt(pos2.reduce((s,x)=>s+(x-avg2)**2,0)/(pos2.length-1)) : 0;
+            const uA_avg1 = pos1.length > 1 ? s1 / Math.sqrt(pos1.length) : 0;
+            const uA_avg2 = pos2.length > 1 ? s2 / Math.sqrt(pos2.length) : 0;
+            const uA_dX = Math.sqrt(uA_avg1**2 + uA_avg2**2) / interval;
+            const uB_dX = Math.sqrt(2) * dX_inst / interval;
+            const u_dX = Math.sqrt(uA_dX**2 + uB_dX**2);
+            const d_dX = -(lam * L) / (2 * deltaX * deltaX);
+            const d_L = lam / (2 * deltaX);
+            const u_d = Math.sqrt((d_dX * u_dX)**2 + (d_L * dL)**2);
+
+            let detail = `【实验参数】λ = ${lam_nm} nm = ${lam} mm, L = ${L} mm, 间隔数 k = ${interval}\n`;
+            detail += `【公式】d = λ·L / (2·Δx)， 其中 Δx = |x₂ - x₁| / k\n\n`;
+            detail += `【步骤1】计算各组平均位置\n`;
+            detail += `  第一组位置: [${pos1.join(', ')}] → 平均 x₁ = ${avg1.toFixed(4)} mm\n`;
+            detail += `  第二组位置: [${pos2.join(', ')}] → 平均 x₂ = ${avg2.toFixed(4)} mm\n\n`;
+            detail += `【步骤2】条纹间距\n  |x₂-x₁| = ${Math.abs(avg2-avg1).toFixed(4)} mm\n`;
+            detail += `  Δx = ${Math.abs(avg2-avg1).toFixed(4)} / ${interval} = <span class="result-line">${deltaX.toFixed(5)}</span> mm\n\n`;
+            detail += `【步骤3】细丝直径\n  d = ${lam} × ${L} / (2 × ${deltaX.toFixed(5)}) = ${d.toFixed(6)} mm = ${(d*1000).toFixed(3)} μm\n\n`;
+            detail += `【步骤4】不确定度分析\n`;
+            detail += `  第一组: 标准差 s₁ = ${s1.toFixed(4)}, uA(x₁) = ${uA_avg1.toFixed(4)} mm\n`;
+            detail += `  第二组: 标准差 s₂ = ${s2.toFixed(4)}, uA(x₂) = ${uA_avg2.toFixed(4)} mm\n`;
+            detail += `  uA(Δx) = √(uA(x₁)²+uA(x₂)²)/k = ${uA_dX.toFixed(6)} mm\n`;
+            detail += `  uB(Δx) = √2·Δx_inst / k = ${uB_dX.toFixed(6)} mm\n`;
+            detail += `  u(Δx) = ${u_dX.toFixed(6)} mm\n`;
+            detail += `  ∂d/∂(Δx) = ${d_dX.toFixed(6)}, ∂d/∂L = ${d_L.toFixed(6)}\n`;
+            detail += `  u(d) = √[(∂d/∂Δx·u(Δx))² + (∂d/∂L·ΔL)²] = ${u_d.toFixed(6)} mm\n`;
+            detail += `  相对不确定度 = ${(u_d/d*100).toFixed(3)}%\n`;
+            detail += `  结果表达: d = (${d.toFixed(6)} ± ${u_d.toFixed(6)}) mm`;
+
+            let html = `<h3 class="result-title">劈尖干涉测细丝直径</h3>`;
+            html += `<div class="result-equation">d = λ·L / (2·Δx)</div>`;
+            html += `<div class="result-item"><h4>第一组平均位置 x₁</h4><div class="result-value">${avg1.toFixed(4)} mm</div></div>`;
+            html += `<div class="result-item"><h4>第二组平均位置 x₂</h4><div class="result-value">${avg2.toFixed(4)} mm</div></div>`;
+            html += `<div class="result-item"><h4>条纹间距 Δx</h4><div class="result-value">${deltaX.toFixed(5)} mm</div></div>`;
+            html += `<div class="result-item"><h4>细丝直径 d</h4><div class="result-value success">${d.toFixed(6)} mm (${(d*1000).toFixed(3)} μm)</div></div>`;
+            html += `<div class="uncertainty-box"><h4>📐 不确定度</h4>
+                <div>u(Δx) = ${u_dX.toFixed(6)} mm</div>
+                <div>u(d) = ${u_d.toFixed(6)} mm</div>
+                <div>相对不确定度 = ${(u_d/d*100).toFixed(3)}%</div>
+                <div><strong>d = (${d.toFixed(6)} ± ${u_d.toFixed(6)}) mm</strong></div></div>`;
+            resultOutput.innerHTML = html;
+            const detailBox = document.createElement('div');
+            detailBox.className = 'detail-box';
+            detailBox.innerHTML = `<h4>📝 详细计算过程</h4>${detail}`;
+            resultOutput.appendChild(detailBox);
+        }
+
+        document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+        // 初始化默认数据
+        addNewtonGroup();
+        // 初始化劈尖默认位置（若干点）
+        [1.205, 1.895, 2.585, 3.275, 3.965].forEach(v => {
+            const row = document.createElement('div');
+            row.className = 'data-row';
+            row.innerHTML = `<input type="number" class="pos1-input" value="${v}" step="0.001"><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+            $('#wedge-group1-inputs').appendChild(row);
+        });
+        [8.215, 8.905, 9.595, 10.285, 10.975].forEach(v => {
+            const row = document.createElement('div');
+            row.className = 'data-row';
+            row.innerHTML = `<input type="number" class="pos2-input" value="${v}" step="0.001"><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+            $('#wedge-group2-inputs').appendChild(row);
+        });
+    })();
+</script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

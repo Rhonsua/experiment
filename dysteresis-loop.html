@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态磁滞回线 · 基本磁化曲线 · 视觉优化版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a { color: #fff; text-decoration: underline; font-size: 0.9rem; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .control-panel {
+            flex: 1 1 450px; min-width: 360px; background: var(--card);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+            max-height: 85vh; overflow-y: auto;
+        }
+        .results-panel {
+            flex: 2.5 1 600px; min-width: 450px; background: var(--card);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+            display: flex; flex-direction: column; max-height: 85vh; overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 1.3rem; font-weight: 700; color: var(--text);
+            margin-bottom: 15px; border-bottom: 2.5px solid var(--primary); padding-bottom: 8px;
+        }
+        .section-label { font-weight: 700; color: var(--text); font-size: 0.9rem; margin: 12px 0 6px; }
+        .param-row {
+            display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px;
+        }
+        .param-row input {
+            width: 72px; padding: 6px 5px; border: 1.5px solid #dde; border-radius: 6px;
+            font-size: 0.82rem; background: #fafbfc; text-align: center; transition: 0.25s;
+        }
+        .param-row input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .param-row .unit { font-size: 0.7rem; color: #888; white-space: nowrap; }
+        .table-wrapper { overflow-x: auto; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); }
+        table.data-table { border-collapse: collapse; font-size: 0.75rem; width: 100%; }
+        table.data-table th, table.data-table td { padding: 6px 8px; text-align: center; border: 1px solid #dde; white-space: nowrap; }
+        table.data-table th { background: var(--primary); color: #fff; }
+        table.data-table td input {
+            width: 65px; padding: 4px 3px; font-size: 0.72rem; border: 1px solid #e0e0e0;
+            border-radius: 3px; text-align: center; background: #fafbfc;
+        }
+        table.data-table td input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; }
+        .add-btn { background: #28a745; color: #fff; }
+        .add-btn:hover { background: #218838; }
+        .remove-btn { background: var(--danger); color: #fff; }
+        .remove-btn:hover { background: #e04848; }
+        .reset-btn { background: #6c757d; color: #fff; }
+        .reset-btn:hover { background: #5a6268; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
+        .calculate-btn {
+            width: 100%; padding: 14px; background: var(--success); color: #fff;
+            border: none; border-radius: 8px; font-size: 1.05rem; font-weight: 700;
+            cursor: pointer; margin-top: 12px; transition: 0.25s;
+        }
+        .calculate-btn:hover { background: #1e8c4a; transform: translateY(-2px); }
+        .instructions {
+            background: #e8f4fc; border-radius: 8px; padding: 12px; margin-bottom: 14px;
+            font-size: 0.85rem; border-left: 4px solid var(--primary);
+        }
+        .result-output {
+            background: #fafbfc;border-radius: 10px;padding: 16px;border: 1px solid var(--border);/* 移除高度限制，让内容自然撑开 */
+            flex: 1;overflow-y: visible;   /* 不再内部滚动 *//* 删除 max-height: 600px; 这行 */margin-bottom: 16px;
+        }
+        .result-item {
+            margin-bottom: 10px; padding: 10px 14px; background: #fff;
+            border-radius: 8px; border-left: 4px solid var(--primary);
+        }
+        .result-value { font-size: 1.05rem; font-weight: 700; }
+        .result-value.success { color: #1e8c4a; }
+        .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .chart-box {
+            margin-top: 16px; background: #ffffff; border: 2px solid #cbd5e1;
+            border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 { color: var(--primary); margin-bottom: 10px; font-size: 1rem; }
+        .chart-container { width: 100%; height: 380px; position: relative; }
+        .chart-container canvas { width: 100% !important; height: 100% !important; }
+        .download-btn {
+            margin-top: 10px; padding: 8px 18px; background: var(--primary); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .download-btn:hover { background: #3a5a9f; }
+        .detail-box {
+            background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px;
+            padding: 14px 18px; margin-top: 14px;
+            font-family: 'Consolas','Courier New','PingFang SC',monospace;
+            font-size: 0.88rem; line-height: 1.8; white-space: pre-wrap;
+            max-height: 500px; min-height: 180px; overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🧲 动态磁滞回线 · 基本磁化曲线</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel" id="control-panel">
+            <h3 class="panel-title">📋 样品参数与示波器数据</h3>
+            <div class="instructions">
+                <p>输入各样品参数及示波器读取的 (X格数, Y格数) 点。<br>
+                H = N₁·Uₓ/(l·R₁) ,  B = R₂·C·Uᵧ/(N₂·S)<br>
+                点应按磁场强度H单调增加（或减少）的顺序录入，以获得单值基本磁化曲线。</p>
+            </div>
+            <div id="samples-container"></div>
+            <div class="btn-row" style="margin-top:10px;">
+                <button class="btn-sm add-btn" id="add-sample-btn">+ 添加样品</button>
+                <button class="btn-sm remove-btn" id="del-sample-btn">- 删除末样品</button>
+                <button class="btn-sm reset-btn" id="reset-default-btn">↺ 默认数据</button>
+            </div>
+            <button id="calculate-btn" class="calculate-btn">🚀 计算并绘制B-H曲线</button>
+        </div>
+        <div class="results-panel">
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👈 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+
+            const defaultSamples = [{
+                name: '样品1',
+                N1: 100, N2: 200, l: 150, S: 80, R1: 10, R2: 10000,
+                C: 2.0, f: 50, Sx: 0.5, Sy: 0.2,
+                points: [
+                    {xdiv: 0.00, ydiv: -3.2},
+                    {xdiv: 0.20, ydiv: -3.0},
+                    {xdiv: 0.40, ydiv: -2.8},
+                    {xdiv: 0.60, ydiv: -2.5},
+                    {xdiv: 0.80, ydiv: -2.2},
+                    {xdiv: 1.00, ydiv: -1.8},
+                    {xdiv: 1.50, ydiv: -1.4},
+                    {xdiv: 2.00, ydiv: -0.7},
+                    {xdiv: 2.50, ydiv: 0.0},
+                    {xdiv: 3.00, ydiv: 0.7},
+                    {xdiv: 4.00, ydiv: 1.4},
+                    {xdiv: 5.00, ydiv: 1.8}
+                ]
+            }];
+
+            let samples = JSON.parse(JSON.stringify(defaultSamples));
+
+            function renderSamples() {
+                const container = $('#samples-container');
+                container.innerHTML = '';
+                samples.forEach((sample, sIdx) => {
+                    const div = document.createElement('div');
+                    div.className = 'sample-block';
+                    div.style.border = '1px solid #d0d7e2';
+                    div.style.borderRadius = '10px';
+                    div.style.padding = '12px';
+                    div.style.marginBottom = '14px';
+                    div.style.background = '#f8f9fc';
+                    div.innerHTML = `
+                        <div style="font-weight:700;color:var(--primary);margin-bottom:8px;">🔹 ${sample.name}</div>
+                        <div class="param-row">
+                            <span>N₁</span><input type="number" class="p-N1" value="${sample.N1}" step="1">
+                            <span>N₂</span><input type="number" class="p-N2" value="${sample.N2}" step="1">
+                            <span>l(mm)</span><input type="number" class="p-l" value="${sample.l}" step="0.1">
+                            <span>S(mm²)</span><input type="number" class="p-S" value="${sample.S}" step="0.1">
+                        </div>
+                        <div class="param-row">
+                            <span>R₁(Ω)</span><input type="number" class="p-R1" value="${sample.R1}" step="0.1">
+                            <span>R₂(Ω)</span><input type="number" class="p-R2" value="${sample.R2}" step="1">
+                            <span>C(μF)</span><input type="number" class="p-C" value="${sample.C}" step="0.01">
+                            <span>f(Hz)</span><input type="number" class="p-f" value="${sample.f}" step="1">
+                        </div>
+                        <div class="param-row">
+                            <span>Sₓ(V/div)</span><input type="number" class="p-Sx" value="${sample.Sx}" step="0.01">
+                            <span>Sᵧ(V/div)</span><input type="number" class="p-Sy" value="${sample.Sy}" step="0.01">
+                        </div>
+                        <div class="section-label">📊 示波器数据点 (X格, Y格)</div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead><tr><th>序号</th><th>X (格)</th><th>Y (格)</th><th>操作</th></tr></thead>
+                                <tbody class="points-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn-sm add-btn add-point-btn" style="margin-top:6px;">+ 添加点</button>
+                    `;
+                    container.appendChild(div);
+
+                    const tbody = div.querySelector('.points-tbody');
+                    sample.points.forEach((pt, pIdx) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${pIdx+1}</td>
+                            <td><input type="number" class="pt-x" value="${pt.xdiv}" step="0.1"></td>
+                            <td><input type="number" class="pt-y" value="${pt.ydiv}" step="0.1"></td>
+                            <td><button class="btn-sm remove-btn del-pt-btn">×</button></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    div.querySelectorAll('.del-pt-btn').forEach((btn, pIdx) => {
+                        btn.addEventListener('click', () => {
+                            sample.points.splice(pIdx, 1);
+                            renderSamples();
+                        });
+                    });
+
+                    div.querySelector('.add-point-btn').addEventListener('click', () => {
+                        const last = sample.points.length ? sample.points[sample.points.length-1] : {xdiv:0, ydiv:0};
+                        sample.points.push({ xdiv: last.xdiv + 0.5, ydiv: last.ydiv + 0.4 });
+                        renderSamples();
+                    });
+                });
+            }
+
+            function readSamplesFromDOM() {
+                const result = [];
+                const blocks = document.querySelectorAll('.sample-block');
+                blocks.forEach((block, idx) => {
+                    const N1 = parseFloat(block.querySelector('.p-N1')?.value);
+                    const N2 = parseFloat(block.querySelector('.p-N2')?.value);
+                    const l = parseFloat(block.querySelector('.p-l')?.value);
+                    const S = parseFloat(block.querySelector('.p-S')?.value);
+                    const R1 = parseFloat(block.querySelector('.p-R1')?.value);
+                    const R2 = parseFloat(block.querySelector('.p-R2')?.value);
+                    const C = parseFloat(block.querySelector('.p-C')?.value);
+                    const f = parseFloat(block.querySelector('.p-f')?.value);
+                    const Sx = parseFloat(block.querySelector('.p-Sx')?.value);
+                    const Sy = parseFloat(block.querySelector('.p-Sy')?.value);
+                    const rows = block.querySelectorAll('.points-tbody tr');
+                    const points = [];
+                    rows.forEach(row => {
+                        const x = parseFloat(row.querySelector('.pt-x')?.value);
+                        const y = parseFloat(row.querySelector('.pt-y')?.value);
+                        if (!isNaN(x) && !isNaN(y)) points.push({xdiv: x, ydiv: y});
+                    });
+                    if (!isNaN(N1)&&!isNaN(N2)&&!isNaN(l)&&!isNaN(S)&&!isNaN(R1)&&!isNaN(R2)&&!isNaN(C)&&!isNaN(f)&&!isNaN(Sx)&&!isNaN(Sy)&&points.length>=2) {
+                        result.push({name:`样品${idx+1}`, N1, N2, l, S, R1, R2, C, f, Sx, Sy, points});
+                    }
+                });
+                return result;
+            }
+
+            document.getElementById('add-sample-btn').addEventListener('click', () => {
+                const last = samples[samples.length-1] || defaultSamples[0];
+                samples.push(JSON.parse(JSON.stringify(last)));
+                samples[samples.length-1].name = `样品${samples.length}`;
+                renderSamples();
+            });
+            document.getElementById('del-sample-btn').addEventListener('click', () => {
+                if(samples.length>1) { samples.pop(); renderSamples(); }
+            });
+            document.getElementById('reset-default-btn').addEventListener('click', () => {
+                samples = JSON.parse(JSON.stringify(defaultSamples));
+                renderSamples();
+            });
+
+            document.getElementById('calculate-btn').addEventListener('click', () => {
+                const validSamples = readSamplesFromDOM();
+                if(!validSamples.length) { alert('请至少输入一个有效样品及其数据点（至少2个点）'); return; }
+
+                const results = validSamples.map(sample => {
+                    const {N1,N2,l,S,R1,R2,C,Sx,Sy,points} = sample;
+                    const l_m = l/1000;
+                    const S_m2 = S*1e-6;
+                    const C_F = C*1e-6;
+                    const BH = points.map(pt => {
+                        const Ux = pt.xdiv * Sx;
+                        const Uy = pt.ydiv * Sy;
+                        const H = (N1 * Ux) / (l_m * R1);
+                        const B = (R2 * C_F * Uy) / (N2 * S_m2);
+                        return {H, B, xdiv: pt.xdiv, ydiv: pt.ydiv};
+                    });
+                    return {...sample, BH};
+                });
+
+                let html = '<h3 class="result-title">🧲 基本磁化曲线计算结果</h3>';
+                results.forEach((res,i) => {
+                    const Hvals = res.BH.map(p=>p.H);
+                    const Bvals = res.BH.map(p=>p.B);
+                    html += `<div class="result-item">
+                        <h4>${res.name}</h4>
+                        <div>数据点数: <span class="result-line">${res.points.length}</span>  ·  H 范围: <span class="result-line">${Math.min(...Hvals).toFixed(1)} ~ ${Math.max(...Hvals).toFixed(1)} A/m</span></div>
+                        <div>B 范围: <span class="result-line">${Math.min(...Bvals).toFixed(4)} ~ ${Math.max(...Bvals).toFixed(4)} T</span></div>
+                    </div>`;
+
+                    // BH 数据表
+                    html += `<div class="table-wrapper" style="margin-top:6px;">
+                        <table class="data-table">
+                            <thead><tr><th>点号</th><th>X (格)</th><th>Y (格)</th><th>H (A/m)</th><th>B (T)</th></tr></thead>
+                            <tbody>`;
+                    res.BH.forEach((p, idx) => {
+                        html += `<tr>
+                            <td>${idx+1}</td>
+                            <td>${p.xdiv.toFixed(1)}</td>
+                            <td>${p.ydiv.toFixed(1)}</td>
+                            <td>${p.H.toFixed(1)}</td>
+                            <td>${p.B.toFixed(4)}</td>
+                        </tr>`;
+                    });
+                    html += `</tbody></table></div>`;
+                });
+
+                // 详细推导过程，关键数值高亮
+                let detail = `【公式】H = N₁·Uₓ/(l·R₁) ,  B = R₂·C·Uᵧ/(N₂·S)\n`;
+                detail += `【换算】l(m)=l(mm)/1000 , S(m²)=S(mm²)·10⁻⁶ , C(F)=C(μF)·10⁻⁶\n\n`;
+                results.forEach((res,idx) => {
+                    detail += `【${res.name}】参数：N₁=${res.N1}, N₂=${res.N2}, l=${res.l}mm, S=${res.S}mm², R₁=${res.R1}Ω, R₂=${res.R2}Ω, C=${res.C}μF, f=${res.f}Hz, Sₓ=${res.Sx}V/div, Sᵧ=${res.Sy}V/div\n`;
+                    res.points.forEach((pt,i) => {
+                        const {H,B} = res.BH[i];
+                        detail += `  点${i+1}: X=${pt.xdiv}格, Y=${pt.ydiv}格 → Uₓ=${(pt.xdiv*res.Sx).toFixed(3)}V, Uᵧ=${(pt.ydiv*res.Sy).toFixed(3)}V `;
+                        detail += `→ H=<span class="result-line">${H.toFixed(1)}A/m</span>, B=<span class="result-line">${B.toFixed(4)}T</span>\n`;
+                    });
+                });
+                html += `<div class="detail-box"><h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}</div>`;
+                $('#result-output').innerHTML = html;
+
+                drawChart(results);
+            });
+
+            function drawChart(results) {
+                const container = $('#chart-container-box');
+                container.innerHTML = '';
+                if(window.activeCharts) window.activeCharts.forEach(ch=>ch.destroy());
+                window.activeCharts = [];
+
+                const colors = ['#e74c3c','#2980b9','#27ae60','#8e44ad','#e67e22'];
+                results.forEach((res, i) => {
+                    const color = colors[i%colors.length];
+                    const box = document.createElement('div');
+                    box.className = 'chart-box';
+                    box.innerHTML = `<h4>📈 ${res.name} · B-H 基本磁化曲线</h4>`;
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart-container';
+                    const canvas = document.createElement('canvas');
+                    chartDiv.appendChild(canvas);
+                    box.appendChild(chartDiv);
+
+                    const btn = document.createElement('button');
+                    btn.className = 'download-btn';
+                    btn.innerHTML = '⬇️ 下载图像 (PNG)';
+                    btn.onclick = () => {
+                        const tmp = document.createElement('canvas');
+                        tmp.width = canvas.width; tmp.height = canvas.height;
+                        const tctx = tmp.getContext('2d');
+                        tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,tmp.width,tmp.height);
+                        tctx.drawImage(canvas,0,0);
+                        const a = document.createElement('a');
+                        a.download = `${res.name}_BH_curve.png`;
+                        a.href = tmp.toDataURL('image/png');
+                        a.click();
+                    };
+                    box.appendChild(btn);
+                    container.appendChild(box);
+
+                    const pts = res.BH.map(p => ({x:p.H, y:p.B}));
+                    const chart = new Chart(canvas, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: res.name,
+                                data: pts,
+                                borderColor: color,
+                                backgroundColor: color,
+                                borderWidth: 2.5,
+                                pointRadius: 3,
+                                showLine: true,
+                                tension: 0.2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { title: {display:true, text:'磁场强度 H (A/m)'} },
+                                y: { title: {display:true, text:'磁感应强度 B (T)'} }
+                            },
+                            plugins: { legend: {display:false} }
+                        }
+                    });
+                    window.activeCharts.push(chart);
+                });
+            }
+
+            renderSamples();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

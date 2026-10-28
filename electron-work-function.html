@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子逸出功测定 · 右侧独立图表+下载</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 420px;
+            min-width: 340px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2.5 1 600px;
+            min-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .section-label {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.9rem;
+            margin: 12px 0 6px;
+        }
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .input-row input {
+            width: 72px;
+            padding: 7px 6px;
+            border: 1.5px solid #dde;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            background: #fafbfc;
+            text-align: center;
+            transition: 0.25s;
+        }
+        .input-row input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
+            background: #fff;
+        }
+        .input-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+            white-space: nowrap;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .add-btn {
+            background: #28a745;
+            color: #fff;
+        }
+        .add-btn:hover {
+            background: #218838;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+        }
+        .remove-btn:hover {
+            background: #e04848;
+        }
+        .reset-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.25s;
+        }
+        .calculate-btn:hover {
+            background: #1e8c4a;
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary);
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table.data-table {
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            width: auto;
+            min-width: 100%;
+        }
+        table.data-table th,
+        table.data-table td {
+            padding: 7px 9px;
+            text-align: center;
+            border: 1px solid #dde;
+            white-space: nowrap;
+        }
+        table.data-table th {
+            background: var(--primary);
+            color: #fff;
+        }
+        table.data-table td input {
+            width: 75px;
+            padding: 5px 4px;
+            font-size: 0.78rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            text-align: center;
+            background: #fafbfc;
+        }
+        table.data-table td input:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: #fff;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            flex: 1;
+            overflow-y: auto;
+            max-height: 800px;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        .result-equation {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'Courier New', 'PingFang SC', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-ok { background: #d4edda; color: #155724; }
+        .badge-warn { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>⚡ 电子逸出功测定 · 理查森直线法</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <p>步骤：设定I<sub>f</sub>和U<sub>a</sub> → 记录I<sub>s</sub>' → 拟合lg(I<sub>s</sub>') vs √U<sub>a</sub> → 拟合lg(I<sub>s</sub>/T²) vs 1/T → 计算逸出功</p>
+            </div>
+            <div class="section-label">🔌 灯丝电流 I<sub>f</sub> (A)</div>
+            <div id="if-container" class="input-row"></div>
+            <div class="btn-row">
+                <button class="btn-sm add-btn" onclick="addIfRow()">+ 添加I<sub>f</sub></button>
+                <button class="btn-sm remove-btn" onclick="removeIfRow()">- 删除末行</button>
+                <button class="btn-sm reset-btn" onclick="resetIfDefault()">↺ 默认</button>
+            </div>
+            <div class="section-label">🔋 阳极电压 U<sub>a</sub> (V)</div>
+            <div id="ua-container" class="input-row"></div>
+            <div class="btn-row">
+                <button class="btn-sm add-btn" onclick="addUaCol()">+ 添加U<sub>a</sub></button>
+                <button class="btn-sm remove-btn" onclick="removeUaCol()">- 删除末列</button>
+                <button class="btn-sm reset-btn" onclick="resetUaDefault()">↺ 默认</button>
+            </div>
+            <div class="section-label">📊 阳极电流 I<sub>s</sub>' (μA) 数据表</div>
+            <div class="table-wrapper" id="is-table-wrapper"></div>
+            <div class="btn-row">
+                <button class="btn-sm reset-btn" onclick="resetIsDefault()">↺ 恢复默认I<sub>s</sub>'</button>
+            </div>
+            <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤与图表）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box1" style="margin-top:16px;"></div>
+            <div id="chart-container-box2" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+
+            // 真实实验数据 (来自深圳大学物理实验报告)
+            let ifValues = [0.55, 0.60, 0.65, 0.70, 0.75];
+            let uaValues = [16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0];
+            // isData[i][j] 对应 ifValues[i] 和 uaValues[j]
+            let isData = [
+                [4, 4, 5, 5, 5, 5, 5, 5],
+                [18, 18, 19, 19, 19, 20, 20, 20],
+                [63, 64, 66, 67, 68, 69, 70, 72],
+                [189, 194, 198, 201, 205, 208, 211, 215],
+                [506, 519, 530, 538, 548, 557, 565, 574]
+            ];
+
+            function initIsData() {
+                // 保持默认数据不变
+            }
+
+            // 渲染If输入框
+            function renderIfInputs() {
+                const cont = $('#if-container');
+                cont.innerHTML = '';
+                ifValues.forEach((v, idx) => {
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.value = v;
+                    inp.step = '0.001';
+                    inp.title = `I_f[${idx}]`;
+                    inp.addEventListener('input', function() {
+                        const nv = parseFloat(this.value);
+                        if (!isNaN(nv) && nv > 0) {
+                            ifValues[idx] = nv;
+                        }
+                    });
+                    cont.appendChild(inp);
+                    const span = document.createElement('span');
+                    span.className = 'unit';
+                    span.textContent = 'A';
+                    cont.appendChild(span);
+                });
+                updateDelIfBtn();
+            }
+
+            // 渲染Ua输入框
+            function renderUaInputs() {
+                const cont = $('#ua-container');
+                cont.innerHTML = '';
+                uaValues.forEach((v, idx) => {
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.value = v;
+                    inp.step = '1';
+                    inp.title = `U_a[${idx}]`;
+                    inp.addEventListener('input', function() {
+                        const nv = parseFloat(this.value);
+                        if (!isNaN(nv) && nv > 0) {
+                            uaValues[idx] = nv;
+                        }
+                    });
+                    cont.appendChild(inp);
+                    const span = document.createElement('span');
+                    span.className = 'unit';
+                    span.textContent = 'V';
+                    cont.appendChild(span);
+                });
+                updateDelUaBtn();
+            }
+
+            // 同步isData维度并渲染表格
+            function syncIsDataDimensions() {
+                const nIf = ifValues.length;
+                const nUa = uaValues.length;
+                while (isData.length < nIf) {
+                    const newRow = [];
+                    const T = 920 + 1600 * ifValues[isData.length];
+                    const prevT = isData.length > 0 ? (920 + 1600 * ifValues[isData.length - 1]) : T;
+                    const ratio = isData.length > 0 ? (prevT * prevT / (T * T)) * Math.exp(-4.54 / (8.617e-5 * T) + 4.54 / (
+                        8.617e-5 * prevT)) : 1.0;
+                    for (let j = 0; j < nUa; j++) {
+                        const prevVal = isData.length > 0 && isData[isData.length - 1] ? isData[isData.length - 1][j] :
+                        0.5;
+                        newRow.push(Math.max(0.1, Math.round(prevVal * ratio)));
+                    }
+                    isData.push(newRow);
+                }
+                while (isData.length > nIf) isData.pop();
+                for (let i = 0; i < nIf; i++) {
+                    while (isData[i].length < nUa) {
+                        const T = 920 + 1600 * ifValues[i];
+                        const sqrtNew = Math.sqrt(uaValues[isData[i].length]);
+                        const sqrtPrev = isData[i].length > 0 ? Math.sqrt(uaValues[isData[i].length - 1]) : sqrtNew;
+                        const prevVal = isData[i].length > 0 ? isData[i][isData[i].length - 1] : 0.5;
+                        isData[i].push(Math.max(0.1, Math.round(prevVal * Math.exp(0.439 * (sqrtNew - sqrtPrev) /
+                            T))));
+                    }
+                    while (isData[i].length > nUa) isData[i].pop();
+                }
+            }
+
+            function renderIsTable() {
+                syncIsDataDimensions();
+                const wrapper = $('#is-table-wrapper');
+                const nIf = ifValues.length;
+                const nUa = uaValues.length;
+                let html = '<table class="data-table"><thead><tr><th>I<sub>f</sub> (A) ╲ U<sub>a</sub> (V)</th>';
+                for (let j = 0; j < nUa; j++) {
+                    html += `<th>${uaValues[j]}V</th>`;
+                }
+                html += '</tr></thead><tbody>';
+                for (let i = 0; i < nIf; i++) {
+                    html +=
+                        `<tr><td style="font-weight:700;background:#f0f3f9;">I<sub>f</sub>=${ifValues[i].toFixed(3)}A</td>`;
+                    for (let j = 0; j < nUa; j++) {
+                        const val = isData[i] ? isData[i][j] : 0;
+                        html +=
+                            `<td><input type="number" class="is-cell" data-i="${i}" data-j="${j}" value="${val}" step="0.1"></td>`;
+                    }
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                wrapper.innerHTML = html;
+
+                // 绑定输入事件
+                wrapper.querySelectorAll('.is-cell').forEach(inp => {
+                    inp.addEventListener('input', function() {
+                        const i = parseInt(this.dataset.i);
+                        const j = parseInt(this.dataset.j);
+                        const nv = parseFloat(this.value);
+                        if (!isNaN(nv) && nv >= 0) {
+                            if (!isData[i]) isData[i] = [];
+                            isData[i][j] = nv;
+                        }
+                    });
+                });
+            }
+
+            function updateDelIfBtn() {
+                const btn = $('.remove-btn');
+                if (btn && btn.innerText.includes('删除末行')) {
+                    btn.style.display = ifValues.length <= 2 ? 'none' : '';
+                }
+            }
+
+            function updateDelUaBtn() {
+                const btn = document.querySelectorAll('.btn-row .remove-btn')[1];
+                if (btn) btn.style.display = uaValues.length <= 2 ? 'none' : '';
+            }
+
+            // 全局添加/删除操作
+            window.addIfRow = function() {
+                const last = ifValues[ifValues.length - 1] || 0.6;
+                ifValues.push(last + 0.025);
+                renderIfInputs();
+                renderIsTable();
+            };
+            window.removeIfRow = function() {
+                if (ifValues.length <= 2) return;
+                ifValues.pop();
+                isData.pop();
+                renderIfInputs();
+                renderIsTable();
+            };
+            window.addUaCol = function() {
+                const last = uaValues[uaValues.length - 1] || 25;
+                const sqrtLast = Math.sqrt(last);
+                const newUa = Math.round(Math.pow(sqrtLast + 1, 2));
+                uaValues.push(newUa > last + 1 ? newUa : last + 10);
+                renderUaInputs();
+                renderIsTable();
+            };
+            window.removeUaCol = function() {
+                if (uaValues.length <= 2) return;
+                uaValues.pop();
+                for (let i = 0; i < isData.length; i++) {
+                    isData[i].pop();
+                }
+                renderUaInputs();
+                renderIsTable();
+            };
+            window.resetIfDefault = function() {
+                ifValues = [0.55, 0.60, 0.65, 0.70, 0.75];
+                isData = [
+                    [4, 4, 5, 5, 5, 5, 5, 5],
+                    [18, 18, 19, 19, 19, 20, 20, 20],
+                    [63, 64, 66, 67, 68, 69, 70, 72],
+                    [189, 194, 198, 201, 205, 208, 211, 215],
+                    [506, 519, 530, 538, 548, 557, 565, 574]
+                ];
+                renderIfInputs();
+                renderIsTable();
+            };
+            window.resetUaDefault = function() {
+                uaValues = [16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0];
+                isData = [
+                    [4, 4, 5, 5, 5, 5, 5, 5],
+                    [18, 18, 19, 19, 19, 20, 20, 20],
+                    [63, 64, 66, 67, 68, 69, 70, 72],
+                    [189, 194, 198, 201, 205, 208, 211, 215],
+                    [506, 519, 530, 538, 548, 557, 565, 574]
+                ];
+                renderUaInputs();
+                renderIsTable();
+            };
+            window.resetIsDefault = function() {
+                isData = [
+                    [4, 4, 5, 5, 5, 5, 5, 5],
+                    [18, 18, 19, 19, 19, 20, 20, 20],
+                    [63, 64, 66, 67, 68, 69, 70, 72],
+                    [189, 194, 198, 201, 205, 208, 211, 215],
+                    [506, 519, 530, 538, 548, 557, 565, 574]
+                ];
+                renderIsTable();
+            };
+
+            // 数学工具
+            const ave = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+            function lsFit(x, y) {
+                const n = x.length;
+                const ax = ave(x),
+                    ay = ave(y);
+                const axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / n;
+                const ax2 = x.reduce((s, v) => s + v * v, 0) / n;
+                const den = ax2 - ax * ax;
+                if (Math.abs(den) < 1e-15) return { a: 0, b: ay, r: 0 };
+                const a = (axy - ax * ay) / den;
+                const b = ay - a * ax;
+                const ay2 = ave(y.map(v => v * v));
+                const r = (axy - ax * ay) / Math.sqrt(Math.max(1e-20, (ax2 - ax * ax) * (ay2 - ay * ay)));
+                return { a, b, r };
+            }
+
+            // 图表管理
+            let activeChart1 = null,
+                activeChart2 = null;
+
+            function destroyCharts() {
+                [activeChart1, activeChart2].forEach(ch => { if (ch) ch.destroy(); });
+                activeChart1 = null;
+                activeChart2 = null;
+                $('#chart-container-box1').innerHTML = '';
+                $('#chart-container-box2').innerHTML = '';
+            }
+
+            function createChartBox(containerId, title) {
+                const container = $(containerId);
+                container.innerHTML = '';
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                box.innerHTML = `<h4>📈 ${title}</h4>`;
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                chartDiv.appendChild(canvas);
+                box.appendChild(chartDiv);
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (PNG)';
+                btn.onclick = () => {
+                    const tmp = document.createElement('canvas');
+                    tmp.width = canvas.width;
+                    tmp.height = canvas.height;
+                    const tctx = tmp.getContext('2d');
+                    tctx.fillStyle = '#ffffff';
+                    tctx.fillRect(0, 0, tmp.width, tmp.height);
+                    tctx.drawImage(canvas, 0, 0);
+                    const a = document.createElement('a');
+                    a.download =
+                        `${title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g,'_')}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
+                    a.href = tmp.toDataURL('image/png');
+                    a.click();
+                };
+                box.appendChild(btn);
+                container.appendChild(box);
+                return canvas;
+            }
+
+            const palette = ['#e74c3c', '#2980b9', '#27ae60', '#e67e22', '#8e44ad', '#1abc9c', '#d35400', '#2c3e50'];
+
+            // 主计算
+            function calculate() {
+                const resultOutput = $('#result-output');
+                resultOutput.innerHTML = '';
+                destroyCharts();
+                // 强制从表格读取最新数据
+                document.querySelectorAll('.is-cell').forEach(inp => {
+                    const i = parseInt(inp.dataset.i);
+                    const j = parseInt(inp.dataset.j);
+                    const v = parseFloat(inp.value);
+                    if (!isNaN(v) && v >= 0) {
+                        if (!isData[i]) isData[i] = [];
+                        isData[i][j] = v;
+                    }
+                });
+                const nIf = ifValues.length;
+                const nUa = uaValues.length;
+                if (nIf < 2 || nUa < 2) return alert('至少需要两组I_f和两个U_a');
+
+                const Tvals = ifValues.map(If => 920.0 + 1600.0 * If);
+                const sqrtUa = uaValues.map(u => Math.sqrt(u));
+
+                // 计算lg(Is')
+                const lgIsPrime = [];
+                for (let i = 0; i < nIf; i++) {
+                    lgIsPrime[i] = [];
+                    for (let j = 0; j < nUa; j++) {
+                        const val = (isData[i] && isData[i][j] !== undefined) ? isData[i][j] : 0.001;
+                        lgIsPrime[i][j] = Math.log10(Math.max(1e-12, val));
+                    }
+                }
+
+                // 各温度拟合 lg(Is') vs √Ua
+                const fitRes = [];
+                for (let i = 0; i < nIf; i++) {
+                    const fit = lsFit(sqrtUa, lgIsPrime[i]);
+                    fitRes.push({ A: fit.b, B: fit.a, R: fit.r, T: Tvals[i], If: ifValues[i] });
+                }
+                const lgIsVals = fitRes.map(f => f.A);
+                const IsVals = lgIsVals.map(lg => Math.pow(10, lg));
+                const lgIsOverT2 = [];
+                const invT = [];
+                for (let i = 0; i < nIf; i++) {
+                    const T = Tvals[i];
+                    const val = IsVals[i] / (T * T);
+                    lgIsOverT2.push(Math.log10(Math.max(1e-20, val)));
+                    invT.push(1000.0 / T);
+                }
+                const finalFit = lsFit(invT, lgIsOverT2);
+                const Bp = finalFit.a,
+                    Ap = finalFit.b,
+                    Rf = finalFit.r;
+                const phi = Math.abs(Bp) / 5.0393;
+                const W0 = phi;
+                const Wstd = 4.54;
+                const err = Math.abs(Wstd - W0) / Wstd * 100;
+
+                let html = '<h3 class="result-title">⚡ 电子逸出功计算结果</h3>';
+                html +=
+                    `<div class="result-equation">lg(Iₛ/T²) = ${Ap.toFixed(6)} ${Bp >= 0 ? '+' : '-'} ${Math.abs(Bp).toFixed(6)} · (1/T)</div>`;
+                html += `<div class="result-item"><h4>最终斜率 B'</h4><div class="result-value">${Bp.toFixed(6)}</div></div>`;
+                html += `<div class="result-item"><h4>最终截距 A'</h4><div class="result-value">${Ap.toFixed(6)}</div></div>`;
+                html +=
+                    `<div class="result-item"><h4>相关系数 R</h4><div class="result-value success">${Rf.toFixed(4)}</div></div>`;
+                html +=
+                    `<div class="result-item"><h4>逸出电位 φ</h4><div class="result-value success">${phi.toFixed(4)} V</div></div>`;
+                html +=
+                    `<div class="result-item"><h4>逸出功 W<sub>0</sub></h4><div class="result-value success">${W0.toFixed(4)} eV</div></div>`;
+                html +=
+                    `<div class="result-item"><h4>相对误差 (vs 钨标准 ${Wstd}eV)</h4><div class="result-value">${err.toFixed(2)}% <span class="badge ${err<5?'badge-ok':'badge-warn'}">${err<5?'良好':'需检查'}</span></div></div>`;
+
+                html += '<h4 style="margin-top:16px;">📋 各温度拟合结果 (lg I<sub>s</sub>\' vs √U<sub>a</sub>)</h4>';
+                html +=
+                    '<div class="table-wrapper"><table class="data-table"><thead><tr><th>I<sub>f</sub>(A)</th><th>T(K)</th><th>截距A (lg I<sub>s</sub>)</th><th>斜率B</th><th>R</th></tr></thead><tbody>';
+                fitRes.forEach(f => html +=
+                    `<tr><td>${f.If.toFixed(3)}</td><td>${f.T.toFixed(1)}</td><td>${f.A.toFixed(6)}</td><td>${f.B.toFixed(6)}</td><td>${f.R.toFixed(4)}</td></tr>`
+                    );
+                html += '</tbody></table></div>';
+
+                html += '<h4 style="margin-top:16px;">📋 lg(I<sub>s</sub>/T²) 与 1/T</h4>';
+                html +=
+                    '<div class="table-wrapper"><table class="data-table"><thead><tr><th>I<sub>f</sub>(A)</th><th>T(K)</th><th>1/T (10⁻³K⁻¹)</th><th>I<sub>s</sub>(μA)</th><th>lg(I<sub>s</sub>/T²)</th></tr></thead><tbody>';
+                for (let i = 0; i < nIf; i++) {
+                    html +=
+                        `<tr><td>${ifValues[i].toFixed(3)}</td><td>${Tvals[i].toFixed(1)}</td><td>${invT[i].toFixed(4)}</td><td>${IsVals[i].toFixed(4)}</td><td>${lgIsOverT2[i].toFixed(6)}</td></tr>`;
+                }
+                html += '</tbody></table></div>';
+                resultOutput.innerHTML = html;
+
+                // 详细推导
+                let detail = `【步骤1】原始参数\n  I_f = [${ifValues.join(', ')}] A\n  U_a = [${uaValues.join(', ')}] V\n  √U_a = [${sqrtUa.map(v=>v.toFixed(4)).join(', ')}]\n\n【步骤2】灯丝温度 T = 920 + 1600·I_f\n`;
+                fitRes.forEach(f => detail +=
+                    `  I_f=${f.If.toFixed(3)}A → T=${f.T.toFixed(1)}K, 1/T=${(1000/f.T).toFixed(4)}×10⁻³\n`);
+                detail += `\n【步骤3】各温度拟合 lg(I_s') = A + B·√U_a\n`;
+                fitRes.forEach(f => detail +=
+                    `  T=${f.T.toFixed(1)}K: lg(I_s)=${f.A.toFixed(6)}, B=${f.B.toFixed(6)}, R=${f.R.toFixed(4)}\n`);
+                detail +=
+                    `\n【步骤4】lg(I_s/T²) vs 1/T 拟合\n  B' = ${Bp.toFixed(6)}, A' = ${Ap.toFixed(6)}, R = ${Rf.toFixed(4)}\n`;
+                detail += `\n【步骤5】逸出电位 φ = |B'| / 5039 = ${phi.toFixed(4)} V\n`;
+                detail += `  逸出功 W₀ = ${W0.toFixed(4)} eV\n  相对误差 = ${err.toFixed(2)}%\n`;
+                const dbox = document.createElement('div');
+                dbox.className = 'detail-box';
+                dbox.innerHTML = `<h4>📝 详细推导过程</h4>${detail.replace(/\n/g,'<br>')}`;
+                resultOutput.appendChild(dbox);
+
+                // 图表1: lg(Is') vs √Ua
+                const canvas1 = createChartBox('#chart-container-box1',
+                    'lg(Iₛ\') vs √Uₐ (消除肖特基效应)');
+                const ctx1 = canvas1.getContext('2d');
+                const ds1 = [];
+                for (let i = 0; i < nIf; i++) {
+                    const col = palette[i % palette.length];
+                    ds1.push({
+                        label: `I_f=${ifValues[i].toFixed(3)}A`,
+                        data: sqrtUa.map((x, j) => ({ x, y: lgIsPrime[i][j] })),
+                        backgroundColor: col,
+                        pointRadius: 4,
+                    });
+                    const xMin = Math.min(...sqrtUa),
+                        xMax = Math.max(...sqrtUa);
+                    ds1.push({
+                        label: `拟合: y=${fitRes[i].A.toFixed(4)}${fitRes[i].B>=0?'+':''}${fitRes[i].B.toFixed(4)}x`,
+                        data: [{ x: xMin - 0.2, y: fitRes[i].A + fitRes[i].B * (xMin - 0.2) },
+                            { x: xMax + 0.2, y: fitRes[i].A + fitRes[i].B * (xMax + 0.2) }
+                        ],
+                        type: 'line',
+                        borderColor: col,
+                        borderWidth: 1.5,
+                        borderDash: [4, 3],
+                        pointRadius: 0,
+                    });
+                }
+                activeChart1 = new Chart(ctx1, {
+                    type: 'scatter',
+                    data: { datasets: ds1 },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { title: { display: true, text: '√Uₐ (V¹/²)' } },
+                            y: { title: { display: true, text: 'lg(Iₛ\')' } }
+                        }
+                    }
+                });
+
+                // 图表2: lg(Is/T²) vs 1/T
+                const canvas2 = createChartBox('#chart-container-box2',
+                    'lg(Iₛ/T²) vs 1/T (理查森直线)');
+                const ctx2 = canvas2.getContext('2d');
+                const xMin2 = Math.min(...invT),
+                    xMax2 = Math.max(...invT);
+                activeChart2 = new Chart(ctx2, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '数据点',
+                            data: invT.map((x, i) => ({ x, y: lgIsOverT2[i] })),
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 5,
+                        }, {
+                            label: `拟合: y=${Ap.toFixed(4)}${Bp>=0?'+':''}${Bp.toFixed(4)}x`,
+                            data: [{ x: xMin2 - 0.05, y: Ap + Bp * (xMin2 - 0.05) },
+                                { x: xMax2 + 0.05, y: Ap + Bp * (xMax2 + 0.05) }
+                            ],
+                            type: 'line',
+                            borderColor: '#e74c3c',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { title: { display: true, text: '1/T (10⁻³ K⁻¹)' } },
+                            y: { title: { display: true, text: 'lg(Iₛ/T²)' } }
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+            // 初始化
+            renderIfInputs();
+            renderUaInputs();
+            renderIsTable();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

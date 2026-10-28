@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表面张力系数 · 拉脱法（独立拟合图 + 白色背景下载）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2 1 500px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+        }
+        .data-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .data-row input {
+            flex: 1;
+            padding: 8px 6px;
+        }
+        .data-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .add-btn {
+            padding: 9px 18px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 14px;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 800px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-equation {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 350px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🫧 表面张力系数（拉脱法）· 独立拟合图 + 白色背景下载</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">灵敏度标定：U = k·(mg) + b，再计算 α = δU / [π(D外+D内)·k]</div>
+            <h4>🔧 阶段1：灵敏度标定 (m, U)</h4>
+            <div id="calibration-inputs"></div>
+            <button class="add-btn" onclick="addCalRow()">+ 添加标定点</button>
+            <div class="input-group"><label>重力加速度 g <span class="unit">m/s²</span></label><input type="number" id="gravity" value="9.794" step="0.001"></div>
+            <h4>📐 阶段2：表面张力测量</h4>
+            <div class="input-group"><label>外径 D外 <span class="unit">mm</span></label><input type="number" id="D-out" value="60.0" step="0.1"></div>
+            <div class="input-group"><label>内径 D内 <span class="unit">mm</span></label><input type="number" id="D-in" value="55.0" step="0.1"></div>
+            <div class="input-group"><label>仪器误差 Δ(δU) <span class="unit">mV</span></label><input type="number" id="delta-du-instr" value="0.05" step="0.01"></div>
+            <h5>📊 电压变化 δU (mV)</h5>
+            <div id="measurement-inputs"></div>
+            <button class="add-btn" onclick="addMeasRow()">+ 添加 δU 数据</button>
+            <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <!-- 独立图表展示区 -->
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+            const resultOutput = $('#result-output');
+            const chartContainerBox = $('#chart-container-box');
+            let activeChart = null;
+
+            function ave(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+            function Ls0(x, y) {
+                const ax = ave(x),
+                    ay = ave(y),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length,
+                    ax2 = x.reduce((s, v) => s + v * v, 0) / x.length;
+                const den = ax2 - ax * ax;
+                return { a: (axy - ax * ay) / den, b: ay - (axy - ax * ay) / den * ax };
+            }
+
+            function destroyChart() {
+                if (activeChart) {
+                    activeChart.destroy();
+                    activeChart = null;
+                }
+                chartContainerBox.innerHTML = '';
+            }
+
+            function drawCalChart(xd, yd, a, b, title) {
+                destroyChart();
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h4>📈 灵敏度标定拟合曲线</h4>`;
+
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                chartBox.appendChild(container);
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                downloadBtn.addEventListener('click', () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCtx.drawImage(canvas, 0, 0);
+
+                    const link = document.createElement('a');
+                    link.download = `灵敏度标定_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    link.click();
+                });
+                chartBox.appendChild(downloadBtn);
+
+                chartContainerBox.appendChild(chartBox);
+
+                const ctx = canvas.getContext('2d');
+                const xMin = Math.min(...xd),
+                    xMax = Math.max(...xd);
+                const xFit = [xMin - (xMax - xMin) * 0.1, xMax + (xMax - xMin) * 0.1];
+
+                activeChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '标定点',
+                            data: xd.map((x, i) => ({ x, y: yd[i] })),
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 6,
+                            pointBorderColor: '#2c3e50',
+                        }, {
+                            label: `U=${a.toFixed(4)}·mg+${b.toFixed(4)}`,
+                            data: [{ x: xFit[0], y: a * xFit[0] + b }, { x: xFit[1], y: a * xFit[1] + b }],
+                            type: 'line',
+                            borderColor: '#e74c3c',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: false }, legend: { labels: { usePointStyle: true } } },
+                        scales: {
+                            x: { title: { display: true, text: 'mg (N)' } },
+                            y: { title: { display: true, text: 'U (mV)' } },
+                        },
+                    },
+                });
+            }
+
+            function addDetailBox(title, content) {
+                const box = document.createElement('div');
+                box.className = 'detail-box';
+                box.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(box);
+            }
+
+            window.addCalRow = () => {
+                const cont = $('#calibration-inputs');
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                row.innerHTML = `<input type="number" class="m-input" placeholder="m(g)" value="0.500" step="0.001"><span class="unit">g</span><input type="number" class="u-input" placeholder="U(mV)" value="2.50" step="0.01"><span class="unit">mV</span><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+                cont.appendChild(row);
+            };
+            window.addMeasRow = () => {
+                const cont = $('#measurement-inputs');
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                row.innerHTML = `<input type="number" class="du-input" placeholder="δU (mV)" value="1.20" step="0.01"><span class="unit">mV</span><button class="remove-btn" onclick="this.closest('.data-row').remove()">×</button>`;
+                cont.appendChild(row);
+            };
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyChart();
+
+                // 读取常数
+                const g = parseFloat($('#gravity').value);
+                const Dout = parseFloat($('#D-out').value);
+                const Din = parseFloat($('#D-in').value);
+                const dDU = parseFloat($('#delta-du-instr').value) || 0.05;
+                if (isNaN(g) || isNaN(Dout) || isNaN(Din)) return alert('请填写完整的常数');
+
+                // ---- 标定数据 ----
+                const calRows = document.querySelectorAll('#calibration-inputs .data-row');
+                const mg = [],
+                    U = [];
+                calRows.forEach(r => {
+                    const m = parseFloat(r.querySelector('.m-input').value);
+                    const u = parseFloat(r.querySelector('.u-input').value);
+                    if (!isNaN(m) && !isNaN(u)) {
+                        mg.push(m * 1e-3 * g);
+                        U.push(u);
+                    }
+                });
+                if (mg.length < 2) return alert('标定数据至少需要两组');
+
+                // 最小二乘法
+                const ls = Ls0(mg, U);
+                const k = ls.a;
+                const b = ls.b;
+
+                // ---- δU 测量数据 ----
+                const measRows = document.querySelectorAll('#measurement-inputs .data-row');
+                const duVals = [];
+                measRows.forEach(r => {
+                    const du = parseFloat(r.querySelector('.du-input').value);
+                    if (!isNaN(du)) duVals.push(du);
+                });
+                if (duVals.length === 0) return alert('至少需要一个 δU 测量数据');
+
+                const nMeas = duVals.length;
+                const avgDU = ave(duVals);
+                let stdDU = 0;
+                if (nMeas > 1) {
+                    stdDU = Math.sqrt(duVals.reduce((s, v) => s + (v - avgDU) ** 2, 0) / (nMeas - 1));
+                }
+                const uA_DU = nMeas > 1 ? stdDU / Math.sqrt(nMeas) : 0;
+
+                // ---- 计算 α (修正后公式) ----
+                const den = Math.PI * (Dout + Din) * 1e-3 * k;   // 分母，单位已统一为 N
+                const alpha = avgDU / den;
+                const uA_alpha = uA_DU / den;
+                const uB_alpha = dDU / den;
+                const uC_alpha = Math.sqrt(uA_alpha ** 2 + uB_alpha ** 2);
+
+                // ---- 构建详细计算过程文本 ----
+                let detail = `【阶段1】灵敏度标定\n公式: U = k·mg + b\n`;
+                detail += `质量 m (g): [${[...calRows].map(r=>r.querySelector('.m-input').value).join(', ')}]\n`;
+                detail += `mg (N): [${mg.map(v=>v.toFixed(6)).join(', ')}]\n`;
+                detail += `U (mV): [${U.join(', ')}]\n\n`;
+
+                const nCal = mg.length;
+                const sx = mg.reduce((a, b) => a + b, 0);
+                const sy = U.reduce((a, b) => a + b, 0);
+                const sxy = mg.reduce((s, xi, i) => s + xi * U[i], 0);
+                const sx2 = mg.reduce((s, v) => s + v * v, 0);
+                const Lxx = sx2 - sx * sx / nCal;
+                const Lxy = sxy - sx * sy / nCal;
+
+                detail += `最小二乘法计算:\n  Σ(mg)=${sx.toFixed(6)}, ΣU=${sy.toFixed(4)}, Σ(mg·U)=${sxy.toFixed(6)}, Σ(mg)²=${sx2.toFixed(6)}\n`;
+                detail += `  Lxx = ${Lxx.toFixed(6)}, Lxy = ${Lxy.toFixed(4)}\n`;
+                detail += `  k = Lxy/Lxx = <span class="result-line">${k.toFixed(6)}</span> mV/N\n`;
+                detail += `  b = Ū - k·mḡ = ${b.toFixed(4)} mV\n\n`;
+
+                detail += `【阶段2】表面张力系数 α = δU / [π(D外+D内)·k]\n`;
+                detail += `  D外=${Dout}mm, D内=${Din}mm, g=${g} m/s², k=${k.toFixed(6)} mV/N\n`;
+                detail += `  δU 测量值: [${duVals.join(', ')}] mV\n  平均δU = ${avgDU.toFixed(4)} mV\n`;
+                detail += `  分母 = π×(${Dout}+${Din})×10⁻³×${k.toFixed(6)} = ${den.toFixed(8)}\n`;
+                detail += `  α = ${avgDU.toFixed(4)} / ${den.toFixed(8)} = <span class="result-line">${alpha.toFixed(8)}</span> N/m\n\n`;
+
+                detail += `【不确定度】\n  δU标准差 s = ${stdDU.toFixed(6)} (n=${nMeas})\n  uA(δU) = ${uA_DU.toFixed(6)} mV\n`;
+                detail += `  uA(α) = uA(δU) / den = ${uA_alpha.toFixed(8)} N/m\n`;
+                detail += `  uB(α) = Δ(δU) / den = ${uB_alpha.toFixed(8)} N/m\n`;
+                detail += `  uC(α) = √(uA²+uB²) = ${uC_alpha.toFixed(8)} N/m\n`;
+                detail += `  相对不确定度 = ${(uC_alpha/alpha*100).toFixed(4)}%\n`;
+                detail += `  结果: α = (${alpha.toFixed(8)} ± ${uC_alpha.toFixed(8)}) N/m`;
+
+                // ---- 输出结果面板 ----
+                let html = `<h3 class="result-title">表面张力系数计算结果</h3>`;
+                html += `<div class="result-item"><h4>灵敏度 k</h4><div class="result-value">${k.toFixed(6)} mV/N</div></div>`;
+                html += `<div class="result-item"><h4>截距 b</h4><div class="result-value">${b.toFixed(4)} mV</div></div>`;
+                html += `<div class="result-equation">α = ${alpha.toFixed(8)} N/m</div>`;
+                html += `<div class="uncertainty-box"><h4>📐 不确定度分析</h4>
+                    <div>uA(α) = ${uA_alpha.toFixed(8)} N/m</div><div>uB(α) = ${uB_alpha.toFixed(8)} N/m</div>
+                    <div>uC(α) = ${uC_alpha.toFixed(8)} N/m</div><div>相对不确定度 = ${(uC_alpha/alpha*100).toFixed(4)}%</div>
+                    <div><strong>α = (${alpha.toFixed(8)} ± ${uC_alpha.toFixed(8)}) N/m</strong></div></div>`;
+                resultOutput.innerHTML = html;
+
+                // 绘制标定拟合图
+                drawCalChart(mg, U, k, b, '灵敏度标定拟合');
+
+                // 附加详细步骤
+                addDetailBox('完整计算过程', detail);
+            }
+
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+            // 初始添加示例行
+            window.addCalRow();
+            window.addCalRow();
+            window.addMeasRow();
+            window.addMeasRow();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>杨氏（弹性）模量 · 拉伸法 / 光杠杆 / 逐差法计算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.4rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .panel {
+            flex: 1 1 100%;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.22rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 14px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.88rem;
+        }
+        .input-group .unit {
+            font-size: 0.78rem;
+            color: #888;
+            margin-left: 5px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 9px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.94rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        input[readonly] {
+            background: #f0f2f5;
+            color: #667;
+        }
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 14px;
+            font-size: 0.88rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .formula {
+            background: #f7f9fc;
+            border: 1px solid #e3e9f2;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: #2c3f55;
+            text-align: center;
+            overflow-x: auto;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        .badge-note {
+            font-size: 0.79rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .dtable-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        table.dtable {
+            width: 100%;
+            min-width: 620px;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+        }
+        table.dtable th,
+        table.dtable td {
+            border-bottom: 1px solid #eef2f7;
+            border-right: 1px solid #eef2f7;
+            padding: 6px 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        table.dtable thead th {
+            background: #eef2f9;
+            color: #445a7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        table.dtable th:last-child,
+        table.dtable td:last-child {
+            border-right: none;
+        }
+        table.dtable tbody tr:last-child td {
+            border-bottom: none;
+        }
+        table.dtable td.idx {
+            color: #7a8ba3;
+            font-weight: 700;
+            font-size: 0.8rem;
+            background: #f8fafc;
+        }
+        table.dtable td input {
+            width: 100%;
+            min-width: 74px;
+            padding: 6px 4px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        table.dtable td.calc {
+            font-family: 'Consolas', monospace;
+            font-size: 0.82rem;
+            color: #1e8c4a;
+            background: #f6fbf8;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .calculate-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: 13px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.02rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 13px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 260px;
+            border: 1px solid var(--border);
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 12px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .sumtab {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 6px;
+        }
+        .sumtab th,
+        .sumtab td {
+            border: 1px solid #e3e9f2;
+            padding: 5px 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .sumtab th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-weight: 700;
+        }
+        .chart-box {
+            margin-top: 18px;
+            background: #fff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 580px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        details.ref {
+            margin-top: 14px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 10px 16px;
+            background: #fbfcfe;
+        }
+        details.ref > summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+            list-style: none;
+        }
+        details.ref > summary::-webkit-details-marker {
+            display: none;
+        }
+        details.ref > summary::before {
+            content: "\25B8  ";
+        }
+        details.ref[open] > summary::before {
+            content: "\25BE  ";
+        }
+        @media (max-width: 700px) {
+            .grid4,
+            .grid3 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .header h2 {
+                font-size: 1.15rem;
+            }
+            body {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🧵 杨氏（弹性）模量 · 拉伸法 / 光杠杆 / 逐差法</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h3 class="panel-title">📖 ① 实验原理与参数</h3>
+            <p class="badge-note">依据《大学物理实验教程》第二章实验二“用拉伸法测弹性模量”（书内第 43～48 页），按表 2-2-1、表 2-2-2 和式（2-2-9）计算。杨氏模量记作 Y，也常记作 E。示例由本站构造，仅用于演示。</p>
+
+            <div class="instructions">
+                <b>胡克定律：</b>F/S = Y·ΔL/L　→　Y = FL/(S·ΔL) = 4FL/(πd²ΔL)<br>
+                <b>光杠杆放大：</b>ΔL = b·Δx/(2D)（2D/b 即放大倍数）<br>
+                <b>合并得测量式：</b>把 F = mg 代入，即得
+            </div>
+            <div class="formula">
+                Y = 8mgLD / (πd²bΔx)　　　（式 2-2-9）
+            </div>
+            <div class="badge-note" style="margin-bottom:12px;">
+                L — 钢丝原长（上下夹头间长度）；D — 光杠杆镜面到标尺的距离；b — 光杠杆后足到前两足连线的垂直距离；
+                d — 钢丝直径；Δx — 标尺读数变化量；m — 砝码质量。用逐差法取 Δx′（对应 3 个砝码）时，m 自动取 <b>3 × 砝码质量间隔</b>；指导书每级 1 kg 时，m = 3 kg。
+            </div>
+
+            <div class="sub-title"><span>仪器参数</span><span class="hint">Δ<sub>仪</sub> 换算 u<sub>B</sub> = Δ<sub>仪</sub>/√3；钢卷尺直接输入 u<sub>B</sub></span></div>
+            <div class="grid4">
+                <div class="input-group">
+                    <label>重力加速度 g <span class="unit">m/s²</span></label>
+                    <input type="number" id="grav" value="9.7988" step="0.0001">
+                </div>
+                <div class="input-group">
+                    <label>逐差对应砝码 m（自动）<span class="unit">kg</span></label>
+                    <input type="number" id="mass" value="3" step="any" readonly aria-label="逐差对应砝码质量，自动等于三倍间隔">
+                </div>
+                <div class="input-group">
+                    <label>螺旋测微器零差 d₀ <span class="unit">mm</span></label>
+                    <input type="number" id="dzero" value="0.000" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>螺旋测微器 Δ<sub>仪</sub> <span class="unit">mm</span></label>
+                    <input type="number" id="dinst" value="0.005" step="0.001">
+                </div>
+            </div>
+            <div class="grid4">
+                <div class="input-group">
+                    <label>标尺 Δ<sub>仪</sub> <span class="unit">mm</span></label>
+                    <input type="number" id="xinst" value="0.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>钢卷尺 u<sub>B</sub> <span class="unit">mm</span></label>
+                    <input type="number" id="tape" value="5.0" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>游标卡尺 Δ<sub>仪</sub> <span class="unit">mm</span></label>
+                    <input type="number" id="caliper" value="0.02" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>砝码质量间隔 <span class="unit">kg/个</span></label>
+                    <input type="number" id="stepkg" value="1" step="0.5">
+                </div>
+            </div>
+
+            <div class="sub-title"><span>单次测量值</span><span class="hint">各测一次，只计 B 类不确定度</span></div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>钢丝原长 L <span class="unit">mm</span></label>
+                    <input type="number" id="len" value="" placeholder="填实测值" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>镜面到标尺距离 D <span class="unit">mm</span></label>
+                    <input type="number" id="dist" value="" placeholder="填实测值" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>光杠杆后足垂距 b <span class="unit">mm</span></label>
+                    <input type="number" id="arm" value="" placeholder="填实测值" step="0.01">
+                </div>
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>U<sub>L</sub>（自动＝钢卷尺 u<sub>B</sub>）<span class="unit">mm</span></label>
+                    <input type="text" id="ulen" readonly>
+                </div>
+                <div class="input-group">
+                    <label>U<sub>D</sub>（自动＝钢卷尺 u<sub>B</sub>）<span class="unit">mm</span></label>
+                    <input type="text" id="udist" readonly>
+                </div>
+                <div class="input-group">
+                    <label>U<sub>b</sub>（自动＝游标卡尺 Δ<sub>仪</sub>/√3）<span class="unit">mm</span></label>
+                    <input type="text" id="uarm" readonly>
+                </div>
+            </div>
+
+            <details class="ref">
+                <summary>实验要点与注意事项</summary>
+                <div class="badge-note" style="font-size:0.85rem;line-height:1.9;">
+                    <b>1. 装置调整</b>：底座调水平；平面镜竖直、两前足在前平台凹槽、后足落在钢丝下端的夹头上（不碰钢丝、不靠圆孔边）；望远镜水平且与反射镜等高，看清黑色叉丝，调节到<b>无视差</b>，且十字横线落在标尺零刻度附近。<br>
+                    <b>2. 读数</b>：先记 x₀；逐次加 1 kg 砝码记 xᵢ；再逐个取下记 xᵢ′。取平均 x̄ᵢ = (xᵢ + xᵢ′)/2。<br>
+                    <b>3. 钢丝直径</b>：上、中、下三处，每处沿<b>纵向、横向</b>各测一次，共 6 次；记螺旋测微器零差 d₀ 并修正。<br>
+                    <b>4. 单次量</b>：L（上下夹头间长度，钢卷尺）、D（镜面到标尺，钢卷尺）、b（光杠杆三足压痕，游标卡尺）。<br>
+                    <b>5. 注意</b>：光杠杆—望远镜—标尺调好后<b>全程不得再移动</b>，否则数据无效需重做；加减砝码要轻放轻取，避免挂钩摆动。
+                </div>
+            </details>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📋 ② 标尺刻度值记录（表 2-2-1）</h3>
+            <div class="badge-note" style="margin:0 0 10px;">
+                加砝码时读 x<sub>i</sub>，减砝码时读 x<sub>i</sub>′，平均 x̄<sub>i</sub> = (x<sub>i</sub> + x<sub>i</sub>′)/2 自动算出。
+            </div>
+            <div class="dtable-wrap">
+                <table class="dtable">
+                    <thead id="x-head"></thead>
+                    <tbody id="x-body"></tbody>
+                </table>
+            </div>
+            <div class="badge-note">逐差法：把 x̄₀…x̄₅ 分成前后两组，Δx′₁ = x̄₃−x̄₀、Δx′₂ = x̄₄−x̄₁、Δx′₃ = x̄₅−x̄₂，再取平均。</div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📋 ③ 钢丝直径记录（表 2-2-2）</h3>
+            <div class="badge-note" style="margin:0 0 10px;">
+                上、中、下三个部位，每处沿<b>纵向</b>和<b>横向</b>各测一次（共 6 次）。填螺旋测微器读数即可，零差在①里统一修正。
+            </div>
+            <div class="dtable-wrap">
+                <table class="dtable">
+                    <thead id="d-head"></thead>
+                    <tbody id="d-body"></tbody>
+                </table>
+            </div>
+            <div class="badge-note">修正后 d<sub>i</sub> = 读数 − d₀；平均值 d̄ = Σd<sub>i</sub>/6。</div>
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="fill-btn" class="ghost-btn">↺ 填充示例（非实测）</button>
+                <button id="clear-btn" class="ghost-btn">🗑 清空读数</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📊 ④ 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const on = (s, ev, fn) => {
+                const el = $(s);
+                if (el) el.addEventListener(ev, fn);
+            };
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+            function fmt(v, digits) {
+                if (!isFinite(v)) return '—';
+                const a = Math.abs(v);
+                if (a === 0) return '0';
+                const d = Math.max(0, (digits || 4) - 1 - Math.floor(Math.log10(a)));
+                return v.toFixed(Math.min(6, d));
+            }
+            const val = id => parseFloat($('#' + id).value);
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => {
+                    try {
+                        c.destroy();
+                    } catch (e) {}
+                });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                if (typeof Chart === 'undefined') {
+                    const msg = document.createElement('div');
+                    msg.className = 'warn-msg';
+                    msg.textContent = '⚠️ 未能加载图表库（Chart.js CDN 不可达），图像已跳过，计算结果不受影响。';
+                    box.insertBefore(msg, wrap);
+                    chartBoxes.appendChild(box);
+                    return;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                try {
+                    charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = '<h4>📝 ' + title + '</h4>' + content;
+                resultOutput.appendChild(b);
+            }
+
+            // ===== 标尺刻度数据（序号 0~5）=====
+            const X_DEMO = [
+                [100.02, 99.98],
+                [108.99, 108.91],
+                [118.02, 117.94],
+                [126.94, 126.86],
+                [136.04, 135.94],
+                [144.96, 144.88]
+            ];
+            // ===== 钢丝直径（上纵 上横 中纵 中横 下纵 下横）=====
+            const D_DEMO = [0.502, 0.498, 0.501, 0.499, 0.500, 0.497];
+
+            function xAvg(i) {
+                const a = val('x-' + i + '-0'),
+                    b = val('x-' + i + '-1');
+                return (isFinite(a) && isFinite(b)) ? (a + b) / 2 : NaN;
+            }
+            function refreshX() {
+                for (let i = 0; i < 6; i++) {
+                    const c = $('#xavg-' + i);
+                    if (c) c.textContent = isFinite(xAvg(i)) ? num(xAvg(i), 3) : '—';
+                }
+            }
+            function refreshD() {
+                const d0 = val('dzero');
+                const vs = [];
+                for (let i = 0; i < 6; i++) {
+                    const v = val('d-' + i);
+                    if (isFinite(v)) vs.push(v - d0);
+                }
+                const avg = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : NaN;
+                const c = $('#davg');
+                if (c) c.textContent = isFinite(avg) ? num(avg, 4) : '—';
+            }
+            function refreshU() {
+                const tape = val('tape'),
+                    cal = val('caliper');
+                $('#ulen').value = isFinite(tape) ? num(tape, 3) : '';
+                $('#udist').value = isFinite(tape) ? num(tape, 3) : '';
+                $('#uarm').value = isFinite(cal) ? num(cal / Math.sqrt(3), 4) : '';
+            }
+
+            function buildXT() {
+                const head = $('#x-head'),
+                    body = $('#x-body');
+                head.innerHTML = '<tr><th style="width:60px">序号</th><th style="width:96px">砝码质量 m (kg)</th>' +
+                    '<th>加砝码 x<sub>i</sub> (mm)</th><th>减砝码 x<sub>i</sub>′ (mm)</th><th>平均 x̄<sub>i</sub> (mm)</th></tr>';
+                body.innerHTML = '';
+                const step = val('stepkg');
+                for (let i = 0; i < 6; i++) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td class="idx">' + i + '</td><td id="xmass-' + i + '">' + num(step * i, 3) + '</td>';
+                    [0, 1].forEach(k => {
+                        const td = document.createElement('td');
+                        const inp = document.createElement('input');
+                        inp.type = 'number';
+                        inp.step = 'any';
+                        inp.id = 'x-' + i + '-' + k;
+                        inp.value = '';
+                        inp.addEventListener('input', refreshX);
+                        td.appendChild(inp);
+                        tr.appendChild(td);
+                    });
+                    const td = document.createElement('td');
+                    td.className = 'calc';
+                    td.id = 'xavg-' + i;
+                    td.textContent = '—';
+                    tr.appendChild(td);
+                    body.appendChild(tr);
+                }
+                refreshX();
+            }
+            function refreshMass() {
+                const step = val('stepkg');
+                $('#mass').value = Number.isFinite(step) && step > 0 ? String(3 * step) : '';
+                for (let i = 0; i < 6; i++) {
+                    const cell = $('#xmass-' + i);
+                    if (cell) cell.textContent = Number.isFinite(step) && step > 0 ? num(step * i, 3) : '—';
+                }
+            }
+            function buildDT() {
+                const head = $('#d-head'),
+                    body = $('#d-body');
+                head.innerHTML = '<tr><th style="width:76px">测量部位</th><th colspan="2">上部</th><th colspan="2">中部</th>' +
+                    '<th colspan="2">下部</th><th rowspan="2" style="width:96px">平均值 (mm)</th></tr>' +
+                    '<tr><th style="width:76px">测量方向</th><th>纵向</th><th>横向</th><th>纵向</th><th>横向</th><th>纵向</th><th>横向</th></tr>';
+                body.innerHTML = '';
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td class="idx">d (mm)</td>';
+                for (let i = 0; i < 6; i++) {
+                    const td = document.createElement('td');
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.step = 'any';
+                    inp.id = 'd-' + i;
+                    inp.value = '';
+                    inp.addEventListener('input', refreshD);
+                    td.appendChild(inp);
+                    tr.appendChild(td);
+                }
+                const td = document.createElement('td');
+                td.className = 'calc';
+                td.id = 'davg';
+                td.textContent = '—';
+                tr.appendChild(td);
+                body.appendChild(tr);
+                refreshD();
+            }
+
+            // 线性拟合
+            function linfit(pts) {
+                const n = pts.length;
+                if (n < 2) return null;
+                const mx = pts.reduce((a, p) => a + p.x, 0) / n;
+                const my = pts.reduce((a, p) => a + p.y, 0) / n;
+                let sxy = 0,
+                    sxx = 0;
+                pts.forEach(p => {
+                    sxy += (p.x - mx) * (p.y - my);
+                    sxx += (p.x - mx) * (p.x - mx);
+                });
+                const a = sxx > 0 ? sxy / sxx : NaN;
+                const b = my - a * mx;
+                const ss = pts.reduce((s, p) => s + Math.pow(p.y - (a * p.x + b), 2), 0);
+                const st = pts.reduce((s, p) => s + Math.pow(p.y - my, 2), 0);
+                return { a: a, b: b, r2: st > 0 ? 1 - ss / st : NaN, n: n };
+            }
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const g = val('grav');
+                const step = val('stepkg');
+                const mass = 3 * step;
+                refreshMass();
+                const d0 = val('dzero');
+                const dinst = val('dinst');
+                const xinst = val('xinst');
+                const tape = val('tape');
+                const cal = val('caliper');
+                const L = val('len');
+                const D = val('dist');
+                const b = val('arm');
+                const warnings = [];
+
+                if (!isFinite(g) || g <= 0) return alert('请填写重力加速度 g');
+                if (!Number.isFinite(step) || step <= 0 || !Number.isFinite(mass)) return alert('砝码质量间隔必须为正数。逐差对应质量自动取间隔的 3 倍。');
+                if (!Number.isFinite(d0)) return alert('请填写螺旋测微器零差 d₀，无零差时填 0。');
+                if (![dinst, xinst, tape, cal].every(v => Number.isFinite(v) && v >= 0)) return alert('仪器不确定度参数应完整填写，且不能为负数。');
+                if (![L, D, b].every(v => isFinite(v) && v > 0)) return alert('请填写单次量 L、D、b（需为正数）');
+
+                // ---- 直径 ----
+                const dv = [];
+                for (let i = 0; i < 6; i++) {
+                    const v = val('d-' + i);
+                    if (!Number.isFinite(v)) return alert('请完整填写钢丝上、中、下部的纵向与横向共 6 个直径读数。');
+                    if (v - d0 <= 0) return alert('每个钢丝直径减去零差后都必须为正数，请核对读数与零差。');
+                    dv.push(v - d0);
+                }
+                
+                const dbar = dv.length ? dv.reduce((a, x) => a + x, 0) / dv.length : NaN;
+                const nD = dv.length;
+                const sD = nD > 1 ? Math.sqrt(dv.reduce((a, x) => a + Math.pow(x - dbar, 2), 0) / (nD - 1)) : 0;
+                const uAd = nD > 1 ? sD / Math.sqrt(nD) : 0;
+                const uBd = dinst / Math.sqrt(3);
+                const Ud = Math.hypot(uAd, uBd);
+
+                // ---- 标尺 ----
+                const xm = [];
+                for (let i = 0; i < 6; i++) {
+                    const v = xAvg(i);
+                    xm.push(v);
+                }
+                if (xm.some(v => !Number.isFinite(v))) {
+                    warnings.push('标尺刻度数据不足 6 组（x̄₀…x̄₅），逐差法无法完整计算。');
+                }
+                const dxs = xm.every(Number.isFinite) ? [xm[3] - xm[0], xm[4] - xm[1], xm[5] - xm[2]] : [];
+                const dxbar = dxs.length ? dxs.reduce((a, x) => a + x, 0) / dxs.length : NaN;
+                const nX = dxs.length;
+                const sX = nX > 1 ? Math.sqrt(dxs.reduce((a, x) => a + Math.pow(x - dxbar, 2), 0) / (nX - 1)) : 0;
+                const uAx = nX > 1 ? sX / Math.sqrt(nX) : 0;
+                const uBx = xinst / Math.sqrt(3);
+                const Udx = Math.hypot(uAx, uBx);
+
+                // ---- 弹性模量 ----
+                const Lm = L / 1000, Dm = D / 1000, bm = b / 1000,
+                    dm = dbar / 1000, dxm = dxbar / 1000;
+                let Y = NaN,
+                    EY = NaN,
+                    UY = NaN;
+                const terms = [];
+                if (isFinite(dxm) && dxm > 0 && isFinite(dm) && dm > 0) {
+                    Y = 8 * mass * g * Lm * Dm / (Math.PI * dm * dm * bm * dxm);
+                    const tL = tape / L,
+                        tD = tape / D,
+                        tb = (cal / Math.sqrt(3)) / b,
+                        td = 2 * Ud / dbar,
+                        tx = Udx / dxbar;
+                    terms.push({ name: 'U_L/L', v: tL }, { name: 'U_D/D', v: tD }, { name: 'U_b/b', v: tb },
+                        { name: '2U_d/d', v: td }, { name: "U_Δx'/Δx'", v: tx });
+                    EY = Math.sqrt(tL * tL + tD * tD + tb * tb + td * td + tx * tx);
+                    UY = Y * EY;
+                } else {
+                    warnings.push('无法计算弹性模量：请检查直径与标尺数据是否完整、为正。');
+                }
+
+                // 标尺线性拟合（x̄ ~ m），用于校核
+                const ptsX = xm.map((v, i) => ({ x: step * i, y: v })).filter(p => Number.isFinite(p.y));
+                const fitX = ptsX.length >= 2 ? linfit(ptsX) : null;
+
+                // ---------- 结果 ----------
+                let html = '<h3 class="result-title">弹性模量测量结果</h3>';
+                if (warnings.length) html += warnings.map(w => '<div class="warn-msg">⚠️ ' + w + '</div>').join('');
+
+                html += '<div class="result-item"><h4>测量式 <span class="tag theory">式 2-2-9</span></h4>' +
+                    '<div style="font-size:0.9rem;font-family:Consolas,monospace;color:#2c3f55;">' +
+                    'Y = 8mgLD / (πd²bΔx′)　（m = ' + num(mass, 2) + ' kg，g = ' + num(g, 4) + ' m/s²）</div></div>';
+
+                html += '<div class="result-item"><h4>① 钢丝直径 d</h4>' +
+                    '<div class="result-value">d = ' + num(dbar, 4) + ' ± ' + num(Ud, 4) + ' mm</div>' +
+                    '<div style="font-size:0.83rem;color:#6b7c93;">' +
+                    '修正后各值：' + dv.map(v => num(v, 4)).join('、') + '（已减零差 ' + num(d0, 4) + ' mm）<br>' +
+                    'A 类 u<sub>A</sub> = S/√n = ' + num(uAd, 5) + ' mm；B 类 u<sub>B</sub> = ' + num(dinst, 4) + '/√3 = ' + num(uBd, 5) + ' mm<br>' +
+                    'U<sub>d</sub> = √(u<sub>A</sub>²+u<sub>B</sub>²) = ' + num(Ud, 5) + ' mm</div></div>';
+
+                if (dxs.length) {
+                    html += '<div class="result-item"><h4>② 标尺变化量 Δx′（逐差法）</h4>' +
+                        '<div class="result-value">Δx̄′ = ' + num(dxbar, 4) + ' ± ' + num(Udx, 4) + ' mm</div>' +
+                        '<div style="font-size:0.83rem;color:#6b7c93;">' +
+                        'x̄₀…x̄₅ = ' + xm.map(v => num(v, 3)).join('、') + ' mm<br>' +
+                        'Δx′₁ = x̄₃−x̄₀ = ' + num(dxs[0], 3) + '，Δx′₂ = x̄₄−x̄₁ = ' + num(dxs[1], 3) +
+                        '，Δx′₃ = x̄₅−x̄₂ = ' + num(dxs[2], 3) + ' mm<br>' +
+                        'A 类 u<sub>A</sub> = ' + num(uAx, 5) + ' mm；B 类 u<sub>B</sub> = ' + num(xinst, 3) + '/√3 = ' + num(uBx, 5) + ' mm<br>' +
+                        'U<sub>Δx′</sub> = ' + num(Udx, 5) + ' mm（对应 ' + num(mass, 2) + ' kg 砝码的标尺变化）</div></div>';
+                }
+
+                if (isFinite(Y)) {
+                    html += '<div class="result-equation">Y = (' + sci(Y, 4) + ' ± ' + sci(UY, 3) + ') Pa</div>';
+                    html += '<div class="badge-note">即 (' + num(Y / 1e9, 3) + ' ± ' + num(UY / 1e9, 3) + ') GPa；对应钢丝伸长 ΔL = b·Δx̄′/(2D) = ' + num(b * dxbar / (2 * D), 6) + ' mm。</div>';
+                    html += '<div class="result-item"><h4>③ 相对不确定度 E<sub>Y</sub></h4>' +
+                        '<div class="result-value">E<sub>Y</sub> = ' + num(EY * 100, 3) + ' %</div>' +
+                        '<div style="overflow-x:auto;"><table class="sumtab"><thead><tr><th>分量</th>' +
+                        '<th>数值</th><th>占比</th></tr></thead><tbody>' +
+                        terms.map(t => '<tr><td>' + t.name + '</td><td>' + sci(t.v, 3) + '</td><td>' +
+                            num(EY > 0 ? t.v * t.v / (EY * EY) * 100 : 0, 1) + ' %</td></tr>').join('') +
+                        '</tbody></table></div>' +
+                        '<div class="badge-note">E<sub>Y</sub> = √[(U<sub>D</sub>/D)² + (U<sub>L</sub>/L)² + (U<sub>b</sub>/b)² + (2U<sub>d</sub>/d)² + (U<sub>Δx′</sub>/Δx′)²]</div></div>';
+                }
+
+                if (fitX) {
+                    html += '<div class="result-item"><h4>④ 校核：x̄–m 线性拟合</h4>' +
+                        '<div style="font-size:0.86rem;color:#4a5d7a;">斜率 k = ' + num(fitX.a, 4) + ' mm/kg，截距 = ' +
+                        num(fitX.b, 3) + ' mm，R² = ' + num(fitX.r2, 5) + '</div>' +
+                        '<div class="badge-note">理论上标尺读数随砝码质量线性增长。用斜率反推：Δx′ = k × ' + num(mass, 2) +
+                        ' = ' + num(fitX.a * mass, 3) + ' mm，可与逐差结果 ' + (dxs.length ? num(dxbar, 3) : '—') + ' mm 对照。</div></div>';
+                }
+
+                resultOutput.innerHTML = html;
+
+                // ---------- 图 1：x̄–m ----------
+                if (ptsX.length >= 2) {
+                    addChartBox('📈 图1 · 标尺读数 x̄ 与砝码质量 m 的关系', () => {
+                        const ds = [{
+                            label: '实测 x̄ (mm)',
+                            data: ptsX,
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 6,
+                            showLine: false
+                        }];
+                        if (fitX) {
+                            const xs = ptsX.map(p => p.x);
+                            const x0 = Math.min.apply(null, xs),
+                                x1 = Math.max.apply(null, xs);
+                            ds.push({
+                                label: '拟合 k = ' + num(fitX.a, 3) + ' mm/kg（R²=' + num(fitX.r2, 4) + '）',
+                                data: [{ x: x0, y: fitX.a * x0 + fitX.b }, { x: x1, y: fitX.a * x1 + fitX.b }],
+                                borderColor: '#e67e22',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                showLine: true
+                            });
+                        }
+                        return {
+                            type: 'scatter',
+                            data: { datasets: ds },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: { duration: 300 },
+                                scales: {
+                                    x: { type: 'linear', beginAtZero: true, title: { display: true, text: '砝码质量 m (kg)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                                    y: { title: { display: true, text: '标尺读数 x̄ (mm)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                                },
+                                plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }
+                            }
+                        };
+                    }, '拉伸法_标尺读数与砝码质量');
+                }
+
+                // ---------- 图 2：逐差量 ----------
+                if (dxs.length) {
+                    addChartBox('📊 图2 · 三个逐差量 Δx′ 与平均值', () => ({
+                        type: 'bar',
+                        data: {
+                            labels: ["Δx′₁ = x̄₃−x̄₀", "Δx′₂ = x̄₄−x̄₁", "Δx′₃ = x̄₅−x̄₂", '平均 Δx̄′'],
+                            datasets: [{
+                                label: 'Δx′ (mm)',
+                                data: dxs.concat([dxbar]),
+                                backgroundColor: ['#4b6cb7', '#4b6cb7', '#4b6cb7', '#27ae60'],
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                                y: { beginAtZero: true, title: { display: true, text: 'Δx′ (mm)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    }), '拉伸法_逐差量');
+                }
+
+                // ---------- 图 3：不确定度分量 ----------
+                if (terms.length) {
+                    addChartBox('📊 图3 · 相对不确定度各分量贡献', () => ({
+                        type: 'bar',
+                        data: {
+                            labels: terms.map(t => t.name),
+                            datasets: [{
+                                label: '分量大小',
+                                data: terms.map(t => t.v * 100),
+                                backgroundColor: '#7c3aed',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                                y: { beginAtZero: true, title: { display: true, text: '相对贡献 (%)', color: '#7c3aed', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    }), '拉伸法_不确定度分量');
+                }
+
+                // ---------- 详细过程 ----------
+                let detail = '【测量式】式 (2-2-9)\n';
+                detail += '  Y = 8mgLD / (π·d²·b·Δx′)\n';
+                detail += '  其中 Δx′ 是每增加 ' + num(mass, 2) + ' kg 砝码时标尺读数变化的平均值，故 m 取 ' + num(mass, 2) + ' kg。\n\n';
+
+                detail += '【仪器参数】\n';
+                detail += '  g = ' + num(g, 4) + ' m/s²，逐差对应砝码 m = ' + num(mass, 2) + ' kg\n';
+                detail += '  螺旋测微器零差 d₀ = ' + num(d0, 4) + ' mm，Δ仪 = ' + num(dinst, 4) + ' mm\n';
+                detail += '  标尺 Δ仪 = ' + num(xinst, 3) + ' mm，钢卷尺 u_B = ' + num(tape, 3) + ' mm，游标卡尺 Δ仪 = ' + num(cal, 3) + ' mm\n';
+                detail += '  单次量：L = ' + num(L, 2) + ' mm，D = ' + num(D, 2) + ' mm，b = ' + num(b, 2) + ' mm\n\n';
+
+                detail += '【① 钢丝直径】\n';
+                dv.forEach((v, i) => {
+                    detail += '  d' + (i + 1) + ' = ' + num(val('d-' + i), 4) + ' − ' + num(d0, 4) + ' = ' + num(v, 4) + ' mm\n';
+                });
+                detail += '  d̄ = ' + num(dbar, 5) + ' mm\n';
+                detail += '  A 类：S = ' + num(sD, 5) + ' mm → u_A = S/√n = ' + num(sD, 5) + '/√' + nD + ' = <span class="result-line">' + num(uAd, 5) + ' mm</span>\n';
+                detail += '  B 类：u_B = Δ仪/√3 = ' + num(dinst, 4) + '/1.7321 = <span class="result-line">' + num(uBd, 5) + ' mm</span>\n';
+                detail += '  U_d = √(u_A² + u_B²) = <span class="result-line">' + num(Ud, 5) + ' mm</span>\n';
+                detail += '  结果：d = ' + num(dbar, 4) + ' ± ' + num(Ud, 4) + ' mm\n\n';
+
+                if (dxs.length) {
+                    detail += '【② 标尺变化量（逐差法）】\n';
+                    for (let i = 0; i < 6; i++) {
+                        detail += '  x̄' + i + ' = (' + num(val('x-' + i + '-0'), 3) + ' + ' + num(val('x-' + i + '-1'), 3) + ')/2 = ' + num(xm[i], 3) + ' mm\n';
+                    }
+                    detail += '  Δx′₁ = x̄₃ − x̄₀ = ' + num(xm[3], 3) + ' − ' + num(xm[0], 3) + ' = ' + num(dxs[0], 3) + ' mm\n';
+                    detail += '  Δx′₂ = x̄₄ − x̄₁ = ' + num(xm[4], 3) + ' − ' + num(xm[1], 3) + ' = ' + num(dxs[1], 3) + ' mm\n';
+                    detail += '  Δx′₃ = x̄₅ − x̄₂ = ' + num(xm[5], 3) + ' − ' + num(xm[2], 3) + ' = ' + num(dxs[2], 3) + ' mm\n';
+                    detail += '  Δx̄′ = (' + num(dxs[0], 3) + ' + ' + num(dxs[1], 3) + ' + ' + num(dxs[2], 3) + ')/3 = <span class="result-line">' + num(dxbar, 4) + ' mm</span>\n';
+                    detail += '  A 类：S = ' + num(sX, 5) + ' mm → u_A = S/√3 = <span class="result-line">' + num(uAx, 5) + ' mm</span>\n';
+                    detail += '  B 类：u_B = ' + num(xinst, 3) + '/√3 = <span class="result-line">' + num(uBx, 5) + ' mm</span>\n';
+                    detail += '  U_Δx′ = √(u_A² + u_B²) = <span class="result-line">' + num(Udx, 5) + ' mm</span>\n';
+                    detail += '  结果：Δx′ = ' + num(dxbar, 4) + ' ± ' + num(Udx, 4) + ' mm\n\n';
+                }
+
+                if (isFinite(Y)) {
+                    detail += '【③ 弹性模量】\n';
+                    detail += '  先把各量换成国际单位：\n';
+                    detail += '    L = ' + num(Lm, 4) + ' m，D = ' + num(Dm, 4) + ' m，b = ' + num(bm, 5) + ' m\n';
+                    detail += '    d = ' + num(dm, 7) + ' m，Δx′ = ' + num(dxm, 5) + ' m\n';
+                    detail += '  Y = 8mgLD/(πd²bΔx′)\n';
+                    detail += '    = 8×' + num(mass, 2) + '×' + num(g, 4) + '×' + num(Lm, 4) + '×' + num(Dm, 4) +
+                        ' / (π×' + sci(dm * dm, 4) + '×' + num(bm, 5) + '×' + num(dxm, 5) + ')\n';
+                    detail += '    = <span class="result-line">' + sci(Y, 5) + ' N/m²</span>\n\n';
+                    detail += '【④ 不确定度】\n';
+                    detail += '  E_Y = √[(U_D/D)² + (U_L/L)² + (U_b/b)² + (2U_d/d)² + (U_Δx′/Δx′)²]\n';
+                    terms.forEach(t => {
+                        detail += '    ' + t.name + ' = ' + sci(t.v, 4) + '（占总方差 ' + num(EY > 0 ? t.v * t.v / (EY * EY) * 100 : 0, 1) + '%）\n';
+                    });
+                    detail += '  E_Y = <span class="result-line">' + num(EY * 100, 4) + ' %</span>\n';
+                    detail += '  U_Y = Y·E_Y = ' + sci(Y, 4) + ' × ' + num(EY, 5) + ' = <span class="result-line">' + sci(UY, 4) + ' N/m²</span>\n\n';
+                    detail += '【测量结果表示】\n';
+                    detail += '  Y = (' + sci(Y, 4) + ' ± ' + sci(UY, 3) + ') N/m²，E_Y = ' + num(EY * 100, 3) + '%\n\n';
+                }
+
+                detail += '【讨论】\n';
+                detail += '  1) 主导误差项：一般 2U_d/d（钢丝直径）与 U_Δx′/Δx′（标尺读数）最大，\n';
+                detail += '     因为 d 出现在公式里是平方、且 d 本身只有零点几毫米。想减小误差应多测几次直径。\n';
+                detail += '  2) 光杠杆把微小伸长放大 2D/b 倍（本实验约 ' + num(2 * D / b, 1) + ' 倍），\n';
+                detail += '     所以 D 尽量大、b 尽量小能提高灵敏度；钢卷尺 u_B 固定时，D 增大使相对分量 u_B/D 减小。\n';
+                detail += '  3) 逐差法的作用：把 x̄₀…x̄₅ 分成前后两组作差，每个逐差量跨 3 级砝码，\n';
+                detail += '     利用全部六组读数；先求相邻差再平均则会抵消为首末两点之差。\n';
+                detail += '  4) 校核：x̄–m 应线性（R² 接近 1），截距接近初始读数 x̄₀。\n';
+                detail += '  5) 钢的弹性模量标准值约 2.0×10¹¹ N/m²，可据此判断结果是否合理。\n';
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            buildXT();
+            buildDT();
+            refreshMass();
+            refreshU();
+            ['#dzero', '#tape', '#caliper'].forEach(s => on(s, 'input', () => {
+                refreshD();
+                refreshU();
+            }));
+            ['input', 'change'].forEach(event => on('#stepkg', event, refreshMass));
+            document.querySelector('.container').addEventListener('input', event => {
+                if (event.target.matches('input:not([readonly])')) {
+                    resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">数据已修改，请点击“开始计算”更新结果。</p>';
+                    destroyCharts();
+                }
+            });
+            on('#calculate-btn', 'click', calculate);
+            on('#fill-btn', 'click', () => {
+                $('#grav').value = '9.7988';
+                $('#mass').value = '3';
+                $('#dzero').value = '0.000';
+                $('#dinst').value = '0.005';
+                $('#xinst').value = '0.5';
+                $('#tape').value = '5.0';
+                $('#caliper').value = '0.02';
+                $('#stepkg').value = '1';
+                $('#len').value = '900.00';
+                $('#dist').value = '1500.00';
+                $('#arm').value = '75.00';
+                buildXT();
+                buildDT();
+                for (let i = 0; i < 6; i++) {
+                    for (let k = 0; k < 2; k++) $('#x-' + i + '-' + k).value = X_DEMO[i][k];
+                    $('#d-' + i).value = D_DEMO[i];
+                }
+                refreshX();
+                refreshD();
+                refreshMass();
+                refreshU();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            on('#clear-btn', 'click', () => {
+                if (!confirm('确定清空所有读数吗？（仪器参数保留）')) return;
+                document.querySelectorAll('input[id^="x-"], input[id^="d-"]').forEach(i => {
+                    i.value = '';
+                });
+                refreshX();
+                refreshD();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

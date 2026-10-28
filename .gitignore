@@ -1,0 +1,34 @@
+# Credentials and machine-specific settings
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+api/config.local.php
+api/secrets.php
+
+# Feedback and rate-limit runtime data; keep only the directory scaffold
+api/feedback-data/*
+!api/feedback-data/.htaccess
+!api/feedback-data/index.php
+!api/feedback-data/README.txt
+api/.image-import-rate-*
+api/image-import-rate-*
+*.log
+logs/
+
+# Local server account files and obsolete hosting/backup pages
+bashrc
+bash_profile
+bash_logout
+htaccess
+404.html
+50x.html
+index_b1.html
+index_b2.html
+*.bak
+*.old
+*~
+.DS_Store
+Thumbs.db

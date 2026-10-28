@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光栅法测光谱波长 · 光栅常数 d 与谱线波长 λ（含不确定度）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 440px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        input[readonly] {
+            background: #f0f2f5;
+            color: #667;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 4px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        table.mini td.idx {
+            color: #7a8ba3;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+        table.mini td.calc-cell {
+            font-size: 0.74rem;
+            color: #2b6ca3;
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 3px 4px;
+        }
+        .del-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0 12px;
+            font-size: 0.85rem;
+            color: #4a5d7a;
+        }
+        .checkbox-row input {
+            width: auto;
+            margin: 0;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .header h2 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔭 光栅法测光谱波长 · 光栅常数 d 与谱线波长 λ</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <b>光栅方程：</b>d·sin θ = k λ（式 2-21-1，k = 0, ±1, ±2 …）<br>
+                <b>测光栅常数：</b>已知 λ₀ → d = λ₀ / sin θ；<b>测波长：</b>已知 d → λ = d · sin θ<br>
+                <b>衍射角：</b>记录 ±1 级谱线的角位置 φ₊₁、φ₋₁，则 2θ = |φ₊₁ − φ₋₁|，θ = |φ₊₁ − φ₋₁| / 2（无需再测零级位置）
+                <svg viewBox="0 0 680 230" width="100%" style="max-width:680px;display:block;margin:10px auto 2px;">
+                    <defs>
+                        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#4b6cb7"/>
+                        </marker>
+                        <marker id="aho" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#e67e22"/>
+                        </marker>
+                    </defs>
+                    <line x1="60" y1="120" x2="640" y2="120" stroke="#c9d4e3" stroke-dasharray="5 5"/>
+                    <line x1="70" y1="120" x2="148" y2="120" stroke="#e67e22" stroke-width="2.5" marker-end="url(#aho)"/>
+                    <text x="66" y="110" font-size="12" fill="#c0651a">平行光垂直入射</text>
+                    <line x1="155" y1="42" x2="155" y2="198" stroke="#2c3e50" stroke-width="3"/>
+                    <g stroke="#2c3e50" stroke-width="1">
+                        <line x1="155" y1="42" x2="166" y2="52"/><line x1="155" y1="62" x2="166" y2="72"/>
+                        <line x1="155" y1="82" x2="166" y2="92"/><line x1="155" y1="102" x2="166" y2="112"/>
+                        <line x1="155" y1="122" x2="166" y2="132"/><line x1="155" y1="142" x2="166" y2="152"/>
+                        <line x1="155" y1="162" x2="166" y2="172"/><line x1="155" y1="182" x2="166" y2="192"/>
+                    </g>
+                    <text x="118" y="216" font-size="12" fill="#2c3e50">透射光栅 d</text>
+                    <line x1="155" y1="120" x2="612" y2="120" stroke="#27ae60" stroke-width="2.5" marker-end="url(#ah)"/>
+                    <text x="620" y="124" font-size="12" fill="#1e8c4a">0 级</text>
+                    <line x1="155" y1="120" x2="600" y2="44" stroke="#4b6cb7" stroke-width="2.5" marker-end="url(#ah)"/>
+                    <text x="612" y="40" font-size="12" fill="#33518f">+1 级</text>
+                    <line x1="155" y1="120" x2="600" y2="196" stroke="#4b6cb7" stroke-width="2.5" marker-end="url(#ah)"/>
+                    <text x="612" y="212" font-size="12" fill="#33518f">−1 级</text>
+                    <path d="M 285 120 A 130 130 0 0 0 283 97" fill="none" stroke="#8b5cf6" stroke-width="1.8"/>
+                    <text x="296" y="106" font-size="13" fill="#7c3aed" font-weight="bold">θ</text>
+                    <path d="M 285 120 A 130 130 0 0 1 283 143" fill="none" stroke="#8b5cf6" stroke-width="1.8"/>
+                    <text x="296" y="152" font-size="13" fill="#7c3aed" font-weight="bold">θ</text>
+                </svg>
+                <div style="text-align:center;font-size:0.78rem;color:#5b6e8c;">图 2-21-1　光栅衍射（多缝夫琅禾费衍射）示意图</div>
+            </div>
+
+            <div class="sub-title"><span>① 实验条件与仪器误差</span><span class="hint">角度读数到 0.01°</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>标定波长 λ₀（汞灯绿光）<span class="unit">nm</span></label>
+                    <input type="number" id="lam0" value="546.1" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>光栅常数标准值 d₀<span class="unit">μm</span></label>
+                    <input type="number" id="d-std" value="3.300" step="0.001">
+                </div>
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>测波长所用 d<span class="unit">μm</span></label>
+                    <input type="number" id="d-used" value="3.300" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>角度读数误差 Δφ<span class="unit">′</span></label>
+                    <input type="number" id="u-phi" value="1.0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>B 类分量处理</label>
+                    <select id="dist-mode">
+                        <option value="uniform" selected>均匀分布（÷√3）</option>
+                        <option value="limit">极限误差直接计入（×1）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="use-du">
+                <label for="use-du" style="font-weight:500;margin:0;">测波长时计入 d 的不确定度（若把 d 改成实测值，建议勾选）</label>
+            </div>
+            <div class="badge-note">分光计读数精确到 1′（= 0.0167°）；若仪器为 0.5′，请把 Δφ 改为 0.5。</div>
+
+            <div class="sub-title"><span>② 测定光栅常数 d（汞灯 546.1 nm 绿光）</span><span class="hint">重复测 ±1 级角位置</span></div>
+            <div id="cal-table"></div>
+            <div class="badge-note">θ = |φ₊₁ − φ₋₁| / 2，代入 d = λ₀ / sin θ；与标准值 d₀ 比较求相对误差。</div>
+
+            <div class="sub-title"><span>③ 测定未知光波波长 λ</span><span class="hint">选择谱线并重复测 ±1 级</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>待测谱线（光源）</label>
+                    <select id="line-select"></select>
+                </div>
+                <div class="input-group">
+                    <label>标准波长 λ<sub>标</sub><span class="unit">nm</span></label>
+                    <input type="number" id="lam-std" value="435.8" step="0.1">
+                </div>
+            </div>
+            <div id="unk-table"></div>
+            <div class="badge-note">λ = d · sin θ；与所选谱线标准波长 λ<sub>标</sub> 比较求相对误差。若测多条谱线，改选谱线后重新填写读数即可。</div>
+
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="reset-btn" class="ghost-btn">↺ 恢复示例数据</button>
+                <button id="clear-btn" class="ghost-btn">🗑 清空</button>
+            </div>
+        </div>
+
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const ave = a => a.reduce((x, y) => x + y, 0) / a.length;
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+            const D2R = Math.PI / 180;
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                if (typeof Chart === 'undefined') {
+                    const msg = document.createElement('div');
+                    msg.className = 'warn-msg';
+                    msg.textContent = '⚠️ 未能加载图表库（Chart.js CDN 不可达），图像已跳过，计算结果不受影响。';
+                    box.insertBefore(msg, wrap);
+                    chartBoxes.appendChild(box);
+                    return;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                try {
+                    charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(b);
+            }
+
+            // ==================== 标准谱线表 ====================
+            const LINES = [
+                { name: '汞灯 紫线 404.7 nm', lam: 404.7 },
+                { name: '汞灯 蓝线 435.8 nm', lam: 435.8 },
+                { name: '汞灯 绿线 546.1 nm', lam: 546.1 },
+                { name: '汞灯 黄线(1) 577.0 nm', lam: 577.0 },
+                { name: '汞灯 黄线(2) 579.1 nm', lam: 579.1 },
+                { name: '钠灯 黄线 D₂ 589.0 nm', lam: 589.0 },
+                { name: '钠灯 黄线 D₁ 589.6 nm', lam: 589.6 },
+                { name: '氢灯 Hα 656.3 nm', lam: 656.3 },
+                { name: '氢灯 Hβ 486.1 nm', lam: 486.1 },
+                { name: '氢灯 Hγ 434.0 nm', lam: 434.0 },
+                { name: '氢灯 Hδ 410.2 nm', lam: 410.2 },
+                { name: '自定义（手动输入标准波长）', lam: null }
+            ];
+            function buildLineSelect() {
+                const sel = $('#line-select');
+                sel.innerHTML = '';
+                LINES.forEach((l, i) => {
+                    const o = document.createElement('option');
+                    o.value = i;
+                    o.textContent = l.name;
+                    sel.appendChild(o);
+                });
+                sel.value = 1;   // 默认汞灯蓝线 435.8 nm
+            }
+
+            // ==================== 示例数据 ====================
+            // d = 3.300 μm 自洽：546.1 nm → θ ≈ 9.5252°，435.8 nm → θ ≈ 7.5887°
+            const DEMO_CAL = [[189.526, 170.474], [189.521, 170.478], [189.529, 170.473]];
+            const DEMO_UNK = [[187.589, 172.411], [187.586, 172.414], [187.591, 172.409]];
+
+            // ==================== 表格构建 ====================
+            function numInput(cls, val, step) {
+                const i = document.createElement('input');
+                i.type = 'number';
+                i.className = cls;
+                i.step = step || 'any';
+                i.value = (val === '' || val === undefined || val === null) ? '' : val;
+                return i;
+            }
+            function cell(node) {
+                const td = document.createElement('td');
+                td.appendChild(node);
+                return td;
+            }
+            function delBtn(tr, minRows) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'del-btn';
+                b.textContent = '×';
+                b.setAttribute('aria-label', '删除该行');
+                b.addEventListener('click', () => {
+                    const tb = tr.parentNode;
+                    if (tb.children.length > minRows) {
+                        tr.remove();
+                        renumber(tb);
+                        refreshLive();
+                    } else {
+                        alert('至少保留 ' + minRows + ' 行数据');
+                    }
+                });
+                return b;
+            }
+            function newTable(headHTML) {
+                const tb = document.createElement('table');
+                tb.className = 'mini';
+                tb.innerHTML = `<thead>${headHTML}</thead><tbody></tbody>`;
+                return tb;
+            }
+            function addRowBtn(body, makeRow) {
+                const add = document.createElement('button');
+                add.type = 'button';
+                add.className = 'mini-add';
+                add.textContent = '＋ 增加一行';
+                add.addEventListener('click', () => {
+                    body.appendChild(makeRow());
+                    renumber(body);
+                    refreshLive();
+                });
+                return add;
+            }
+            function renumber(body) {
+                Array.from(body.children).forEach((tr, i) => {
+                    const idx = tr.querySelector('.idx');
+                    if (idx) idx.textContent = i + 1;
+                });
+            }
+
+            // ---- ② 光栅常数表 ----
+            function buildCal() {
+                const box = $('#cal-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:12%">次数</th><th style="width:28%">φ₊₁ (°)</th><th style="width:28%">φ₋₁ (°)</th><th style="width:22%">θ (°)</th><th style="width:10%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(p, m) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    tr.appendChild(cell(numInput('in-p', p === undefined ? '' : p, '0.001')));
+                    tr.appendChild(cell(numInput('in-m', m === undefined ? '' : m, '0.001')));
+                    const cc = document.createElement('td');
+                    cc.className = 'calc-cell';
+                    cc.textContent = '—';
+                    tr.appendChild(cc);
+                    tr.appendChild(cell(delBtn(tr, 1)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_CAL.forEach(r => makeRow(r[0], r[1]));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('', '')));
+                renumber(body);
+            }
+
+            // ---- ③ 未知波长表 ----
+            function buildUnk() {
+                const box = $('#unk-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:12%">序号</th><th style="width:28%">φ₊₁ (°)</th><th style="width:28%">φ₋₁ (°)</th><th style="width:22%">θ / λ</th><th style="width:10%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(p, m) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    tr.appendChild(cell(numInput('in-p', p === undefined ? '' : p, '0.001')));
+                    tr.appendChild(cell(numInput('in-m', m === undefined ? '' : m, '0.001')));
+                    const cc = document.createElement('td');
+                    cc.className = 'calc-cell';
+                    cc.textContent = '—';
+                    tr.appendChild(cc);
+                    tr.appendChild(cell(delBtn(tr, 1)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_UNK.forEach(r => makeRow(r[0], r[1]));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('', '')));
+                renumber(body);
+            }
+
+            // ==================== 实时预览 ====================
+            function refreshLive() {
+                const lam0 = parseFloat($('#lam0').value);
+                const dUsed = parseFloat($('#d-used').value) * 1000;   // nm
+                $('#cal-table').querySelectorAll('tbody tr').forEach(tr => {
+                    const cc = tr.querySelector('.calc-cell');
+                    if (!cc) return;
+                    const p = parseFloat(tr.querySelector('.in-p').value);
+                    const m = parseFloat(tr.querySelector('.in-m').value);
+                    if (isFinite(p) && isFinite(m) && lam0 > 0) {
+                        const t = Math.abs(p - m) / 2;
+                        const s = Math.sin(t * D2R);
+                        cc.textContent = `θ=${t.toFixed(4)}° d=${(lam0 / s / 1000).toFixed(4)}μm`;
+                    } else cc.textContent = '—';
+                });
+                $('#unk-table').querySelectorAll('tbody tr').forEach(tr => {
+                    const cc = tr.querySelector('.calc-cell');
+                    if (!cc) return;
+                    const p = parseFloat(tr.querySelector('.in-p').value);
+                    const m = parseFloat(tr.querySelector('.in-m').value);
+                    if (isFinite(p) && isFinite(m) && dUsed > 0) {
+                        const t = Math.abs(p - m) / 2;
+                        const lam = dUsed * Math.sin(t * D2R);
+                        cc.textContent = `θ=${t.toFixed(4)}° λ=${lam.toFixed(2)}nm`;
+                    } else cc.textContent = '—';
+                });
+            }
+
+            function readPairs(sel) {
+                const body = $(sel).querySelector('tbody');
+                if (!body) return { pairs: [], blank: 0, n: 0 };
+                const pairs = [];
+                let blank = 0, n = 0;
+                Array.from(body.children).forEach(tr => {
+                    n++;
+                    const p = parseFloat(tr.querySelector('.in-p').value);
+                    const m = parseFloat(tr.querySelector('.in-m').value);
+                    if (isFinite(p) && isFinite(m)) pairs.push({ p, m });
+                    else blank++;
+                });
+                return { pairs, blank, n };
+            }
+
+            function uConf() {
+                return $('#dist-mode').value === 'uniform' ? 1 / Math.sqrt(3) : 1;
+            }
+
+            // ==================== 主计算 ====================
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const lam0 = parseFloat($('#lam0').value);              // nm
+                const dStd = parseFloat($('#d-std').value);             // μm
+                const dUsedUm = parseFloat($('#d-used').value);         // μm
+                const dUsed = dUsedUm * 1000;                           // nm
+                const dPhiMin = parseFloat($('#u-phi').value) || 0;     // 角分
+                const useDU = $('#use-du').checked;
+                if (!(lam0 > 0)) return alert('请填写标定波长 λ₀（nm）');
+                if (!(dUsed > 0)) return alert('请填写测波长所用的光栅常数 d（μm）');
+
+                // 单个读数标准不确定度（弧度）→ θ = |φ₊₁−φ₋₁|/2，故 u(θ) = √2/2·u(φ)
+                const uPhiRad = (dPhiMin / 60) * D2R * uConf();
+                const uThetaB = Math.SQRT2 / 2 * uPhiRad;               // rad
+
+                const warnings = [];
+                const cal = readPairs('#cal-table');
+                const unk = readPairs('#unk-table');
+
+                if (cal.blank > 0) warnings.push('光栅常数测定表中有空白行，已忽略。');
+                if (unk.blank > 0) warnings.push('未知波长测定表中有空白行，已忽略。');
+
+                // ---------- ② 光栅常数 ----------
+                let calRes = null;
+                if (cal.pairs.length >= 1) {
+                    const thetas = cal.pairs.map(o => Math.abs(o.p - o.m) / 2);       // deg
+                    const ds = thetas.map(t => lam0 / Math.sin(t * D2R));             // nm
+                    const thMean = ave(thetas);
+                    const sinMean = Math.sin(thMean * D2R);
+                    const dMean = lam0 / sinMean;                                     // nm
+                    const n = thetas.length;
+                    const sTh = n > 1 ? Math.sqrt(thetas.reduce((a, t) => a + (t - thMean) ** 2, 0) / (n - 1)) : 0;
+                    const uThA = (n > 1 ? sTh / Math.sqrt(n) : 0) * D2R;              // rad
+                    const uTh = Math.hypot(uThA, uThetaB);                            // rad
+                    const cotTh = Math.cos(thMean * D2R) / sinMean;
+                    const uD = dMean * Math.abs(cotTh) * uTh;                         // nm
+                    const relErr = (dMean - dStd * 1000) / (dStd * 1000) * 100;       // %
+                    calRes = { pairs: cal.pairs, thetas, ds, thMean, sinMean, dMean, dMeanUm: dMean / 1000, uD, uDUm: uD / 1000, uTh, uThA, uThetaB, n, sTh, relErr };
+                    if (dMean / 1000 < 1 || dMean / 1000 > 20) warnings.push(`测得 d = ${num(dMean / 1000, 4)} μm 偏离常见光栅常数（1~20 μm）较多，请检查波长、角度读数与单位。`);
+                }
+
+                // ---------- ③ 未知波长 ----------
+                let unkRes = null;
+                if (unk.pairs.length >= 1) {
+                    const thetas = unk.pairs.map(o => Math.abs(o.p - o.m) / 2);
+                    const lams = thetas.map(t => dUsed * Math.sin(t * D2R));
+                    const thMean = ave(thetas);
+                    const lamMean = dUsed * Math.sin(thMean * D2R);
+                    const n = thetas.length;
+                    const sTh = n > 1 ? Math.sqrt(thetas.reduce((a, t) => a + (t - thMean) ** 2, 0) / (n - 1)) : 0;
+                    const uThA = (n > 1 ? sTh / Math.sqrt(n) : 0) * D2R;
+                    const uTh = Math.hypot(uThA, uThetaB);
+                    const cotTh = Math.cos(thMean * D2R) / Math.sin(thMean * D2R);
+                    const relD = (useDU && calRes && calRes.dMean > 0) ? calRes.uD / calRes.dMean : 0;
+                    const uLam = lamMean * Math.hypot(relD, Math.abs(cotTh) * uTh);
+                    const lamStd = parseFloat($('#lam-std').value);
+                    const relErr = isFinite(lamStd) && lamStd > 0 ? (lamMean - lamStd) / lamStd * 100 : NaN;
+                    unkRes = { pairs: unk.pairs, thetas, lams, thMean, lamMean, uLam, uTh, uThA, uThetaB, n, sTh, lamStd, relErr, relD, useDU };
+                    if (!(lamMean > 200 && lamMean < 1100)) warnings.push(`测得 λ = ${num(lamMean, 2)} nm 超出可见光/近红外范围（200~1100 nm），请检查 d、角度读数与单位。`);
+                }
+
+                if (!calRes && !unkRes) {
+                    resultOutput.innerHTML = `<h3 class="result-title">光栅衍射计算结果</h3>
+                        <div class="warn-msg">没有可用的数据：请至少填写一组 ±1 级角位置读数。</div>`;
+                    return;
+                }
+
+                // ==================== 结果面板 ====================
+                const lineName = LINES[Number($('#line-select').value)] ? LINES[Number($('#line-select').value)].name : '—';
+                let html = `<h3 class="result-title">光栅衍射计算结果</h3>`;
+                if (warnings.length) html += warnings.map(w => `<div class="warn-msg">⚠️ ${w}</div>`).join('');
+
+                html += `<div class="result-item"><h4>实验条件 <span class="tag theory">已知量</span></h4>
+                    <div class="result-value">λ₀ = ${num(lam0, 1)} nm，d₀ = ${num(dStd, 3)} μm，d<sub>用</sub> = ${num(dUsedUm, 3)} μm</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    光栅方程 d·sin θ = k λ（式 2-21-1，本实验取 k = ±1）；角度读数误差 Δφ = ${num(dPhiMin, 2)}′，B 类分量按${$('#dist-mode').value === 'uniform' ? '均匀分布 ÷√3' : '极限误差直接计入'}处理</div></div>`;
+
+                // ② 光栅常数
+                if (calRes) {
+                    html += `<div class="result-item"><h4>② 光栅常数 d <span class="tag exp">d = λ₀ / sin θ</span></h4>
+                        <div class="result-value">d = ${num(calRes.dMeanUm, 4)} μm</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        各次 θ：${calRes.thetas.map(t => num(t, 4)).join('、')}°　→　θ̄ = ${num(calRes.thMean, 4)}°，sin θ̄ = ${num(calRes.sinMean, 6)}<br>
+                        d = λ₀/sin θ̄ = ${num(lam0, 1)} / ${num(calRes.sinMean, 6)} = ${num(calRes.dMean, 2)} nm = ${num(calRes.dMeanUm, 4)} μm<br>
+                        与标准值 ${num(dStd, 3)} μm 的相对误差 = ${num(calRes.relErr, 3)} %</div>
+                        <table class="mini" style="margin-top:8px;">
+                            <thead><tr><th>次数</th><th>φ₊₁ (°)</th><th>φ₋₁ (°)</th><th>θ (°)</th><th>sin θ</th><th>d (μm)</th></tr></thead>
+                            <tbody>${calRes.pairs.map((o, i) => `<tr><td>${i + 1}</td><td>${num(o.p, 3)}</td><td>${num(o.m, 3)}</td>
+                                <td>${num(calRes.thetas[i], 4)}</td><td>${num(Math.sin(calRes.thetas[i] * D2R), 6)}</td><td>${num(calRes.ds[i] / 1000, 4)}</td></tr>`).join('')}
+                            <tr><td><b>平均</b></td><td>—</td><td>—</td><td><b>${num(calRes.thMean, 4)}</b></td><td><b>${num(calRes.sinMean, 6)}</b></td><td><b>${num(calRes.dMeanUm, 4)}</b></td></tr></tbody>
+                        </table></div>`;
+                }
+
+                // ③ 未知波长
+                if (unkRes) {
+                    html += `<div class="result-item"><h4>③ 未知谱线波长 λ <span class="tag exp">λ = d · sin θ</span></h4>
+                        <div class="result-value">λ = ${num(unkRes.lamMean, 2)} nm</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        待测谱线：${lineName}　标准波长 λ<sub>标</sub> = ${isFinite(unkRes.lamStd) ? num(unkRes.lamStd, 1) : '—'} nm<br>
+                        各次 θ：${unkRes.thetas.map(t => num(t, 4)).join('、')}°　→　θ̄ = ${num(unkRes.thMean, 4)}°<br>
+                        λ = d·sin θ̄ = ${num(dUsed, 1)} × ${num(Math.sin(unkRes.thMean * D2R), 6)} = ${num(unkRes.lamMean, 2)} nm<br>
+                        与标准值的相对误差 = ${isFinite(unkRes.relErr) ? num(unkRes.relErr, 3) + ' %' : '—'}</div>
+                        <table class="mini" style="margin-top:8px;">
+                            <thead><tr><th>序号</th><th>φ₊₁ (°)</th><th>φ₋₁ (°)</th><th>θ (°)</th><th>λ (nm)</th></tr></thead>
+                            <tbody>${unkRes.pairs.map((o, i) => `<tr><td>${i + 1}</td><td>${num(o.p, 3)}</td><td>${num(o.m, 3)}</td>
+                                <td>${num(unkRes.thetas[i], 4)}</td><td>${num(unkRes.lams[i], 2)}</td></tr>`).join('')}
+                            <tr><td><b>平均</b></td><td>—</td><td>—</td><td><b>${num(unkRes.thMean, 4)}</b></td><td><b>${num(unkRes.lamMean, 2)}</b></td></tr></tbody>
+                        </table></div>`;
+                }
+
+                if (calRes) html += `<div class="result-equation">d = (${num(calRes.dMeanUm, 4)} ± ${num(calRes.uDUm, 4)}) μm</div>`;
+                if (unkRes) html += `<div class="result-equation">λ = (${num(unkRes.lamMean, 2)} ± ${num(unkRes.uLam, 2)}) nm</div>`;
+
+                // ---------- 不确定度 ----------
+                html += `<div class="uncertainty-box"><h4>📐 不确定度分析</h4>
+                    <div style="font-size:0.85rem;">
+                        θ = |φ₊₁ − φ₋₁|/2，两读数独立 → u(θ) = √2/2 · u(φ)；<br>
+                        d = λ₀/sin θ → u(d)/d = |cot θ|·u(θ)；λ = d·sin θ → u(λ)/λ = √[(u(d)/d)² + (cot θ·u(θ))²]。
+                    </div>
+                    <table>
+                        <thead><tr><th>量</th><th>平均值</th><th>u<sub>A</sub>（角度散布）</th><th>u<sub>B</sub>（读数误差）</th><th>结果 ± u</th><th>u<sub>r</sub></th></tr></thead>
+                        <tbody>
+                            ${calRes ? `<tr><td>d (μm)</td><td>${num(calRes.dMeanUm, 4)}</td>
+                                <td>${sci(calRes.uThA, 3)} rad</td><td>${sci(calRes.uThetaB, 3)} rad</td>
+                                <td>${num(calRes.dMeanUm, 4)} ± ${num(calRes.uDUm, 4)}</td><td>${sci(calRes.uD / calRes.dMean, 3)}</td></tr>` : ''}
+                            ${unkRes ? `<tr><td>λ (nm)</td><td>${num(unkRes.lamMean, 2)}</td>
+                                <td>${sci(unkRes.uThA, 3)} rad</td><td>${sci(unkRes.uThetaB, 3)} rad</td>
+                                <td>${num(unkRes.lamMean, 2)} ± ${num(unkRes.uLam, 2)}</td><td>${sci(unkRes.uLam / unkRes.lamMean, 3)}</td></tr>` : ''}
+                        </tbody>
+                    </table>
+                    <div style="margin-top:8px;font-size:0.82rem;color:#9a7d0a;">
+                    💡 衍射角 θ 越大，|cot θ| 越小、波长分辨越好：测量时应尽量用<b>较高级次</b>或让 ±1 级谱线尽量分开（即光栅常数 d 略小些），以减小角度误差对结果的影响。
+                    </div>
+                </div>`;
+
+                resultOutput.innerHTML = html;
+
+                // ==================== 图像 ====================
+                if (calRes) {
+                    addChartBox('📊 图1 · 光栅常数 d 的逐次测量值与标准值对比', () => {
+                        const labels = calRes.ds.map((_, i) => `第 ${i + 1} 次`);
+                        const vals = calRes.ds.map(v => v / 1000);
+                        const lo = Math.min(...vals, dStd), hi = Math.max(...vals, dStd);
+                        return {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '测得 d (μm)',
+                                    data: vals,
+                                    backgroundColor: '#4b6cb7',
+                                    borderRadius: 6,
+                                    order: 2
+                                }, {
+                                    label: `标准值 ${num(dStd, 3)} μm`,
+                                    data: labels.map(() => dStd),
+                                    type: 'line',
+                                    borderColor: '#e67e22',
+                                    borderDash: [6, 4],
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    fill: false,
+                                    order: 1
+                                }]
+                            },
+                            options: barOpts('测量次序', '光栅常数 d (μm)', lo, hi, dStd, 'μm')
+                        };
+                    }, '光栅常数_d');
+                }
+                if (unkRes) {
+                    addChartBox('📊 图2 · 待测谱线波长的逐次测量值与标准值对比', () => {
+                        const labels = unkRes.lams.map((_, i) => `第 ${i + 1} 次`);
+                        const vals = unkRes.lams.slice();
+                        const std = isFinite(unkRes.lamStd) ? unkRes.lamStd : ave(vals);
+                        const lo = Math.min(...vals, std), hi = Math.max(...vals, std);
+                        return {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '测得 λ (nm)',
+                                    data: vals,
+                                    backgroundColor: '#27ae60',
+                                    borderRadius: 6,
+                                    order: 2
+                                }, {
+                                    label: `标准值 ${num(std, 1)} nm`,
+                                    data: labels.map(() => std),
+                                    type: 'line',
+                                    borderColor: '#e67e22',
+                                    borderDash: [6, 4],
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    fill: false,
+                                    order: 1
+                                }]
+                            },
+                            options: barOpts('测量次序', '波长 λ (nm)', lo, hi, std, 'nm')
+                        };
+                    }, '未知波长_λ');
+                }
+
+                // sinθ–λ 关系图（式 2-21-1 的线性形式）
+                addChartBox('📈 图3 · sin θ 与 λ 的线性关系（直线斜率 = 1/d）', () => {
+                    const dRef = calRes ? calRes.dMean : dUsed;   // nm
+                    const linePts = [];
+                    for (let l = 380; l <= 700; l += 20) linePts.push({ x: l, y: l / dRef });
+                    const pts = [];
+                    if (calRes) pts.push({ x: lam0, y: Math.sin(calRes.thMean * D2R), lbl: 'λ₀ 标定点' });
+                    if (unkRes) pts.push({ x: unkRes.lamMean, y: Math.sin(unkRes.thMean * D2R), lbl: '待测谱线' });
+                    return {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: `理论直线 sin θ = λ/d（d = ${num(dRef / 1000, 4)} μm）`,
+                                data: linePts,
+                                type: 'line',
+                                borderColor: '#e67e22',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false
+                            }, {
+                                label: '实测点',
+                                data: pts,
+                                backgroundColor: '#4b6cb7',
+                                pointRadius: 6,
+                                showLine: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            scales: {
+                                x: { type: 'linear', title: { display: true, text: '波长 λ (nm)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                                y: { title: { display: true, text: 'sin θ', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                            },
+                            plugins: {
+                                legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => c.datasetIndex === 0
+                                            ? `λ=${num(c.parsed.x, 1)} nm → sinθ=${num(c.parsed.y, 5)}`
+                                            : `${c.raw.lbl || ''}：λ=${num(c.parsed.x, 1)} nm，sinθ=${num(c.parsed.y, 5)}`
+                                    }
+                                }
+                            }
+                        }
+                    };
+                }, 'sinθ-λ关系');
+
+                // ==================== 详细过程 ====================
+                let detail = '';
+                detail += `【实验条件】\n`;
+                detail += `  标定波长 λ₀ = ${num(lam0, 2)} nm（汞灯绿光，已知）\n`;
+                detail += `  光栅常数标准值 d₀ = ${num(dStd, 4)} μm；测波长所用 d = ${num(dUsedUm, 4)} μm\n`;
+                detail += `  角度读数误差 Δφ = ${num(dPhiMin, 3)}′ = ${sci((dPhiMin / 60) * D2R, 4)} rad\n`;
+                detail += `  B 类分量处理：${$('#dist-mode').value === 'uniform' ? '均匀分布，除以 √3' : '极限误差直接计入'}\n`;
+                detail += `  待测谱线：${lineName}，标准波长 λ标 = ${isFinite(parseFloat($('#lam-std').value)) ? num(parseFloat($('#lam-std').value), 2) : '—'} nm\n\n`;
+
+                if (calRes) {
+                    detail += `【② 光栅常数 d 的测定 · d = λ₀/sin θ（式 2-21-1 取 k=1）】\n`;
+                    detail += `  衍射角 θ = |φ₊₁ − φ₋₁|/2（两读数之差为 2θ）\n`;
+                    calRes.pairs.forEach((o, i) => {
+                        detail += `    第 ${i + 1} 次：φ₊₁ = ${num(o.p, 3)}°，φ₋₁ = ${num(o.m, 3)}° → 2θ = ${num(Math.abs(o.p - o.m), 3)}° → θ = ${num(calRes.thetas[i], 4)}°，sin θ = ${num(Math.sin(calRes.thetas[i] * D2R), 6)}，d = ${num(calRes.ds[i] / 1000, 4)} μm\n`;
+                    });
+                    detail += `  θ̄ = ${num(calRes.thMean, 5)}°，sin θ̄ = ${num(calRes.sinMean, 7)}\n`;
+                    detail += `  d = λ₀/sin θ̄ = ${num(lam0, 2)}/${num(calRes.sinMean, 7)} = <span class="result-line">${num(calRes.dMean, 3)} nm = ${num(calRes.dMeanUm, 5)} μm</span>\n`;
+                    detail += `  相对误差 = |d − d₀|/d₀ = |${num(calRes.dMeanUm, 5)} − ${num(dStd, 4)}|/${num(dStd, 4)} = <span class="result-line">${num(Math.abs(calRes.relErr), 3)} %</span>\n`;
+                    detail += `  不确定度：\n`;
+                    detail += `    A 类：θ 的散布 s(θ) = ${num(calRes.sTh, 5)}° → u_A(θ) = s/√n = ${num(calRes.sTh / Math.sqrt(calRes.n), 5)}° = ${sci(calRes.uThA, 4)} rad\n`;
+                    detail += `    B 类：u(φ) = ${sci((dPhiMin / 60) * D2R, 4)} rad${$('#dist-mode').value === 'uniform' ? '（已 ÷√3）' : ''}，u_B(θ) = (√2/2)u(φ) = ${sci(calRes.uThetaB, 4)} rad\n`;
+                    detail += `    u(θ) = √(u_A²+u_B²) = ${sci(calRes.uTh, 4)} rad\n`;
+                    detail += `    u(d) = d·|cot θ|·u(θ) = ${num(calRes.dMean, 3)} × ${num(Math.abs(Math.cos(calRes.thMean * D2R) / calRes.sinMean), 4)} × ${sci(calRes.uTh, 4)} = <span class="result-line">${num(calRes.uD, 3)} nm = ${num(calRes.uDUm, 5)} μm</span>\n`;
+                    detail += `    d = <span class="result-line">(${num(calRes.dMeanUm, 5)} ± ${num(calRes.uDUm, 5)}) μm</span>\n\n`;
+                }
+
+                if (unkRes) {
+                    detail += `【③ 未知波长的测定 · λ = d·sin θ】\n`;
+                    unkRes.pairs.forEach((o, i) => {
+                        detail += `    第 ${i + 1} 次：φ₊₁ = ${num(o.p, 3)}°，φ₋₁ = ${num(o.m, 3)}° → θ = ${num(unkRes.thetas[i], 4)}° → λ = ${num(unkRes.lams[i], 2)} nm\n`;
+                    });
+                    detail += `  θ̄ = ${num(unkRes.thMean, 5)}°，sin θ̄ = ${num(Math.sin(unkRes.thMean * D2R), 7)}\n`;
+                    detail += `  λ = d·sin θ̄ = ${num(dUsed, 2)} × ${num(Math.sin(unkRes.thMean * D2R), 7)} = <span class="result-line">${num(unkRes.lamMean, 3)} nm</span>\n`;
+                    detail += `  相对误差 = |λ − λ标|/λ标 = <span class="result-line">${isFinite(unkRes.relErr) ? num(Math.abs(unkRes.relErr), 3) + ' %' : '—'}</span>\n`;
+                    detail += `  不确定度：\n`;
+                    detail += `    A 类：u_A(θ) = ${sci(unkRes.uThA, 4)} rad；B 类：u_B(θ) = ${sci(unkRes.uThetaB, 4)} rad\n`;
+                    detail += `    u(θ) = ${sci(unkRes.uTh, 4)} rad\n`;
+                    detail += `    ${unkRes.useDU && calRes ? `计入 d 的不确定度：u(d)/d = ${sci(calRes.uD / calRes.dMean, 4)}\n    ` : ''}u(λ)/λ = √[(u_d/d)² + (cot θ·u_θ)²] = ${sci(unkRes.uLam / unkRes.lamMean, 4)}\n`;
+                    detail += `    λ = <span class="result-line">(${num(unkRes.lamMean, 2)} ± ${num(unkRes.uLam, 2)}) nm</span>\n\n`;
+                }
+
+                detail += `【讨论与注意】\n`;
+                detail += `  1) 光栅必须垂直于入射平行光：调好光栅后，左右两侧 ±1 级谱线的读数应对称，若明显不对称说明光栅未调正；\n`;
+                detail += `  2) 读数要取 +1 级与 −1 级两侧同一谱线，用 2θ = |φ₊₁ − φ₋₁| 求衍射角，可自动消除刻度盘偏心差；\n`;
+                detail += `  3) 汞灯黄线 577.0 nm 与 579.1 nm 相距很近，作为一条"黄线"（约 578 nm）观察时不易分开，需用较高分辨的仪器；\n`;
+                detail += `  4) 衍射角越大（k 越高、d 越小）测量越精确；但高级次谱线较弱，需兼顾可见度；\n`;
+                detail += `  5) 切勿用手触摸光栅表面；光栅片轻薄，放置和取用时要小心，不要坠落；\n`;
+                detail += `  6) 本实验只用到 k = ±1 级，式（2-21-1）中 k 取 1，故 d = λ/sin θ、λ = d·sin θ。\n`;
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            function barOpts(xTitle, yTitle, lo, hi, std, unit) {
+                const pad = Math.max((hi - lo) * 1.5, hi * 0.002, 0.0005);
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 300 },
+                    scales: {
+                        x: { title: { display: true, text: xTitle, color: '#4b6cb7', font: { weight: 'bold' } }, grid: { display: false }, ticks: { font: { size: 11 } } },
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: lo - pad,
+                            suggestedMax: hi + pad,
+                            title: { display: true, text: yTitle, color: '#4b6cb7', font: { weight: 'bold' } },
+                            grid: { color: '#eef2f7' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } } }
+                    }
+                };
+            }
+
+            // ==================== 事件绑定 ====================
+            buildLineSelect();
+            buildCal();
+            buildUnk();
+            refreshLive();
+
+            $('#line-select').addEventListener('change', () => {
+                const l = LINES[Number($('#line-select').value)];
+                if (l && l.lam !== null) $('#lam-std').value = l.lam;
+            });
+            document.addEventListener('input', e => {
+                if (e.target && (e.target.classList.contains('in-p') || e.target.classList.contains('in-m') ||
+                    e.target.id === 'lam0' || e.target.id === 'd-used')) {
+                    refreshLive();
+                }
+            });
+            $('#calculate-btn').addEventListener('click', calculate);
+            $('#reset-btn').addEventListener('click', () => {
+                $('#lam0').value = '546.1';
+                $('#d-std').value = '3.300';
+                $('#d-used').value = '3.300';
+                $('#u-phi').value = '1.0';
+                $('#dist-mode').value = 'uniform';
+                $('#use-du').checked = false;
+                $('#line-select').value = 1;
+                $('#lam-std').value = '435.8';
+                buildCal();
+                buildUnk();
+                refreshLive();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            $('#clear-btn').addEventListener('click', () => {
+                if (!confirm('确定清空全部读数吗？（参数保留）')) return;
+                ['#cal-table', '#unk-table'].forEach(sel => {
+                    const body = $(sel).querySelector('tbody');
+                    if (!body) return;
+                    Array.from(body.children).forEach(tr => {
+                        tr.querySelectorAll('input').forEach(i => { i.value = ''; });
+                    });
+                });
+                refreshLive();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

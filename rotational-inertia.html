@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刚体转动惯量 · 角加速度记录与平行轴验证</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0 8px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 4px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        .del-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .add-btn {
+            padding: 9px 18px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 360px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 1.15rem;
+            }
+        }
+
+        .measurement-table { overflow-x:auto; margin:10px 0 16px; }
+        .beta-table { min-width:430px; }
+        .beta-table input, .beta-table select { min-width:74px; }
+        .beta-table td:nth-child(2) { white-space:nowrap; font-size:.76rem; }
+        .beta-table td:nth-child(3) { width:70px; }
+        .beta-table th:first-child { min-width:27px; }
+        .parallel-card { padding:12px; border:1px solid #dce5ef; border-radius:8px; margin-top:12px; background:#f8faff; }
+        .parallel-card h4 { margin-bottom:10px; color:#405a80; }
+        .uncertainty-settings { margin:12px 0; padding:10px; background:#f4f7fb; border-radius:8px; }
+        summary { cursor:pointer; font-weight:600; color:#405a80; }
+        .uncertainty-settings .grid2 { margin-top:10px; }
+        .empty-result { color:#6b7c93; padding:25px 0; }
+        .main-value { color:#254879; font-weight:700; font-size:1.15rem; overflow-wrap:anywhere; }
+        .result-item p { margin-top:5px; font-size:.84rem; }
+        .warn-msg ul { padding-left:20px; }
+        .calculation-details { margin-top:16px; }
+        .calculation-details pre { white-space:pre-wrap; overflow-wrap:anywhere; font: .8rem/1.7 Consolas, monospace; margin-top:10px; }
+        .inertia-chart { height:300px; position:relative; }
+        .chart-box { margin:14px 0; padding:12px; border:1px solid #e3e9f2; border-radius:8px; }
+        .btn-row { flex-wrap:wrap; }
+        .sub-title h4 { font-size:inherit; }
+        .mass-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0; }
+        .mass-actions button:disabled { opacity:.5; cursor:not-allowed; }
+        .mass-label { display:block; font-size:.75rem; margin-top:4px; }
+        .beta-table .measurement-mass { min-width:112px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>⚙️ 刚体转动惯量 · 恒力矩转动法</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel" id="inertia-inputs">
+            <h3 class="panel-title">📋 参数与角加速度记录</h3>
+            <div class="instructions">
+                每组直接记录<b>有动力、无动力</b>两个角加速度，单位均为 rad/s²。
+                有动力填正值；无动力为减速段，可填负值或减速度大小，计算时统一取 −|β无|。<br>
+                沿用恒力矩公式：<b>J = mR(g − Rβ有) / (β有 + |β无|)</b>；试样转动惯量为加载后的总惯量减去空台平均惯量。
+            </div>
+            <p class="badge-note">质量填写挂盘与砝码的总质量。例如挂盘 43 g，加 5、10、20 g 时应分别填 48、53、63 g。</p><button type="button" class="mini-add" id="actual-masses-btn">填入前三档：43 g 挂盘＋5 / 10 / 20 g 砝码</button>
+            <section aria-labelledby="constants-title">
+                <h4 id="constants-title">🔧 仪器参数与砝码质量档</h4>
+                <div class="grid3" id="mass-input-list">
+                    <div class="input-group mass-entry"><label for="mass-1-g">第 1 档总质量 m₁ <span class="unit">g</span></label><input type="number" id="mass-1-g" class="mass-input" min="0" step="any" placeholder="砝码＋挂钩"></div>
+                    <div class="input-group mass-entry"><label for="mass-2-g">第 2 档总质量 m₂ <span class="unit">g</span></label><input type="number" id="mass-2-g" class="mass-input" min="0" step="any" placeholder="砝码＋挂钩"></div>
+                    <div class="input-group mass-entry"><label for="mass-3-g">第 3 档总质量 m₃ <span class="unit">g</span></label><input type="number" id="mass-3-g" class="mass-input" min="0" step="any" placeholder="砝码＋挂钩"></div>
+                </div>
+                <div class="mass-actions"><button type="button" class="mini-add" id="add-mass-btn">+ 添加质量档</button><button type="button" class="mini-add" id="remove-mass-btn" disabled>删除末尾质量档</button></div>
+                <p class="badge-note" id="mass-status" aria-live="polite">可继续添加 m₄、m₅ 等质量档，并在下方各组中选择。</p>
+                <div class="input-group"><label for="gravity">重力加速度 g <span class="unit">m/s²</span></label><input type="number" id="gravity" value="9.794" min="0" step="any"></div>
+                <div class="badge-note">质量填写砝码与挂钩/托盘的<b>实际总质量</b>，不会自动加上挂钩质量。内置塔轮半径为 20、25 mm。</div>
+                <details class="uncertainty-settings"><summary>不确定度参数</summary>
+                    <div class="grid2">
+                        <div class="input-group"><label for="u-mass">质量标准不确定度 u(m) <span class="unit">kg</span></label><input type="number" id="u-mass" value="0.0001" min="0" step="any"></div>
+                        <div class="input-group"><label for="u-radius-mm">塔轮半径标准不确定度 u(R) <span class="unit">mm</span></label><input type="number" id="u-radius-mm" value="0.05" min="0" step="any"></div>
+                        <div class="input-group"><label for="u-powered">有动力角加速度标准不确定度 <span class="unit">rad/s²</span></label><input type="number" id="u-powered" value="0" min="0" step="any"></div>
+                        <div class="input-group"><label for="u-free">无动力角加速度标准不确定度 <span class="unit">rad/s²</span></label><input type="number" id="u-free" value="0" min="0" step="any"></div>
+                    </div>
+                    <p class="badge-note">填标准不确定度；0 表示该分量未计入。仅有一组有效测量时，无法估计重复测量的 A 类不确定度。</p>
+                </details>
+            </section>
+            <section aria-labelledby="empty-title">
+                <div class="sub-title"><h4 id="empty-title">阶段 1 · 空转台（3 组）</h4><span class="hint">每组可选择质量档，默认 m₁、m₂、m₃</span></div>
+                <p class="badge-note">每组塔轮半径可选 20 或 25 mm。由有效组的转动惯量取平均，得到空台 J₀。</p>
+                <div class="measurement-table" id="box-empty"></div>
+            </section>
+            <section aria-labelledby="disk-title">
+                <div class="sub-title"><h4 id="disk-title">阶段 2 · 圆盘（6 组）</h4><span class="hint">每组可选质量档；塔轮为 20、25 mm</span></div>
+                <div class="grid2">
+                    <div class="input-group"><label for="disk-mass-g">圆盘质量 M盘 <span class="unit">g</span></label><input type="number" id="disk-mass-g" value="486" min="0" step="any"></div>
+                    <div class="input-group"><label for="disk-radius-mm">圆盘半径 r盘 <span class="unit">mm</span></label><input type="number" id="disk-radius-mm" value="100" min="0" step="any"></div>
+                </div>
+                <div class="badge-note">理论值：J盘 = ½M盘 r盘²。表内角加速度为放上圆盘后的实测值。</div>
+                <div class="measurement-table" id="box-disk"></div>
+            </section>
+            <section aria-labelledby="ring-title">
+                <div class="sub-title"><h4 id="ring-title">阶段 3 · 圆环（6 组）</h4><span class="hint">每组可选质量档；塔轮为 20、25 mm</span></div>
+                <div class="grid3">
+                    <div class="input-group"><label for="ring-mass-g">圆环质量 M环 <span class="unit">g</span></label><input type="number" id="ring-mass-g" value="460" min="0" step="any"></div>
+                    <div class="input-group"><label for="ring-inner-mm">内半径 r内 <span class="unit">mm</span></label><input type="number" id="ring-inner-mm" value="90" min="0" step="any"></div>
+                    <div class="input-group"><label for="ring-outer-mm">外半径 r外 <span class="unit">mm</span></label><input type="number" id="ring-outer-mm" value="100" min="0" step="any"></div>
+                </div>
+                <div class="badge-note">理论值：J环 = ½M环(r内² + r外²)。表内角加速度为放上圆环后的实测值。</div>
+                <div class="measurement-table" id="box-ring"></div>
+            </section>
+            <section aria-labelledby="parallel-title">
+                <div class="sub-title"><h4 id="parallel-title">阶段 4 · 平行轴定理（2 组）</h4><span class="hint">两个相同圆柱：对称摆放 → 平移其中一个</span></div>
+                <div class="input-group"><label for="cyl-mass-g">单个圆柱质量 m柱 <span class="unit">g</span></label><input type="number" id="cyl-mass-g" value="170" min="0" step="any"></div>
+                <div class="instructions">两次测量保持其他装置不变，仅平移一个圆柱。d₁、d₂ 分别为<b>圆柱 1、圆柱 2 的中心到转台圆心的距离</b>，不是两圆柱之间的距离。<br>比较 ΔJ实测 = J后 − J前 与 ΔJ理论 = m柱[(d₁后² + d₂后²) − (d₁前² + d₂前²)]。</div>
+                <div id="box-parallel"></div>
+            </section>
+            <div class="btn-row"><button id="calculate-btn" class="calculate-btn" type="button">🚀 开始计算</button><button id="clear-btn" class="ghost-btn" type="button">清空测量</button></div>
+            <button id="demo-btn" class="mini-add" type="button">填入演示数据</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果与详细步骤</h3>
+            <div id="result-output" class="result-output" aria-live="polite"><p class="empty-result">👈 填写角加速度后点击“开始计算”</p></div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+    <script>
+(() => {
+    'use strict';
+    const $ = selector => document.querySelector(selector);
+    const groups = { empty: [], disk: [], ring: [] };
+    const titles = { empty: '空转台', disk: '圆盘', ring: '圆环' };
+    const charts = [];
+    const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length;
+    const sci = value => Number.isFinite(value) ? value.toExponential(5) : '—';
+    const fixed = (value, digits = 3) => Number.isFinite(value) ? value.toFixed(digits) : '—';
+    const inputValue = id => {
+        const raw = $('#' + id)?.value.trim();
+        return raw === undefined || raw === '' ? null : Number(raw);
+    };
+    const positive = value => Number.isFinite(value) && value > 0;
+    const same = (a, b) => Math.abs(a - b) < 1e-8;
+    const radiusSelect = id => `<select id="${id}" aria-label="塔轮半径 R (mm)"><option value="20">20</option><option value="25">25</option></select>`;
+    const subscript = value => String(value).replace(/\d/g, digit => '₀₁₂₃₄₅₆₇₈₉'[Number(digit)]);
+    const massInputs = () => [...document.querySelectorAll('#mass-input-list .mass-input')];
+    const massIndex = input => Number(input.id.match(/^mass-(\d+)-g$/)[1]);
+    const massSelect = (id, selected=1) => `<select id="${id}" class="measurement-mass" aria-label="本组砝码质量档">${massInputs().map(input=>`<option value="${massIndex(input)}"${massIndex(input)===selected?' selected':''}>m${subscript(massIndex(input))}</option>`).join('')}</select>`;
+
+    for (const kind of Object.keys(groups)) {
+        const table = document.createElement('table');
+        table.className = 'mini beta-table';
+        table.innerHTML = '<thead><tr><th>组</th><th>砝码总质量<br>g</th><th>塔轮 R<br>mm</th><th>有动力 β有<br>rad/s²</th><th>无动力 β无<br>rad/s²</th></tr></thead><tbody></tbody>';
+        const radii = kind === 'empty' ? [null] : [20, 25];
+        let index = 0;
+        for (const radius of radii) for (let mass = 1; mass <= 3; mass++) {
+            const prefix = kind + '-' + (++index);
+            groups[kind].push({ prefix, mass, radius, label: titles[kind] + '第 ' + index + ' 组' });
+            const tr = document.createElement('tr');
+            tr.dataset.measurement = prefix;
+            tr.innerHTML = `<th scope="row">${index}</th><td>${massSelect(prefix + '-mass', mass)}<span class="mass-label" data-mass="${mass}">m${mass}：待填</span></td>` +
+                `<td>${radius === null ? radiusSelect(prefix + '-radius') : radius}</td>` +
+                `<td><input type="number" id="${prefix}-powered" step="any" min="0" aria-label="${titles[kind]}第${index}组有动力角加速度 (rad/s²)" placeholder="有动力"></td>` +
+                `<td><input type="number" id="${prefix}-free" step="any" aria-label="${titles[kind]}第${index}组无动力角加速度 (rad/s²)" placeholder="减速段"></td>`;
+            table.tBodies[0].appendChild(tr);
+        }
+        $('#box-' + kind).appendChild(table);
+    }
+    for (let state = 1; state <= 2; state++) {
+        const prefix = 'parallel-' + state;
+        const card = document.createElement('section');
+        card.className = 'parallel-card';
+        card.setAttribute('aria-labelledby', prefix + '-title');
+        card.innerHTML = `<h4 id="${prefix}-title">第 ${state} 组 · ${state === 1 ? '两个圆柱对称摆放（移动前）' : '平移一个圆柱后'}</h4>` +
+            `<div class="grid2"><div class="input-group"><label for="${prefix}-mass">本组砝码总质量</label>${massSelect(prefix + '-mass')}</div>` +
+            `<div class="input-group"><label for="${prefix}-radius">塔轮半径 R <span class="unit">mm</span></label>${radiusSelect(prefix + '-radius')}</div>` +
+            `<div class="input-group"><label for="${prefix}-d1">圆柱 1 距圆心 d₁ <span class="unit">mm</span></label><input type="number" id="${prefix}-d1" value="50" min="0" step="any"></div>` +
+            `<div class="input-group"><label for="${prefix}-d2">圆柱 2 距圆心 d₂ <span class="unit">mm</span></label><input type="number" id="${prefix}-d2" value="${state === 1 ? 50 : 75}" min="0" step="any"></div>` +
+            `<div class="input-group"><label for="${prefix}-powered">有动力 β有 <span class="unit">rad/s²</span></label><input type="number" id="${prefix}-powered" min="0" step="any" placeholder="有动力"></div>` +
+            `<div class="input-group"><label for="${prefix}-free">无动力 β无 <span class="unit">rad/s²</span></label><input type="number" id="${prefix}-free" step="any" placeholder="减速段"></div></div>`;
+        $('#box-parallel').appendChild(card);
+    }
+
+    function syncMassLabels() {
+        const inputs=massInputs(), indices=inputs.map(massIndex);
+        document.querySelectorAll('.measurement-mass').forEach(select=>{
+            const selected=select.value;
+            if([...select.options].map(option=>Number(option.value)).join(',')!==indices.join(',')){
+                select.replaceChildren(...inputs.map(input=>{const option=document.createElement('option');option.value=massIndex(input);return option;}));
+                if(indices.includes(Number(selected)))select.value=selected;
+            }
+            [...select.options].forEach(option=>{
+                const mass=inputValue('mass-'+option.value+'-g');
+                option.textContent='m'+subscript(option.value)+'（'+(positive(mass)?mass+' g':'待填')+'）';
+            });
+        });
+        document.querySelectorAll('.mass-label').forEach(label => {
+            label.dataset.mass=label.closest('tr').querySelector('.measurement-mass').value;
+            const mass = inputValue('mass-' + label.dataset.mass + '-g');
+            label.textContent = 'm' + label.dataset.mass + '：' + (positive(mass) ? mass + ' g' : '待填');
+        });
+        $('#remove-mass-btn').disabled=inputs.length<=3;
+    }
+    $('#add-mass-btn').addEventListener('click',()=>{
+        const index=massInputs().length+1,entry=document.createElement('div');entry.className='input-group mass-entry';
+        entry.innerHTML=`<label for="mass-${index}-g">第 ${index} 档总质量 m${subscript(index)} <span class="unit">g</span></label><input type="number" id="mass-${index}-g" class="mass-input" min="0" step="any" placeholder="砝码＋挂钩">`;
+        $('#mass-input-list').append(entry);invalidate();
+        $('#mass-status').textContent='已添加 m'+subscript(index)+'；填入总质量后，即可在下方各组选择。';
+    });
+    $('#remove-mass-btn').addEventListener('click',()=>{
+        const inputs=massInputs();if(inputs.length<=3)return;
+        const last=inputs.at(-1),index=massIndex(last);
+        if([...document.querySelectorAll('.measurement-mass')].some(select=>Number(select.value)===index)){
+            $('#mass-status').textContent='m'+subscript(index)+' 仍被测量组使用，请先将这些组切换到其他质量档，再删除。';return;
+        }
+        if(last.value!==''&&!confirm('删除末尾质量档 m'+subscript(index)+'（'+last.value+' g）？已填角加速度保留。'))return;
+        last.closest('.mass-entry').remove();invalidate();$('#mass-status').textContent='已删除 m'+subscript(index)+'，其他质量档与测量记录保留。';
+    });
+    function clearCharts() {
+        charts.splice(0).forEach(chart => chart.destroy());
+        $('#chart-container-box').replaceChildren();
+    }
+    function invalidate() {
+        syncMassLabels();
+        clearCharts();
+        $('#result-output').innerHTML = '<p class="empty-result">数据已修改，请点击“开始计算”更新结果。</p>';
+    }
+    $('#inertia-inputs').addEventListener('input', invalidate);
+    $('#inertia-inputs').addEventListener('change', invalidate);
+    syncMassLabels();
+
+    function addGrad(a, b, scale = 1) {
+        const out = { ...a };
+        for (const [key, value] of Object.entries(b)) out[key] = (out[key] || 0) + scale * value;
+        return out;
+    }
+    function calculate() {
+        clearCharts();
+        const output = $('#result-output');
+        const warnings = [];
+        const g = inputValue('gravity');
+        const uncertainty = {
+            mass: inputValue('u-mass'), radius: inputValue('u-radius-mm'),
+            powered: inputValue('u-powered'), free: inputValue('u-free')
+        };
+        if (!positive(g)) {
+            output.innerHTML = '<p class="warn-msg">请填写大于 0 的重力加速度 g。</p>';
+            return;
+        }
+        if (Object.values(uncertainty).some(value => value === null || !Number.isFinite(value) || value < 0)) {
+            output.innerHTML = '<p class="warn-msg">不确定度参数应为大于或等于 0 的有限数值；不计入的分量请填 0。</p>';
+            return;
+        }
+        uncertainty.radius /= 1000;
+        const uOf = key => key.startsWith('mass:') ? uncertainty.mass : key.startsWith('radius:') ? uncertainty.radius : key.endsWith(':powered') ? uncertainty.powered : uncertainty.free;
+        const variance = grad => Object.entries(grad).reduce((sum, [key, value]) => sum + (value * uOf(key)) ** 2, 0);
+        function readMeasurement(config) {
+            const powered = inputValue(config.prefix + '-powered');
+            const rawFree = inputValue(config.prefix + '-free');
+            if (powered === null && rawFree === null) return null;
+            if (!positive(powered) || rawFree === null || !Number.isFinite(rawFree)) {
+                warnings.push(config.label + '：请填完整的两个角加速度，有动力须大于 0。');
+                return null;
+            }
+            const massIndex = Number($('#' + config.prefix + '-mass').value);
+            const massG = inputValue('mass-' + massIndex + '-g');
+            if (!positive(massG)) {
+                warnings.push(config.label + '：请先填写 m' + massIndex + ' 的有效总质量。');
+                return null;
+            }
+            const radiusMM = config.radius === null ? Number($('#' + config.prefix + '-radius').value) : config.radius;
+            if (![20, 25].includes(radiusMM)) {
+                warnings.push(config.label + '：塔轮半径须为 20 或 25 mm。');
+                return null;
+            }
+            const m = massG / 1000, R = radiusMM / 1000, q = Math.abs(rawFree);
+            const D = powered + q;
+            if (g - R * powered <= 0) {
+                warnings.push(config.label + '：Rβ有 必须小于 g，请核对单位和角加速度。');
+                return null;
+            }
+            const J = m * R * (g - R * powered) / D;
+            const grad = {
+                ['mass:' + massIndex]: R * (g - R * powered) / D,
+                ['radius:' + radiusMM]: m * (g - 2 * R * powered) / D,
+                [config.prefix + ':powered']: -m * R * (g + R * q) / (D * D),
+                [config.prefix + ':free']: -J / D
+            };
+            if (!positive(J) || !Object.values(grad).every(Number.isFinite) || !Number.isFinite(variance(grad))) {
+                warnings.push(config.label + '：数据超出可计算范围，请核对数值。');
+                return null;
+            }
+            return { ...config, mass:massIndex, J, grad, m, R, powered, free: -q, rawFree };
+        }
+        const summarize = rows => {
+            if (!rows.length) return null;
+            const n = rows.length, J = mean(rows.map(row => row.J));
+            const s = n > 1 ? Math.sqrt(rows.reduce((sum, row) => sum + (row.J - J) ** 2, 0) / (n - 1)) : 0;
+            const t = ({ 2: 1.84, 3: 1.32, 4: 1.20, 5: 1.14, 6: 1.11 })[n] || 1;
+            const uA = n > 1 ? t * s / Math.sqrt(n) : 0;
+            let grad = {};
+            rows.forEach(row => { grad = addGrad(grad, row.grad, 1 / n); });
+            const uB = Math.sqrt(variance(grad));
+            return { n, J, s, t, uA, uB, grad, uC: Math.hypot(uA, uB) };
+        };
+        const rows = {}, summaries = {};
+        for (const kind of Object.keys(groups)) {
+            rows[kind] = groups[kind].map(readMeasurement).filter(Boolean);
+            summaries[kind] = summarize(rows[kind]);
+            if (rows[kind].length && rows[kind].length < groups[kind].length) warnings.push(titles[kind] + '仅有 ' + rows[kind].length + '/' + groups[kind].length + ' 组完整数据，结果使用这些有效组。');
+        }
+        const base = summaries.empty;
+        const specimens = {};
+        for (const kind of ['disk', 'ring']) {
+            const loaded = summaries[kind];
+            if (!loaded) continue;
+            if (!base) {
+                warnings.push(titles[kind] + '已得到加载总惯量；请补充空台数据后扣除 J₀。');
+                continue;
+            }
+            const grad = addGrad(loaded.grad, base.grad, -1);
+            const uA = Math.hypot(loaded.uA, base.uA), uB = Math.sqrt(variance(grad));
+            specimens[kind] = { J: loaded.J - base.J, grad, uA, uB, uC: Math.hypot(uA, uB) };
+            if (specimens[kind].J <= 0) warnings.push(titles[kind] + '扣除空台后的转动惯量不大于 0，请核对数据。');
+            const sensitiveRows=rows[kind].filter(row=>Math.abs(row.J-base.J)<.05*Math.max(row.J,base.J));
+            if(sensitiveRows.length)warnings.push(sensitiveRows.map(row=>row.label).join('、')+'的总惯量与空台接近，逐组差值对测量偏差敏感；请核对原始角加速度。');
+            if (Math.abs(specimens[kind].J) < .05 * Math.max(loaded.J, base.J)) warnings.push(titles[kind] + '加载总惯量与空台总惯量接近，扣除后的差值对测量偏差敏感，可能出现较大的倍数变化；请核对两组测量。');
+        }
+        const theory = { disk: null, ring: null };
+        const diskM = inputValue('disk-mass-g'), diskR = inputValue('disk-radius-mm');
+        if (positive(diskM) && positive(diskR)) theory.disk = .5 * diskM / 1000 * (diskR / 1000) ** 2;
+        else if (summaries.disk) warnings.push('圆盘理论值需要有效的圆盘质量和半径。');
+        const ringM = inputValue('ring-mass-g'), inner = inputValue('ring-inner-mm'), outer = inputValue('ring-outer-mm');
+        if (positive(ringM) && Number.isFinite(inner) && inner >= 0 && positive(outer) && outer > inner) theory.ring = .5 * ringM / 1000 * ((inner / 1000) ** 2 + (outer / 1000) ** 2);
+        else if (summaries.ring) warnings.push('圆环理论值需要有效质量，且外半径须大于内半径（内半径可为 0）。');
+        for (const kind of ['disk', 'ring']) if (theory[kind] !== null && !positive(theory[kind])) {
+            theory[kind] = null;
+            warnings.push(titles[kind] + '几何参数超出可计算范围。');
+        }
+        const parallel = [1, 2].map(state => {
+            const prefix = 'parallel-' + state;
+            const row = readMeasurement({ prefix, mass: Number($('#' + prefix + '-mass').value), radius: null, label: '平行轴第 ' + state + ' 组' });
+            if (!row) return null;
+            const d1mm = inputValue(prefix + '-d1'), d2mm = inputValue(prefix + '-d2');
+            if (![d1mm, d2mm].every(value => value !== null && Number.isFinite(value) && value >= 0)) {
+                warnings.push('平行轴第 ' + state + ' 组：d₁、d₂ 均须填写，且不能为负。');
+                return null;
+            }
+            return { ...row, d1mm, d2mm, S: (d1mm / 1000) ** 2 + (d2mm / 1000) ** 2 };
+        });
+        let comparison = null;
+        if (parallel.every(Boolean)) {
+            const [before, after] = parallel;
+            if (!same(before.d1mm, before.d2mm)) warnings.push('平行轴第 1 组不是对称摆放：应使 d₁ = d₂。');
+            const changed = Number(!same(before.d1mm, after.d1mm)) + Number(!same(before.d2mm, after.d2mm));
+            if (changed !== 1) warnings.push('平行轴两组应只平移一个圆柱，请核对两次 d₁、d₂。');
+            const cylinderM = inputValue('cyl-mass-g');
+            const measured = after.J - before.J;
+            const uMeasured = Math.sqrt(variance(addGrad(after.grad, before.grad, -1)));
+            if (!positive(cylinderM)) warnings.push('请填写单个圆柱的有效质量，才能计算平行轴理论差值。');
+            else {
+                const expected = cylinderM / 1000 * (after.S - before.S);
+                const relative = expected !== 0 ? Math.abs((measured - expected) / expected) * 100 : null;
+                if (![measured, uMeasured, expected, after.S, before.S].every(Number.isFinite)) warnings.push('平行轴距离或质量超出可计算范围。');
+                else {
+                    comparison = { measured, expected, relative, uMeasured, mass: cylinderM / 1000 };
+                    if (expected === 0) warnings.push('两组 d₁²+d₂² 相同，理论差值为 0，无法计算相对偏差。');
+                }
+            }
+        } else if (parallel.some(Boolean)) warnings.push('平行轴比较需要移动前、移动后两组完整记录。');
+
+        let html = '<h3 class="result-title">刚体转动惯量计算结果</h3>';
+        const block = (id, heading, value, body) => `<article class="result-item" data-result="${id}"${Number.isFinite(value) ? ` data-value="${value}"` : ''}><h4>${heading}</h4>${body}</article>`;
+        if (base) html += block('empty', '空转台平均转动惯量 J₀', base.J, `<p class="main-value">${sci(base.J)} kg·m²</p><p>有效组 ${base.n}/3；uA = ${sci(base.uA)}，uB = ${sci(base.uB)}，uC = ${sci(base.uC)} kg·m²</p>`);
+        for (const kind of ['disk', 'ring']) {
+            const loaded = summaries[kind], specimen = specimens[kind];
+            if (!loaded) continue;
+            const measured = specimen ? `<p class="main-value">${sci(specimen.J)} kg·m²</p><p>uA = ${sci(specimen.uA)}，uB = ${sci(specimen.uB)}，uC = ${sci(specimen.uC)} kg·m²</p>` : '<p>请补充空台测量，以计算试样自身转动惯量。</p>';
+            html += block(kind, titles[kind] + '自身转动惯量', specimen?.J, measured + `<p>有效组 ${loaded.n}/6；加载总惯量均值 ${sci(loaded.J)} kg·m²</p>` + (theory[kind] !== null ? `<p>理论值 ${sci(theory[kind])} kg·m²${specimen ? `；相对误差 ${fixed((specimen.J - theory[kind]) / theory[kind] * 100)} %` : ''}</p>` : '<p>理论值：请补充有效几何参数。</p>'));
+        }
+        if (parallel.some(Boolean)) {
+            html += block('parallel', '平行轴定理 · 两组差值比较', comparison?.measured, parallel.map((row, i) => row ? `<p>第 ${i + 1} 组：J = ${sci(row.J)} kg·m²，d₁ = ${row.d1mm} mm，d₂ = ${row.d2mm} mm</p>` : `<p>第 ${i + 1} 组：数据不完整。</p>`).join('') + (comparison ? `<p data-result="parallel-measured" data-value="${comparison.measured}">实测 ΔJ = ${sci(comparison.measured)} kg·m²</p><p data-result="parallel-theory" data-value="${comparison.expected}">理论 ΔJ = ${sci(comparison.expected)} kg·m²</p><p>实测差值的 B 类标准不确定度 = ${sci(comparison.uMeasured)} kg·m²</p><p>相对偏差绝对值：${comparison.relative === null ? '理论差值为 0，无法计算' : fixed(comparison.relative) + ' %'}</p><p class="badge-note">圆柱自身的质心惯量和不变的支架惯量在两次相减时抵消。请结合测量不确定度评估两者的一致性。</p>` : ''));
+        }
+        for (const kind of Object.keys(groups)) if (rows[kind].length) {
+            html += `<details class="calculation-details" open><summary>${titles[kind]} · 逐组数值核对</summary><div class="measurement-table"><table class="mini beta-table"><thead><tr><th>组别</th><th>m (g → kg)</th><th>R (mm → m)</th><th>β有 / β无 (rad/s²)</th><th>总惯量 J (kg·m²)</th><th>扣除空台后 (kg·m²)</th></tr></thead><tbody>`;
+            for (const row of rows[kind]) {
+                const difference=base && kind!=='empty' ? row.J-base.J : null;
+                html += `<tr data-measurement="${row.prefix}" data-total="${row.J}"${difference!==null?` data-specimen="${difference}"`:''}><td>${row.label}</td><td>${row.m*1000} → ${row.m}</td><td>${row.R*1000} → ${row.R}</td><td>${row.powered} / ${row.free}</td><td>${sci(row.J)}<br>（${row.J.toFixed(9)}）</td><td>${difference===null?'—':sci(difference)+'<br>（'+difference.toFixed(9)+'）'}</td></tr>`;
+            }
+            html += '</tbody></table></div><p class="badge-note">e−3 表示 ×10⁻³；e−4 表示 ×10⁻⁴。总惯量与扣除空台后的试样惯量分别列出，所有组均按相同公式计算。</p></details>';
+        }
+        if (!base && !summaries.disk && !summaries.ring && !parallel.some(Boolean)) html += '<p class="empty-result">尚无完整测量记录。请填写所用砝码总质量及有动力、无动力两个角加速度。</p>';
+        if (warnings.length) html += '<div class="warn-msg"><b>需核对：</b><ul>' + warnings.map(warning => '<li>' + warning + '</li>').join('') + '</ul></div>';
+
+        let details = `【公式与单位】\n质量 g ÷ 1000 → kg；半径和距离 mm ÷ 1000 → m。\nβ无 = −|输入值|；J = mR(g − Rβ有)/(β有 − β无)。\n`;
+        for (const kind of Object.keys(groups)) if (rows[kind].length) {
+            details += `\n【${titles[kind]} · 每组计算】\n`;
+            rows[kind].forEach(row => {
+                details += `${row.label}：m=${row.m*1000} g=${row.m} kg，R=${row.R*1000} mm=${row.R} m，β有=${row.powered}，β无=${row.free} rad/s²\n  J总 = ${row.m} × ${row.R} × (${g} − ${row.R} × ${row.powered}) / (${row.powered} − (${row.free}))\n      = ${sci(row.J)} kg·m²`;
+                if (kind !== 'empty' && base) details += `；J试样 = J总 − J₀ = ${sci(row.J)} − ${sci(base.J)} = ${sci(row.J - base.J)} kg·m²`;
+                details += '\n';
+            });
+            const summary = summaries[kind];
+            details += `平均总惯量 = ${sci(summary.J)} kg·m²；有效组 n=${summary.n}。\n`;
+        }
+        if (comparison) details += `\n【平行轴差值】\nΔJ理论 = ${comparison.mass} × (${parallel[1].S} − ${parallel[0].S}) = ${sci(comparison.expected)} kg·m²\nΔJ实测 = ${sci(parallel[1].J)} − ${sci(parallel[0].J)} = ${sci(comparison.measured)} kg·m²\n`;
+        details += '\n【不确定度】\nA类沿用原页面的系数：uA=t·s/√n（3组 t=1.32，6组 t=1.11）；n<2 时无法估计重复测量分量。\nB类由输入的质量、半径及两个角加速度标准不确定度一阶传播；同一质量编号、同一塔轮半径在不同组中共用参数。\n对均值和差值先合并共有参数的灵敏度，再求平方和，避免重复计算共有分量。\nuC=√(uA²+uB²)。几何尺寸、圆柱质量与距离的不确定度未纳入理论值；角加速度不确定度填0表示该分量未计入。';
+        html += '<details class="calculation-details"><summary>展开完整计算过程</summary><pre id="calculation-steps"></pre></details>';
+        output.innerHTML = html;
+        $('#calculation-steps').textContent = details;
+        if (typeof Chart !== 'function') {
+            if (base || comparison) $('#chart-container-box').textContent = '图表暂未加载，数值结果已完成计算。';
+            return;
+        }
+        function draw(title, config, filename) {
+            const box = document.createElement('section');
+            box.className = 'chart-box';
+            const heading = document.createElement('h4'); heading.textContent = title; box.appendChild(heading);
+            const wrap = document.createElement('div'); wrap.className = 'inertia-chart';
+            const canvas = document.createElement('canvas'); wrap.appendChild(canvas); box.appendChild(wrap);
+            const download = document.createElement('button'); download.className = 'mini-add'; download.type = 'button'; download.textContent = '下载图表 PNG';
+            download.addEventListener('click', () => {
+                const image = document.createElement('canvas'); image.width = canvas.width; image.height = canvas.height;
+                const context = image.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, image.width, image.height); context.drawImage(canvas, 0, 0);
+                const link = document.createElement('a'); link.download = filename + '.png'; link.href = image.toDataURL('image/png'); link.click();
+            });
+            box.appendChild(download); $('#chart-container-box').appendChild(box);
+            charts.push(new Chart(canvas.getContext('2d'), config));
+        }
+        const measuredKinds = ['disk', 'ring'].filter(kind => specimens[kind]);
+        if (measuredKinds.length) draw('圆盘、圆环实测值与理论值', {
+            type: 'bar', data: { labels: measuredKinds.map(kind => titles[kind]), datasets: [
+                { label: '实测（已扣除空台）', data: measuredKinds.map(kind => specimens[kind].J), backgroundColor: '#4b6cb7' },
+                { label: '理论', data: measuredKinds.map(kind => theory[kind]), backgroundColor: '#27ae60' }
+            ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { title: { display: true, text: '转动惯量 J (kg·m²)' } } } }
+        }, '圆盘圆环转动惯量');
+        if (comparison && parallel[0].S !== parallel[1].S) draw('平行轴定理 · 两种摆放状态', {
+            type: 'scatter', data: { datasets: [
+                { label: '实测两组', data: parallel.map(row => ({ x: row.S * 1e6, y: row.J })), backgroundColor: '#4b6cb7', pointRadius: 5 },
+                { label: '以移动前实测值为基准的理论变化', data: parallel.map(row => ({ x: row.S * 1e6, y: parallel[0].J + comparison.mass * (row.S - parallel[0].S) })).sort((a, b) => a.x - b.x), showLine: true, pointRadius: 0, borderColor: '#27ae60' }
+            ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', title: { display: true, text: 'd₁² + d₂² (mm²)' } }, y: { title: { display: true, text: '两圆柱与支架总惯量 J (kg·m²)' } } } }
+        }, '平行轴定理两组比较');
+    }
+    $('#actual-masses-btn').addEventListener('click',()=>{
+        if(massInputs().slice(0,3).some(input=>input.value!=='')&&!confirm('将前三档总质量改为 48、53、63 g？其他质量档和已填角加速度保留。'))return;
+        [48,53,63].forEach((mass,i)=>$('#mass-'+(i+1)+'-g').value=mass);
+        invalidate();
+    });
+    $('#calculate-btn').addEventListener('click', calculate);
+    $('#clear-btn').addEventListener('click', () => {
+        if (!confirm('清空全部质量档的质量值和全部角加速度记录？质量档数量、每组选择、几何参数、距离和半径选择会保留。')) return;
+        document.querySelectorAll('.mass-input, [id$="-powered"], [id$="-free"]').forEach(input => {
+            if (input.id !== 'u-powered' && input.id !== 'u-free') input.value = '';
+        });
+        invalidate();
+    });
+    $('#demo-btn').addEventListener('click', () => {
+        if (!confirm('演示数据会覆盖当前记录与几何参数，继续？')) return;
+        const defaults = { 'mass-1-g': 53, 'mass-2-g': 58, 'mass-3-g': 48, gravity: 9.794, 'disk-mass-g': 486, 'disk-radius-mm': 100, 'ring-mass-g': 460, 'ring-inner-mm': 90, 'ring-outer-mm': 100, 'cyl-mass-g': 170 };
+        Object.entries(defaults).forEach(([id, value]) => { $('#' + id).value = value; });
+        const J0 = 2.947e-4, q = .05;
+        function fill(prefix, mass, radiusMM, J) {
+            const m = defaults['mass-' + mass + '-g'] / 1000, R = radiusMM / 1000;
+            $('#' + prefix + '-powered').value = ((m * R * defaults.gravity - J * q) / (J + m * R * R)).toPrecision(12);
+            $('#' + prefix + '-free').value = -q;
+        }
+        for (const kind of Object.keys(groups)) groups[kind].forEach(row => {
+            $('#' + row.prefix + '-mass').value=String(row.mass);
+            if (row.radius === null) $('#' + row.prefix + '-radius').value = '20';
+            const J = J0 + (kind === 'disk' ? .5 * .486 * .1 ** 2 : kind === 'ring' ? .5 * .460 * (.09 ** 2 + .1 ** 2) : 0);
+            fill(row.prefix, row.mass, row.radius || 20, J);
+        });
+        for (let state = 1; state <= 2; state++) {
+            const prefix = 'parallel-' + state, d2 = state === 1 ? 50 : 75;
+            $('#' + prefix + '-mass').value = '1'; $('#' + prefix + '-radius').value = '20';
+            $('#' + prefix + '-d1').value = 50; $('#' + prefix + '-d2').value = d2;
+            const J = J0 + 2 * .17 * (3 * .015 ** 2 + .025 ** 2) / 12 + .17 * (.05 ** 2 + (d2 / 1000) ** 2);
+            fill(prefix, 1, 20, J);
+        }
+        invalidate();
+        $('#result-output').innerHTML = '<p class="empty-result">已填入演示数据，请点击“开始计算”。实际实验请换成自己的测量值。</p>';
+    });
+})();
+
+    </script>
+    <script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

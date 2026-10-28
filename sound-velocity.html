@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>声速的测定 · 驻波法 / 相位比较法 / 时差法（含逐差法与不确定度）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 4px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        table.mini td.idx {
+            color: #7a8ba3;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+        .del-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .formula-line {
+            background: #f4f7fb;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #2c3f55;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .phase-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .phase-tag.same {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .phase-tag.opp {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        table.mini.diff td {
+            padding: 2px 4px;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3,
+            .grid4 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .header h2 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔊 声速的测定 · 驻波法 / 相位比较法 / 时差法</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <b>原理：</b>v = f·λ（式 2-6-1 前的基本关系）；换能器 S₁ 发射、S₂ 接收并反射<br>
+                <b>波长：</b>驻波法/相位法测相邻同相点（波腹）间距 → 逐差法求 λ；时差法由 v = Δx/Δt 求声速
+            </div>
+
+            <div class="sub-title"><span>① 实验条件与仪器误差</span><span class="hint">f 取谐振频率（约 35 kHz）</span></div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>信号频率 f <span class="unit">kHz</span></label>
+                    <input type="number" id="freq" value="35.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>室温 t <span class="unit">℃</span></label>
+                    <input type="number" id="temp" value="20.0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Δf <span class="unit">kHz</span></label>
+                    <input type="number" id="u-f" value="0.01" step="0.001">
+                </div>
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>Δx（位置读数）<span class="unit">mm</span></label>
+                    <input type="number" id="u-x" value="0.01" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>Δt（时间读数）<span class="unit">μs</span></label>
+                    <input type="number" id="u-t" value="0.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>B 类分量处理</label>
+                    <select id="dist-mode">
+                        <option value="uniform" selected>均匀分布（÷√3）</option>
+                        <option value="limit">极限误差直接计入（×1）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="badge-note">室温下的理论声速 v<sub>理</sub> = 331.45·√(1 + t/273.15) m/s，用于对照（20 ℃ 约 343.4 m/s）。</div>
+
+            <div class="sub-title"><span>② 共振干涉法（驻波法）读数</span><span class="hint">连续 12 个波腹位置 x</span></div>
+            <div id="stand-table"></div>
+            <div class="badge-note">相邻波腹间距为 λ/2，逐差法（x₇−x₁ … x₁₂−x₆ 各为 3λ）求波长；读数到 0.001 mm。</div>
+
+            <div class="sub-title"><span>③ 相位比较法读数</span><span class="hint">李萨如图形为直线时的位置，同相/反相交替</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>第 1 个读数（序号 1）的相位</label>
+                    <select id="phase-start">
+                        <option value="same" selected>同相位（正斜率直线）</option>
+                        <option value="opp">反相位（负斜率直线）</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>相邻同相/反相点间距 <span class="unit">波长的 1/2</span></label>
+                    <input type="text" id="phase-gap" value="λ/2" readonly style="background:#f0f2f5;color:#667;">
+                </div>
+            </div>
+            <div id="phase-table"></div>
+            <div class="badge-note">同相位点与反相位点依次相隔 λ/2（式 2-6-7），故读数序列的相邻间距仍为 λ/2，逐差法与驻波法相同。</div>
+
+            <div class="sub-title"><span>④ 时差法读数</span><span class="hint">间距取大些以减小误差</span></div>
+            <div id="time-table"></div>
+            <div class="badge-note">注意用 v = Δx/Δt 而不是 v = x/t（x 读数不等于发射面到接收面的真实距离 L）。t 长时间不变时应调大"接收增益"。</div>
+
+            <div class="sub-title"><span>⑤ 波形移动法（选做）</span><span class="hint">两次波形重叠之间恰好移动一个波长</span></div>
+            <div id="move-table"></div>
+            <div class="badge-note">若不做该测量，把该表清空即可自动跳过。</div>
+
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="reset-btn" class="ghost-btn">↺ 恢复示例数据</button>
+                <button id="clear-btn" class="ghost-btn">🗑 清空</button>
+            </div>
+        </div>
+
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const ave = a => a.reduce((x, y) => x + y, 0) / a.length;
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+            function fmt(v, d) {
+                if (!isFinite(v)) return '—';
+                if (v === 0) return '0';
+                const a = Math.abs(v);
+                if (a >= 1e6 || a < 1e-4) return v.toExponential(3);
+                return v.toFixed(d === undefined ? (a >= 1000 ? 1 : a >= 100 ? 2 : 4) : d);
+            }
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                if (typeof Chart === 'undefined') {
+                    const msg = document.createElement('div');
+                    msg.className = 'warn-msg';
+                    msg.textContent = '⚠️ 未能加载图表库（Chart.js CDN 不可达），图像已跳过，计算结果不受影响。';
+                    box.insertBefore(msg, wrap);
+                    chartBoxes.appendChild(box);
+                    return;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                try {
+                    charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(b);
+            }
+
+            // ==================== 示例数据 ====================
+            // 与 f = 35.00 kHz、t = 20 ℃（v_理 ≈ 343.4 m/s，λ ≈ 9.83 mm）自洽
+            const DEMO_STAND = [95.000, 99.921, 104.826, 109.748, 114.653, 119.578,
+                124.481, 129.412, 134.309, 139.238, 144.133, 149.060];
+            const DEMO_PHASE = [88.000, 92.918, 97.830, 102.749, 107.657, 112.576,
+                117.485, 122.402, 127.311, 132.230, 137.139, 142.058];
+            const DEMO_TIME_X = [120.000, 140.000, 160.000, 180.000, 200.000, 220.000];
+            const DEMO_TIME_T = [349, 407, 465, 523, 581, 640];
+            const DEMO_MOVE = [100.000, 109.831, 119.658, 129.490];
+
+            // ==================== 表格构建 ====================
+            function numInput(cls, val, step) {
+                const i = document.createElement('input');
+                i.type = 'number';
+                i.className = cls;
+                i.step = step || 'any';
+                i.value = (val === '' || val === undefined || val === null) ? '' : val;
+                return i;
+            }
+            function delBtn(tr, minRows, onDel) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'del-btn';
+                b.textContent = '×';
+                b.setAttribute('aria-label', '删除该行');
+                b.addEventListener('click', () => {
+                    const tb = tr.parentNode;
+                    if (tb.children.length > minRows) {
+                        tr.remove();
+                        if (onDel) onDel(tb);
+                    } else {
+                        alert('至少保留 ' + minRows + ' 行数据');
+                    }
+                });
+                return b;
+            }
+            function cell(node) {
+                const td = document.createElement('td');
+                td.appendChild(node);
+                return td;
+            }
+            function newTable(headHTML) {
+                const tb = document.createElement('table');
+                tb.className = 'mini';
+                tb.innerHTML = `<thead>${headHTML}</thead><tbody></tbody>`;
+                return tb;
+            }
+            function addRowBtn(body, makeRow) {
+                const add = document.createElement('button');
+                add.type = 'button';
+                add.className = 'mini-add';
+                add.textContent = '＋ 增加一行';
+                add.addEventListener('click', () => {
+                    body.appendChild(makeRow());
+                });
+                return add;
+            }
+            function refreshPhaseLabels() {
+                const start = $('#phase-start').value;
+                const body = $('#phase-table').querySelector('tbody');
+                if (!body) return;
+                Array.from(body.children).forEach((tr, i) => {
+                    const span = tr.querySelector('.phase-tag');
+                    if (!span) return;
+                    const isSame = (i % 2 === 0) === (start === 'same');
+                    span.textContent = isSame ? '同相' : '反相';
+                    span.className = 'phase-tag ' + (isSame ? 'same' : 'opp');
+                });
+            }
+
+            // ---- ② 驻波法表 ----
+            function buildStand() {
+                const box = $('#stand-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:20%">序号</th><th style="width:60%">x (mm)</th><th style="width:20%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(val) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    tr.appendChild(cell(numInput('in-x', val === undefined ? '' : val, '0.001')));
+                    tr.appendChild(cell(delBtn(tr, 4, renumber)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_STAND.forEach(v => makeRow(v));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('')));
+                renumber(body);
+            }
+            function renumber(body) {
+                Array.from(body.children).forEach((tr, i) => {
+                    const idx = tr.querySelector('.idx');
+                    if (idx) idx.textContent = i + 1;
+                });
+                refreshPhaseLabels();
+            }
+
+            // ---- ③ 相位比较法表 ----
+            function buildPhase() {
+                const box = $('#phase-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:16%">序号</th><th style="width:24%">相位</th><th style="width:44%">x (mm)</th><th style="width:16%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(val) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    const tag = document.createElement('span');
+                    tag.className = 'phase-tag same';
+                    tag.textContent = '同相';
+                    tr.appendChild(cell(tag));
+                    tr.appendChild(cell(numInput('in-x', val === undefined ? '' : val, '0.001')));
+                    tr.appendChild(cell(delBtn(tr, 4, renumber)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_PHASE.forEach(v => makeRow(v));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('')));
+                renumber(body);
+            }
+
+            // ---- ④ 时差法表 ----
+            function buildTime() {
+                const box = $('#time-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:16%">序号</th><th style="width:40%">x (mm)</th><th style="width:28%">t (μs)</th><th style="width:16%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(x, t) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    tr.appendChild(cell(numInput('in-x', x === undefined ? '' : x, '0.001')));
+                    tr.appendChild(cell(numInput('in-t', t === undefined ? '' : t, '0.1')));
+                    tr.appendChild(cell(delBtn(tr, 4, renumber)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_TIME_X.forEach((x, i) => makeRow(x, DEMO_TIME_T[i]));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('', '')));
+                renumber(body);
+            }
+
+            // ---- ⑤ 波形移动法表 ----
+            function buildMove() {
+                const box = $('#move-table');
+                box.innerHTML = '';
+                const tb = newTable('<tr><th style="width:20%">序号</th><th style="width:60%">波形重叠位置 (mm)</th><th style="width:20%"></th></tr>');
+                const body = tb.querySelector('tbody');
+                function makeRow(val) {
+                    const tr = document.createElement('tr');
+                    const idx = document.createElement('td');
+                    idx.className = 'idx';
+                    tr.appendChild(idx);
+                    tr.appendChild(cell(numInput('in-x', val === undefined ? '' : val, '0.001')));
+                    tr.appendChild(cell(delBtn(tr, 2, renumber)));
+                    body.appendChild(tr);
+                    renumber(body);
+                    return tr;
+                }
+                DEMO_MOVE.forEach(v => makeRow(v));
+                box.appendChild(tb);
+                box.appendChild(addRowBtn(body, () => makeRow('')));
+                renumber(body);
+            }
+
+            function buildAll() {
+                buildStand();
+                buildPhase();
+                buildTime();
+                buildMove();
+            }
+
+            // ==================== 数据读取 ====================
+            function readCol(boxSel, cls) {
+                const body = $(boxSel).querySelector('tbody');
+                if (!body) return [];
+                return Array.from(body.children).map(tr => {
+                    const el = tr.querySelector('.' + cls);
+                    const v = el ? parseFloat(el.value) : NaN;
+                    return isFinite(v) ? v : null;
+                });
+            }
+
+            // ==================== 计算工具 ====================
+            function linreg(pts) {          // pts: [{x, y}]
+                const n = pts.length;
+                if (n < 2) return null;
+                const mx = ave(pts.map(p => p.x)), my = ave(pts.map(p => p.y));
+                let Sxx = 0, Sxy = 0, Syy = 0;
+                pts.forEach(p => {
+                    Sxx += (p.x - mx) ** 2;
+                    Sxy += (p.x - mx) * (p.y - my);
+                    Syy += (p.y - my) ** 2;
+                });
+                if (Sxx <= 0) return null;
+                const a1 = Sxy / Sxx, a0 = my - a1 * mx;
+                const ssRes = pts.reduce((s, p) => s + (p.y - (a0 + a1 * p.x)) ** 2, 0);
+                const r2 = Syy > 0 ? 1 - ssRes / Syy : 1;
+                return { a0, a1, r2, sy: n > 2 ? Math.sqrt(ssRes / (n - 2)) : NaN, Sxx, n };
+            }
+
+            /**
+             * 逐差法求波长
+             * @param xsMm 位置读数（mm），按测量顺序
+             * @param stepLambda 相邻读数间隔相当于多少个波长（驻波/相位法 = 0.5，波形移动法 = 1）
+             * @param uxMm 单个位置读数的标准不确定度（mm）
+             */
+            function diffLambda(xsMm, stepLambda, uxMm) {
+                const n = xsMm.length;
+                const half = Math.floor(n / 2);
+                const diffs = [];
+                for (let i = 0; i < half; i++) diffs.push(xsMm[i + half] - xsMm[i]);
+                const mean = ave(diffs);
+                const factor = 1 / (half * stepLambda);      // λ = mean × factor
+                const lambdaMm = mean * factor;
+                const nD = diffs.length;
+                const sMean = Math.sqrt(diffs.reduce((a, d) => a + (d - mean) ** 2, 0) / (nD * (nD - 1)));
+                const uA = sMean * factor;
+                const uB = (Math.SQRT2 * uxMm / Math.sqrt(nD)) * factor;
+                return {
+                    diffs, mean, lambdaMm, factor, half, nD, xs: xsMm,
+                    spacingMm: mean / half,
+                    uA, uB,
+                    negative: diffs.filter(d => d <= 0).length,
+                    nonMono: xsMm.some((v, i) => i > 0 && v <= xsMm[i - 1])
+                };
+            }
+
+            function pairTableHTML(diffs, half, unit) {
+                let h = `<table class="mini diff" style="margin-top:8px;">
+                    <thead><tr><th>逐差组 i</th><th>x<sub>i+${half}</sub> − x<sub>i</sub> (${unit})</th></tr></thead><tbody>`;
+                diffs.forEach((d, i) => {
+                    h += `<tr><td>${i + 1}</td><td>${num(d, 3)}</td></tr>`;
+                });
+                h += `<tr><td><b>平均</b></td><td><b>${num(ave(diffs), 3)}</b></td></tr></tbody></table>`;
+                return h;
+            }
+
+            function uConf() {
+                const mode = $('#dist-mode').value;
+                return mode === 'uniform' ? 1 / Math.sqrt(3) : 1;
+            }
+
+            // ==================== 主计算 ====================
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const fkHz = parseFloat($('#freq').value);
+                const temp = parseFloat($('#temp').value);
+                const uF = (parseFloat($('#u-f').value) || 0) * uConf();
+                const uX = (parseFloat($('#u-x').value) || 0) * uConf();
+                const uT = (parseFloat($('#u-t').value) || 0) * uConf();
+                if (!(fkHz > 0)) return alert('请填写信号频率 f（kHz）');
+                const fHz = fkHz * 1000;
+
+                // 理论声速
+                const vTheory = isFinite(temp) && temp > -273 ? 331.45 * Math.sqrt(1 + temp / 273.15) : NaN;
+                const lambdaTheory = isFinite(vTheory) ? vTheory / fHz * 1000 : NaN;   // mm
+
+                const warnings = [];
+                const methods = [];     // {name, lambdaMm, uLambdaMm, v, uV, rel...}
+
+                // ---------- ① 驻波法 ----------
+                const standRaw = readCol('#stand-table', 'in-x');
+                const standVals = standRaw.filter(v => v !== null);
+                let stand = null;
+                if (standRaw.some(v => v === null)) warnings.push('驻波法读数表中有空白行，已忽略该行。');
+                if (standVals.length >= 4) {
+                    const useStand = standVals.length % 2 === 1 ? standVals.slice(0, -1) : standVals;
+                    if (useStand.length !== standVals.length) warnings.push('驻波法读数为奇数个，逐差法取偶数个数据，已舍去最后一个读数。');
+                    stand = diffLambda(useStand, 0.5, uX);
+                    if (stand.negative > 0) warnings.push('驻波法存在非正的逐差结果（x 读数未随间距单调增大），请检查数据顺序。');
+                    if (!(stand.lambdaMm > 0)) {
+                        warnings.push('驻波法逐差平均为零或负值，无法求波长，已跳过该方法的声速计算。');
+                        stand = null;
+                    }
+                }
+                if (stand) {
+                    const lamM = stand.lambdaMm / 1000;
+                    const uLamM = Math.hypot(stand.uA, stand.uB) / 1000;
+                    const v = fHz * lamM;
+                    const relLam = uLamM / lamM, relF = uF / (fkHz);
+                    const uV = v * Math.hypot(relLam, relF);
+                    stand.v = v;
+                    stand.uV = uV;
+                    stand.lamM = lamM;
+                    stand.uLamM = uLamM;
+                    stand.relLam = relLam;
+                    stand.relF = relF;
+                    methods.push({ name: '共振干涉法（驻波法）', lambdaMm: stand.lambdaMm, uLambdaMm: Math.hypot(stand.uA, stand.uB), v: v, uV: uV });
+                }
+
+                // ---------- ② 相位比较法 ----------
+                const phaseRaw = readCol('#phase-table', 'in-x');
+                const phaseVals = phaseRaw.filter(v => v !== null);
+                let phase = null;
+                if (phaseRaw.some(v => v === null)) warnings.push('相位比较法读数表中有空白行，已忽略该行。');
+                if (phaseVals.length >= 4) {
+                    const usePhase = phaseVals.length % 2 === 1 ? phaseVals.slice(0, -1) : phaseVals;
+                    if (usePhase.length !== phaseVals.length) warnings.push('相位比较法读数为奇数个，已舍去最后一个读数。');
+                    phase = diffLambda(usePhase, 0.5, uX);
+                    if (phase.negative > 0) warnings.push('相位比较法存在非正的逐差结果，请检查数据顺序或同相/反相判断。');
+                    if (!(phase.lambdaMm > 0)) {
+                        warnings.push('相位比较法逐差平均为零或负值，无法求波长，已跳过该方法的声速计算。');
+                        phase = null;
+                    }
+                }
+                if (phase) {
+                    const lamM = phase.lambdaMm / 1000;
+                    const uLamM = Math.hypot(phase.uA, phase.uB) / 1000;
+                    const v = fHz * lamM;
+                    const relLam = uLamM / lamM, relF = uF / fkHz;
+                    const uV = v * Math.hypot(relLam, relF);
+                    phase.v = v;
+                    phase.uV = uV;
+                    phase.lamM = lamM;
+                    phase.uLamM = uLamM;
+                    phase.relLam = relLam;
+                    phase.relF = relF;
+                    methods.push({ name: '相位比较法', lambdaMm: phase.lambdaMm, uLambdaMm: Math.hypot(phase.uA, phase.uB), v: v, uV: uV });
+                }
+
+                // ---------- ③ 时差法 ----------
+                const timeX = readCol('#time-table', 'in-x');
+                const timeT = readCol('#time-table', 'in-t');
+                let time = null;
+                const timePts = [];
+                for (let i = 0; i < Math.min(timeX.length, timeT.length); i++) {
+                    if (timeX[i] !== null && timeT[i] !== null) timePts.push({ x: timeT[i], y: timeX[i] });
+                }
+                if (timePts.length >= 4) {
+                    const n = timePts.length;
+                    const half = Math.floor(n / 2);
+                    let sdX = 0, sdT = 0;
+                    const ratios = [], dxs = [], dts = [];
+                    for (let i = 0; i < half; i++) {
+                        const dx = timePts[i + half].y - timePts[i].y;
+                        const dt = timePts[i + half].x - timePts[i].x;
+                        dxs.push(dx); dts.push(dt);
+                        sdX += dx; sdT += dt;
+                        if (dt > 0) ratios.push(dx / dt * 1000);      // m/s
+                    }
+                    const vDD = sdX / sdT * 1000;
+                    if (!(sdT > 0) || !(vDD > 0)) {
+                        warnings.push('时差法的时间差 Δt 之和不大于零，无法求声速，已跳过该方法（请检查 t 是否随 x 增大）。');
+                    } else {
+                    const nR = ratios.length;
+                    const mR = nR ? ave(ratios) : vDD;
+                    const sRat = nR > 1 ? Math.sqrt(ratios.reduce((a, v) => a + (v - mR) ** 2, 0) / (nR * (nR - 1))) : 0;
+                    const fitXT = linreg(timePts);
+                    const vFit = fitXT ? fitXT.a1 * 1000 : NaN;
+                    const uFit = fitXT && isFinite(fitXT.sy) ? fitXT.sy / Math.sqrt(fitXT.Sxx) * 1000 : NaN;
+                    const relX = Math.sqrt(2 * half) * uX / sdX;
+                    const relT = Math.sqrt(2 * half) * uT / sdT;
+                    const uB = vDD * Math.hypot(relX, relT);
+                    const uA = sRat;
+                    const uV = Math.hypot(uA, uB);
+                    time = { v: vDD, uV, uA, uB, relX, relT, ratios, dxs, dts, sdX, sdT, vFit, uFit, fit: fitXT, pts: timePts, half, n, negative: dts.filter(d => d <= 0).length };
+                    if (time.negative > 0) warnings.push('时差法存在非正的时间差（Δt ≤ 0），请检查 x 与 t 的对应关系。');
+                    if (sdT < 10) warnings.push(`时差法总时间差 ΣΔt = ${num(sdT, 1)} μs 偏小，相对误差大；应把两换能器间距拉大（如 100 mm 以上）后重测。`);
+                    methods.push({ name: '时差法', v: vDD, uV: uV });
+                    }
+                }
+
+                // ---------- ④ 波形移动法（选做） ----------
+                const moveVals = readCol('#move-table', 'in-x').filter(v => v !== null);
+                let move = null;
+                if (moveVals.length >= 2) {
+                    move = diffLambda(moveVals, 1.0, uX);
+                    if (!(move.lambdaMm > 0)) {
+                        warnings.push('波形移动法逐差平均为零或负值，已跳过该方法。');
+                        move = null;
+                    }
+                }
+                if (move) {
+                    const lamM = move.lambdaMm / 1000;
+                    const uLamM = Math.hypot(move.uA, move.uB) / 1000;
+                    const v = fHz * lamM;
+                    const relLam = uLamM / lamM, relF = uF / fkHz;
+                    const uV = v * Math.hypot(relLam, relF);
+                    move.v = v;
+                    move.uV = uV;
+                    move.lamM = lamM;
+                    move.uLamM = uLamM;
+                    move.relLam = relLam;
+                    move.relF = relF;
+                    methods.push({ name: '波形移动法（选做）', lambdaMm: move.lambdaMm, uLambdaMm: Math.hypot(move.uA, move.uB), v: v, uV: uV });
+                }
+
+                if (!stand && !phase && !time && !move) {
+                    resultOutput.innerHTML = `<h3 class="result-title">声速测定结果</h3>
+                        <div class="warn-msg">没有可用的数据：请至少填写一种方法的位置读数。</div>`;
+                    return;
+                }
+
+                // ---------- 合理性检查 ----------
+                methods.forEach(m => {
+                    if (m.v < 300 || m.v > 380) {
+                        warnings.push(`${m.name}测得 v = ${num(m.v, 2)} m/s，超出常温空气声速的合理范围（300~380 m/s），请检查频率与位置读数。`);
+                    }
+                });
+                if (methods.length >= 2) {
+                    const vs = methods.map(m => m.v);
+                    const spread = (Math.max(...vs) - Math.min(...vs)) / ave(vs) * 100;
+                    if (spread > 2) warnings.push(`各方法结果相对偏差达 ${num(spread, 2)}%，超过 2%，建议检查测量与读数。`);
+                }
+
+                // ---------- 加权平均 ----------
+                let wSum = 0, wvSum = 0;
+                methods.forEach(m => {
+                    if (isFinite(m.uV) && m.uV > 0) {
+                        const w = 1 / (m.uV * m.uV);
+                        wSum += w;
+                        wvSum += w * m.v;
+                    }
+                });
+                const vComb = wSum > 0 ? wvSum / wSum : ave(methods.map(m => m.v));
+                const uComb = wSum > 0 ? 1 / Math.sqrt(wSum) : NaN;
+
+                // ==================== 结果面板 ====================
+                let html = `<h3 class="result-title">声速测定结果</h3>`;
+                if (warnings.length) html += warnings.map(w => `<div class="warn-msg">⚠️ ${w}</div>`).join('');
+
+                html += `<div class="result-item"><h4>实验条件 <span class="tag theory">对照</span></h4>
+                    <div class="result-value">f = ${num(fkHz, 2)} kHz，t = ${num(temp, 1)} ℃ → v<sub>理</sub> = ${num(vTheory, 2)} m/s</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    v<sub>理</sub> = 331.45·√(1 + t/273.15) = ${num(vTheory, 3)} m/s；λ<sub>理</sub> = v<sub>理</sub>/f = ${num(lambdaTheory, 4)} mm（λ/2 = ${num(lambdaTheory / 2, 4)} mm）</div></div>`;
+
+                // ① 驻波法
+                if (stand) {
+                    html += `<div class="result-item"><h4>① 共振干涉法（驻波法） <span class="tag exp">式 2-6-3 + 逐差法</span></h4>
+                        <div class="result-value">λ = ${num(stand.lambdaMm, 4)} mm → v = ${num(stand.v, 2)} m/s</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        相邻波腹间距 = λ/2 = ${num(stand.spacingMm, 4)} mm（共 ${stand.nD} 组逐差，每组含 ${stand.half} 个半波长）<br>
+                        逐差平均 Δ̄ = ${num(stand.mean, 4)} mm = ${stand.half}×λ/2 → λ = Δ̄/${stand.half}×2 = ${num(stand.lambdaMm, 4)} mm<br>
+                        v = f·λ = ${num(fkHz, 2)} kHz × ${num(stand.lambdaMm, 4)} mm = ${num(stand.v, 2)} m/s</div>
+                        ${pairTableHTML(stand.diffs, stand.half, 'mm')}</div>`;
+                }
+
+                // ② 相位法
+                if (phase) {
+                    html += `<div class="result-item"><h4>② 相位比较法 <span class="tag exp">式 2-6-7 + 逐差法</span></h4>
+                        <div class="result-value">λ = ${num(phase.lambdaMm, 4)} mm → v = ${num(phase.v, 2)} m/s</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        同相点与相邻反相点相距 λ/2 = ${num(phase.spacingMm, 4)} mm（相邻直线图形间距即 θ 差 π）<br>
+                        x₂ − x₁ = λ/2 → 逐差平均 Δ̄ = ${num(phase.mean, 4)} mm = ${phase.half}×λ/2 → λ = ${num(phase.lambdaMm, 4)} mm<br>
+                        v = f·λ = ${num(phase.v, 2)} m/s</div>
+                        ${pairTableHTML(phase.diffs, phase.half, 'mm')}</div>`;
+                }
+
+                // ③ 时差法
+                if (time) {
+                    html += `<div class="result-item"><h4>③ 时差法 <span class="tag exp">v = Δx/Δt</span></h4>
+                        <div class="result-value">v = ${num(time.v, 2)} m/s</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        逐差法：ΣΔx = ${num(time.sdX, 3)} mm，ΣΔt = ${num(time.sdT, 1)} μs → v = ΣΔx/ΣΔt = ${num(time.v, 2)} m/s<br>
+                        各逐差段比值：${time.ratios.map(r => num(r, 2)).join('、')} m/s，平均 ${num(time.ratios.length ? ave(time.ratios) : NaN, 2)} m/s<br>
+                        最小二乘拟合 x–t 斜率 = ${num(time.vFit, 2)} m/s（R² = ${time.fit ? num(time.fit.r2, 6) : '—'}），与逐差结果相差 ${num(Math.abs(time.vFit - time.v), 2)} m/s<br>
+                        <i>注：x 读数不等于发射面到接收面的真实距离 L，故必须用 v = Δx/Δt。</i></div></div>`;
+                }
+
+                // ④ 波形移动法
+                if (move) {
+                    html += `<div class="result-item"><h4>④ 波形移动法（选做） <span class="tag exp">选做</span></h4>
+                        <div class="result-value">λ = ${num(move.lambdaMm, 4)} mm → v = ${num(move.v, 2)} m/s</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        两次波形重叠之间接收器恰好移动一个波长；逐差平均 Δ̄ = ${num(move.mean, 4)} mm = ${move.half}×λ → λ = ${num(move.lambdaMm, 4)} mm</div>
+                        ${pairTableHTML(move.diffs, move.half, 'mm')}</div>`;
+                }
+
+                html += `<div class="result-equation">v = (${num(vComb, 2)} ± ${num(uComb, 2)}) m/s</div>`;
+                html += `<div class="result-item"><h4>综合结果（按不确定度加权平均） <span class="tag err">结论</span></h4>
+                    <div class="result-value">v = (${num(vComb, 2)} ± ${num(uComb, 2)}) m/s，u<sub>r</sub> = ${num(uComb / vComb * 100, 3)} %</div>
+                    <div style="font-size:0.82rem;color:#6b7c93;">
+                    权重 w<sub>i</sub> = 1/u<sub>i</sub>²；与理论值 ${num(vTheory, 2)} m/s 的偏差 = ${num((vComb - vTheory) / vTheory * 100, 3)} %</div></div>`;
+
+                // ---------- 不确定度 ----------
+                html += `<div class="uncertainty-box"><h4>📐 不确定度分析</h4>
+                    <div style="font-size:0.85rem;">
+                        v = f·λ，故 u<sub>r</sub>(v) = √[ (u<sub>λ</sub>/λ)² + (u<sub>f</sub>/f)² ]；
+                        逐差法 u<sub>λ</sub> = √(S<sub>A</sub>² + S<sub>B</sub>²)，S<sub>A</sub> 由逐差值的散布给出，S<sub>B</sub> 由位置读数误差传递。
+                    </div>
+                    <table>
+                        <thead><tr><th>方法</th><th>λ (mm)</th><th>u<sub>λ</sub> (mm)</th><th>v (m/s)</th><th>u(v) (m/s)</th><th>u<sub>r</sub></th></tr></thead>
+                        <tbody>
+                            ${methods.map(m => `<tr><td>${m.name}</td><td>${isFinite(m.lambdaMm) ? num(m.lambdaMm, 4) : '—'}</td>
+                                <td>${isFinite(m.uLambdaMm) ? num(m.uLambdaMm, 5) : '—'}</td>
+                                <td>${num(m.v, 2)}</td><td>${num(m.uV, 3)}</td><td>${sci(m.uV / m.v, 3)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                    <table style="margin-top:8px;">
+                        <thead><tr><th>不确定度来源</th><th>相对贡献</th><th>占比</th></tr></thead>
+                        <tbody>
+                            ${stand ? `<tr><td>驻波法 Δx 项（B 类）</td><td>${sci(stand.uB / stand.lambdaMm, 3)}</td><td>—</td></tr>
+                            <tr><td>驻波法逐差散布（A 类）</td><td>${sci(stand.uA / stand.lambdaMm, 3)}</td><td>—</td></tr>` : ''}
+                            <tr><td>Δf/f</td><td>${sci(uF / fkHz, 3)}</td><td>${num((uF / fkHz) ** 2 / ((uComb / vComb) ** 2) * 100, 2)} %</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top:8px;font-weight:700;">
+                        v = (${num(vComb, 2)} ± ${num(uComb, 2)}) m/s，u<sub>r</sub>(v) = ${num(uComb / vComb * 100, 3)} %
+                    </div>
+                    ${(uF / fkHz > (stand ? Math.hypot(stand.uA, stand.uB) / stand.lambdaMm : 0))
+                        ? `<div style="margin-top:8px;font-size:0.82rem;color:#9a7d0a;">💡 主要误差来自<b>频率 f 的准确度</b>：实验前务必找准谐振频率（接收波形振幅最大），并在该频率下完成全部测量。</div>`
+                        : `<div style="margin-top:8px;font-size:0.82rem;color:#9a7d0a;">💡 主要误差来自<b>位置读数</b>：可用逐差法取更多组、或提高读数分辨力来改善。</div>`}
+                </div>`;
+
+                resultOutput.innerHTML = html;
+
+                // ==================== 图像 ====================
+                if (stand) {
+                    const pts = stand.xs.map((y, i) => ({ x: i + 1, y: y }));
+                    addChartBox('📈 图1 · 驻波法 x–n 关系（直线斜率的 2 倍即波长）', () => ({
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: '波腹位置读数',
+                                data: pts,
+                                backgroundColor: '#4b6cb7',
+                                pointRadius: 5,
+                                showLine: false
+                            }, fitLineDataset(pts, '#27ae60', '线性拟合 (斜率 = λ/2)')]
+                        },
+                        options: chartOpts('序号 n', '位置 x (mm)')
+                    }), '驻波法_x-n');
+                }
+                if (phase) {
+                    const pts = phase.xs.map((y, i) => ({ x: i + 1, y: y }));
+                    addChartBox('📈 图2 · 相位比较法 x–n 关系（同相/反相交替出现）', () => ({
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: '同相/反相点位置',
+                                data: pts,
+                                backgroundColor: '#7c3aed',
+                                pointRadius: 5,
+                                showLine: false
+                            }, fitLineDataset(pts, '#27ae60', '线性拟合 (斜率 = λ/2)')]
+                        },
+                        options: chartOpts('序号 n', '位置 x (mm)')
+                    }), '相位法_x-n');
+                }
+                if (time) {
+                    const pts = time.pts.map(p => ({ x: p.x, y: p.y }));
+                    addChartBox('📈 图3 · 时差法 x–t 关系（直线斜率即声速）', () => ({
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: '实测 (t, x)',
+                                data: pts,
+                                backgroundColor: '#4b6cb7',
+                                pointRadius: 5,
+                                showLine: false
+                            }, fitLineDataset(pts, '#27ae60', `线性拟合 v = ${num(time.vFit, 2)} m/s`)]
+                        },
+                        options: chartOpts('传播时间 t (μs)', '位置 x (mm)')
+                    }), '时差法_x-t');
+                }
+
+                addChartBox('📊 图4 · 各方法声速对比（虚线为理论值）', () => {
+                    const labels = methods.map(m => m.name);
+                    const vals = methods.map(m => m.v);
+                    const errs = methods.map(m => (isFinite(m.uV) ? m.uV : 0));
+                    const lo = Math.min(...vals, vTheory), hi = Math.max(...vals, vTheory);
+                    return {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '测得声速 v (m/s)',
+                                data: vals,
+                                backgroundColor: '#4b6cb7',
+                                borderRadius: 6,
+                                order: 2
+                            }, {
+                                label: `理论值 ${num(vTheory, 2)} m/s`,
+                                data: labels.map(() => vTheory),
+                                type: 'line',
+                                borderColor: '#e67e22',
+                                borderDash: [6, 4],
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                order: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            scales: {
+                                x: { title: { display: true, text: '测量方法', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { display: false }, ticks: { maxRotation: 30, minRotation: 0, autoSkip: false, font: { size: 11 } } },
+                                y: {
+                                    beginAtZero: false,
+                                    suggestedMin: lo - 8,
+                                    suggestedMax: hi + 8,
+                                    title: { display: true, text: '声速 v (m/s)', color: '#4b6cb7', font: { weight: 'bold' } },
+                                    grid: { color: '#eef2f7' }
+                                }
+                            },
+                            plugins: {
+                                legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => c.datasetIndex === 0
+                                            ? `${labels[c.dataIndex]}：${num(vals[c.dataIndex], 2)} ± ${num(errs[c.dataIndex], 2)} m/s`
+                                            : `理论值：${num(vTheory, 2)} m/s`
+                                    }
+                                }
+                            }
+                        }
+                    };
+                }, '各方法对比');
+
+                // ==================== 详细过程 ====================
+                let detail = '';
+                detail += `【实验条件】\n`;
+                detail += `  f = ${num(fkHz, 3)} kHz（谐振频率），室温 t = ${num(temp, 2)} ℃\n`;
+                detail += `  λ理 = v理/f = ${num(vTheory, 3)} / ${num(fHz, 1)} = ${sci(lambdaTheory / 1000, 5)} m = ${num(lambdaTheory, 4)} mm\n`;
+                detail += `  λ/2 = ${num(lambdaTheory / 2, 4)} mm（相邻波腹或相邻同相/反相点的理论间距）\n`;
+                detail += `  仪器误差：Δf = ${num(parseFloat($('#u-f').value) || 0, 4)} kHz，Δx = ${num(parseFloat($('#u-x').value) || 0, 4)} mm，Δt = ${num(parseFloat($('#u-t').value) || 0, 4)} μs\n`;
+                detail += `  B 类分量处理：${$('#dist-mode').value === 'uniform' ? '均匀分布，除以 √3' : '极限误差直接计入'}\n\n`;
+
+                if (stand) {
+                    detail += `【① 共振干涉法（驻波法）· 逐差法求波长】\n`;
+                    detail += `  原理：入射波与反射波叠加形成驻波，相邻波腹（波节）间距为 λ/2（式 2-6-3）\n`;
+                    detail += `  逐差：${stand.half} 组，每组 x(i+${stand.half}) − x(i)\n`;
+                    stand.diffs.forEach((d, i) => { detail += `    Δ${i + 1} = ${num(d, 3)} mm\n`; });
+                    detail += `  Δ̄ = ${num(stand.mean, 5)} mm = ${stand.half} × (λ/2) = ${num(stand.half, 0)} × λ/2\n`;
+                    detail += `  λ = 2Δ̄/${stand.half} = <span class="result-line">${num(stand.lambdaMm, 5)} mm</span>\n`;
+                    detail += `  v = f·λ = ${num(fkHz, 3)}×10³ × ${sci(stand.lamM, 5)} = <span class="result-line">${num(stand.v, 3)} m/s</span>\n`;
+                    detail += `  不确定度：\n`;
+                    detail += `    A 类（逐差散布）u_A = s(Δ)/√n × 2/${stand.half} = ${num(stand.uA, 6)} mm\n`;
+                    detail += `    B 类（Δx=${num(uX, 5)} mm/次，Δ 含两个读数）u_B = √2·Δx/√${stand.nD} × 2/${stand.half} = ${num(stand.uB, 6)} mm\n`;
+                    detail += `    u(λ) = √(u_A²+u_B²) = ${num(Math.hypot(stand.uA, stand.uB), 6)} mm（相对 ${sci(stand.relLam, 4)}）\n`;
+                    detail += `    u(f)/f = ${num(uF, 6)}/${num(fkHz, 3)} = ${sci(stand.relF, 4)}\n`;
+                    detail += `    u(v) = v·√[(u_λ/λ)²+(u_f/f)²] = <span class="result-line">${num(stand.uV, 4)} m/s</span>\n\n`;
+                }
+
+                if (phase) {
+                    detail += `【② 相位比较法 · 逐差法求波长】\n`;
+                    detail += `  原理：Δφ = 2πx/λ（式 2-6-6）；同相点（正斜率直线）与反相点（负斜率直线）相差 π，\n`;
+                    detail += `        故 x₂ − x₁ = λ/2（式 2-6-7），读数序列为同相、反相依次交替\n`;
+                    detail += `  逐差：${phase.half} 组\n`;
+                    phase.diffs.forEach((d, i) => { detail += `    Δ${i + 1} = ${num(d, 3)} mm\n`; });
+                    detail += `  Δ̄ = ${num(phase.mean, 5)} mm = ${phase.half} × (λ/2)\n`;
+                    detail += `  λ = <span class="result-line">${num(phase.lambdaMm, 5)} mm</span>\n`;
+                    detail += `  v = f·λ = <span class="result-line">${num(phase.v, 3)} m/s</span>\n`;
+                    detail += `  u(λ) = ${num(Math.hypot(phase.uA, phase.uB), 6)} mm，u(v) = <span class="result-line">${num(phase.uV, 4)} m/s</span>\n\n`;
+                }
+
+                if (time) {
+                    detail += `【③ 时差法】\n`;
+                    detail += `  原理：脉冲调制波经时间 t 传播距离 L，v = L/t；由于 x 读数≠真实距离 L，改用 v = Δx/Δt\n`;
+                    detail += `  数据与逐差（${time.half} 组，每组跨 ${time.half} 个测点）：\n`;
+                    for (let i = 0; i < time.half; i++) {
+                        detail += `    Δx${i + 1} = ${num(time.dxs[i], 3)} mm，Δt${i + 1} = ${num(time.dts[i], 1)} μs → v${i + 1} = ${num(time.dxs[i] / time.dts[i] * 1000, 2)} m/s\n`;
+                    }
+                    detail += `  ΣΔx = ${num(time.sdX, 3)} mm，ΣΔt = ${num(time.sdT, 1)} μs\n`;
+                    detail += `  v = ΣΔx/ΣΔt = ${num(time.sdX, 2)}/${num(time.sdT, 1)} × 1000 = <span class="result-line">${num(time.v, 3)} m/s</span>\n`;
+                    detail += `  最小二乘校核：x = a + v·t，斜率 = ${num(time.vFit, 3)} m/s，R² = ${time.fit ? num(time.fit.r2, 6) : '—'}\n`;
+                    detail += `  不确定度：\n`;
+                    detail += `    A 类（各段比值散布）u_A = ${num(time.uA, 4)} m/s\n`;
+                    detail += `    B 类：Δ 项 = √(2×${time.half})·Δx/ΣΔx = ${sci(time.relX, 4)}，Δt 项 = √(2×${time.half})·Δt/ΣΔt = ${sci(time.relT, 4)}\n`;
+                    detail += `         u_B = v·√(Δ项²+Δt项²) = ${num(time.uB, 4)} m/s\n`;
+                    detail += `    u(v) = √(u_A²+u_B²) = <span class="result-line">${num(time.uV, 4)} m/s</span>\n\n`;
+                }
+
+                if (move) {
+                    detail += `【④ 波形移动法（选做）】\n`;
+                    detail += `  原理：CH1（发射）波形不动，CH2（接收）波形随接收器移动；两次波形重叠之间恰好移动一个波长\n`;
+                    detail += `  Δ̄ = ${num(move.mean, 5)} mm = ${move.half} × λ → λ = <span class="result-line">${num(move.lambdaMm, 5)} mm</span>\n`;
+                    detail += `  v = f·λ = <span class="result-line">${num(move.v, 3)} m/s</span>，u(v) = ${num(move.uV, 4)} m/s\n\n`;
+                }
+
+                detail += `【⑤ 综合结果】\n`;
+                methods.forEach(m => {
+                    detail += `  ${m.name}：v = ${num(m.v, 3)} ± ${num(m.uV, 3)} m/s（u_r = ${num(m.uV / m.v * 100, 3)}%）\n`;
+                });
+                detail += `  加权平均（w = 1/u²）：v = <span class="result-line">(${num(vComb, 3)} ± ${num(uComb, 3)}) m/s</span>，u_r = ${num(uComb / vComb * 100, 3)}%\n`;
+                detail += `  与理论值 ${num(vTheory, 3)} m/s 的相对偏差 = ${num((vComb - vTheory) / vTheory * 100, 3)} %\n\n`;
+
+                detail += `【讨论与注意】\n`;
+                detail += `  1) 测量前必须先把接收波形调到振幅最大以确定谐振频率，全部测量都在该频率下进行；\n`;
+                detail += `  2) 驻波法中说"波腹位置"是指示波器上该点的振幅极大，而不是整个驻波的形状；\n`;
+                detail += `  3) 波形失真时调小"接收增益"或"连续波强度"；时差法若 t 长时间不变，则要调大"接收增益"；\n`;
+                detail += `  4) 驻波法间距过小（如 < 100 mm）时测量误差偏大，应把间距拉大后再读数；\n`;
+                detail += `  5) 干涉法要求发射面与接收面严格平行，否则反射波方向偏离、驻波不理想；相位法的要求相对宽松；\n`;
+                detail += `  6) 有声速随温度升高而增大：v ∝ √T，故必须记录室温并用 v理 = 331.45√(1+t/273.15) 作对照。\n`;
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            function fitLineDataset(pts, color, label) {
+                const fit = linreg(pts);
+                if (!fit) return { label: label, data: [], showLine: false };
+                const xs = pts.map(p => p.x);
+                const x0 = Math.min(...xs), x1 = Math.max(...xs);
+                return {
+                    label: label + `（R²=${num(fit.r2, 6)}）`,
+                    data: [{ x: x0, y: fit.a0 + fit.a1 * x0 }, { x: x1, y: fit.a0 + fit.a1 * x1 }],
+                    type: 'line',
+                    borderColor: color,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    fill: false
+                };
+            }
+            function chartOpts(xTitle, yTitle) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 300 },
+                    scales: {
+                        x: { title: { display: true, text: xTitle, color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                        y: { title: { display: true, text: yTitle, color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                    },
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } } }
+                    }
+                };
+            }
+
+            // ==================== 事件绑定 ====================
+            buildAll();
+            $('#phase-start').addEventListener('change', refreshPhaseLabels);
+            $('#calculate-btn').addEventListener('click', calculate);
+            $('#reset-btn').addEventListener('click', () => {
+                $('#freq').value = '35.00';
+                $('#temp').value = '20.0';
+                $('#u-f').value = '0.01';
+                $('#u-x').value = '0.01';
+                $('#u-t').value = '0.5';
+                $('#dist-mode').value = 'uniform';
+                buildAll();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            $('#clear-btn').addEventListener('click', () => {
+                if (!confirm('确定清空全部读数吗？（参数保留）')) return;
+                ['#stand-table', '#phase-table', '#time-table', '#move-table'].forEach(sel => {
+                    const body = $(sel).querySelector('tbody');
+                    if (!body) return;
+                    Array.from(body.children).forEach(tr => {
+                        tr.querySelectorAll('input').forEach(i => { i.value = ''; });
+                    });
+                });
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

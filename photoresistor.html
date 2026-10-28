@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光敏电阻特性 · 伏安特性与光照特性计算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.4rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .panel {
+            flex: 1 1 100%;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.22rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 14px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 9px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.94rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        input[readonly] {
+            background: #f0f2f5;
+            color: #667;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 14px;
+            font-size: 0.88rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        .badge-note {
+            font-size: 0.79rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .dtable-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        table.dtable {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+        }
+        table.dtable th,
+        table.dtable td {
+            border-bottom: 1px solid #eef2f7;
+            border-right: 1px solid #eef2f7;
+            padding: 6px 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        table.dtable thead th {
+            background: #eef2f9;
+            color: #445a7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        table.dtable thead th input {
+            min-width: 58px;
+            padding: 5px 4px;
+            font-size: 0.82rem;
+            text-align: center;
+            border-radius: 6px;
+            background: #fff;
+        }
+        table.dtable th:last-child,
+        table.dtable td:last-child {
+            border-right: none;
+        }
+        table.dtable tbody tr:last-child td {
+            border-bottom: none;
+        }
+        table.dtable td.rowlab {
+            font-weight: 700;
+            color: var(--text);
+            background: #f8fafc;
+            font-size: 0.86rem;
+        }
+        table.dtable td.qty {
+            background: #fbfcfe;
+            color: #5b6e8c;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        table.dtable td input {
+            width: 100%;
+            min-width: 60px;
+            padding: 6px 4px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        table.dtable td.calc {
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: #1e8c4a;
+            background: #f6fbf8;
+            padding: 4px 3px;
+        }
+        table.dtable tr.gsep td {
+            border-top: 2px solid #dbe4f0;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .calculate-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: 13px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.02rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 13px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 260px;
+            border: 1px solid var(--border);
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-equation {
+            font-size: 1.08rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 12px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .sumtab {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 6px;
+        }
+        .sumtab th,
+        .sumtab td {
+            border: 1px solid #e3e9f2;
+            padding: 5px 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .sumtab th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-weight: 700;
+        }
+        .chart-box {
+            margin-top: 18px;
+            background: #fff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 360px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        details.ref {
+            margin-top: 14px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 10px 16px;
+            background: #fbfcfe;
+        }
+        details.ref > summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+            list-style: none;
+        }
+        details.ref > summary::-webkit-details-marker {
+            display: none;
+        }
+        details.ref > summary::before {
+            content: "\25B8  ";
+        }
+        details.ref[open] > summary::before {
+            content: "\25BE  ";
+        }
+        figure {
+            margin: 14px 0;
+            text-align: center;
+        }
+        figure img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #fff;
+        }
+        figcaption {
+            font-size: 0.82rem;
+            color: #6b7c93;
+            margin-top: 8px;
+        }
+        .svg-wrap {
+            background: #fcfdff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px;
+            overflow-x: auto;
+        }
+        @media (max-width: 640px) {
+            .grid3,
+            .grid4 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .header h2 {
+                font-size: 1.15rem;
+            }
+            body {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔆 光敏电阻特性 · 伏安特性与光照特性</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h3 class="panel-title">📖 ① 实验原理与参数</h3>
+
+            <div class="instructions">
+                <b>测量电路（图 2-13-9）：</b>光敏电阻 R<sub>p</sub> 与取样电阻 R 串联，电源 U 可调（0~12 V），用万用表测取样电阻上的电压 <b>U<sub>R</sub></b>。<br>
+                <b>I<sub>ph</sub> = U<sub>R</sub> / R</b>（串联电路电流）　|　<b>U′ = U − U<sub>R</sub></b>（光敏电阻两端电压）　|　<b>R<sub>p</sub> = U′ / I<sub>ph</sub></b>
+            </div>
+
+            <div class="svg-wrap">
+            <svg viewBox="0 0 680 285" width="100%" style="max-width:680px;display:block;margin:0 auto;">
+                <title>光敏电阻特性测试电路（图 2-13-9）</title>
+                <rect x="40" y="100" width="100" height="70" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.8"/>
+                <text x="90" y="128" font-size="13" font-weight="500" fill="#444441" text-anchor="middle" font-family="system-ui, sans-serif">U 可调</text>
+                <text x="90" y="148" font-size="12" fill="#5F5E5A" text-anchor="middle" font-family="system-ui, sans-serif">0 ~ 12 V</text>
+
+                <line x1="140" y1="135" x2="200" y2="135" stroke="#888780" stroke-width="1.6"/>
+                <line x1="310" y1="135" x2="360" y2="135" stroke="#888780" stroke-width="1.6"/>
+                <line x1="480" y1="135" x2="570" y2="135" stroke="#888780" stroke-width="1.6"/>
+                <line x1="570" y1="135" x2="570" y2="245" stroke="#888780" stroke-width="1.6"/>
+                <line x1="570" y1="245" x2="90" y2="245" stroke="#888780" stroke-width="1.6"/>
+                <line x1="90" y1="245" x2="90" y2="170" stroke="#888780" stroke-width="1.6"/>
+
+                <rect x="200" y="113" width="110" height="44" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+                <text x="255" y="131" font-size="13" font-weight="500" fill="#0C447C" text-anchor="middle" font-family="system-ui, sans-serif">R_p</text>
+                <text x="255" y="148" font-size="11" fill="#185FA5" text-anchor="middle" font-family="system-ui, sans-serif">光敏电阻</text>
+
+                <rect x="360" y="113" width="120" height="44" rx="8" fill="#EAF3DE" stroke="#639922" stroke-width="0.8"/>
+                <text x="420" y="131" font-size="13" font-weight="500" fill="#3B6D11" text-anchor="middle" font-family="system-ui, sans-serif">R = 1.00 kΩ</text>
+                <text x="420" y="148" font-size="11" fill="#639922" text-anchor="middle" font-family="system-ui, sans-serif">取样电阻</text>
+
+                <line x1="380" y1="157" x2="380" y2="218" stroke="#888780" stroke-width="1.6"/>
+                <line x1="380" y1="218" x2="400" y2="218" stroke="#888780" stroke-width="1.6"/>
+                <line x1="460" y1="157" x2="460" y2="218" stroke="#888780" stroke-width="1.6"/>
+                <line x1="460" y1="218" x2="440" y2="218" stroke="#888780" stroke-width="1.6"/>
+                <circle cx="420" cy="218" r="21" fill="#fff" stroke="#4b6cb7" stroke-width="1.6"/>
+                <text x="420" y="224" font-size="14" font-weight="500" fill="#4b6cb7" text-anchor="middle" font-family="system-ui, sans-serif">V</text>
+                <text x="420" y="262" font-size="12" fill="#4b6cb7" text-anchor="middle" font-family="system-ui, sans-serif">万用表（读 U_R）</text>
+
+                <text x="255" y="100" font-size="12" fill="#185FA5" text-anchor="middle" font-family="system-ui, sans-serif">U′ = U − U_R</text>
+                <circle cx="360" cy="135" r="3.4" fill="#888780"/>
+            </svg>
+            </div>
+            <div class="badge-note" style="text-align:center;">图 2-13-9　光敏电阻伏安特性 / 光照特性测试电路</div>
+
+            <div class="sub-title"><span>仪器与参数</span><span class="hint">灯泡 6 V；距离 5~25 cm</span></div>
+            <div class="grid4">
+                <div class="input-group">
+                    <label>取样电阻 R <span class="unit">kΩ</span></label>
+                    <input type="number" id="rsample" value="1.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>额定功率 P<sub>max</sub> <span class="unit">W</span></label>
+                    <input type="number" id="pmax" value="0.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>光照特性固定 U′ <span class="unit">V</span></label>
+                    <input type="number" id="uprime" value="4" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>被测器件</label>
+                    <select id="device">
+                        <option value="光敏电阻" selected>光敏电阻（R_p）</option>
+                        <option value="光敏三极管 3DU33">光敏三极管 3DU33</option>
+                    </select>
+                </div>
+            </div>
+            <div class="badge-note">本页测法对光敏电阻、光敏三极管同样适用（都是「串联取样电阻 → 测 U<sub>R</sub>」），换器件时改一下上面的名称即可。</div>
+
+            <details class="ref">
+                <summary>教材参考图形（图 2-13-1、图 2-13-2）</summary>
+                <figure>
+                    <img src="光敏电阻图表/光敏电阻-伏安与光照特性曲线.jpg" alt="图2-13-1 光敏电阻的伏安特性曲线 与 图2-13-2 光敏电阻的光照特性曲线">
+                    <figcaption>图 2-13-1（左）伏安特性：不同光强下的 I<sub>ph</sub>–U′ 直线，虚线为 0.5 W 等功率线。<br>图 2-13-2（右）光照特性：不同 U′ 下的 I<sub>ph</sub>–E<sub>c</sub> 曲线，随光强增大逐渐饱和。</figcaption>
+                </figure>
+            </details>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📋 ② 伏安特性实验数据</h3>
+            <div class="badge-note" style="margin:0 0 10px;">
+                条件：灯泡 6 V，分别固定距离 <b>5 cm</b> 与 <b>10 cm</b>。改变电源电压 U = 2 / 4 / 6 / 8 / 10 V，记录万用表读数 <b>U<sub>R</sub></b>；<b>U−U<sub>R</sub></b> 与 <b>I<sub>ph</sub></b> 自动算出。
+            </div>
+            <div class="dtable-wrap">
+                <table class="dtable">
+                    <thead id="v-head"></thead>
+                    <tbody id="v-body"></tbody>
+                </table>
+            </div>
+            <div class="badge-note">I<sub>ph</sub> = U<sub>R</sub>/R，U′ = U − U<sub>R</sub>。作 I<sub>ph</sub>–U′ 图即得伏安特性曲线。</div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📋 ③ 光照特性实验数据</h3>
+            <div class="badge-note" style="margin:0 0 10px;">
+                条件：灯泡 6 V，保持光敏电阻两端电压 <b>U′ = 4 V 不变</b>（每换一个距离都要调节电源 U，使 U = U<sub>R</sub> + U′）。记录各距离下的光强与 <b>U<sub>R</sub></b>。
+            </div>
+            <div class="dtable-wrap">
+                <table class="dtable">
+                    <thead id="l-head"></thead>
+                    <tbody id="l-body"></tbody>
+                </table>
+            </div>
+            <div class="badge-note">最后一列是<b>遮光（暗）</b>状态，光强记 0 lx，用来得到暗电流、暗电阻。</div>
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="fill-btn" class="ghost-btn">↺ 恢复示例数据</button>
+                <button id="clear-btn" class="ghost-btn">🗑 清空读数</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📊 ④ 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const on = (s, ev, fn) => {
+                const el = $(s);
+                if (el) el.addEventListener(ev, fn);
+            };
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+
+            function fmt(v, digits) {
+                if (!isFinite(v)) return '—';
+                const a = Math.abs(v);
+                if (a === 0) return '0';
+                const d = Math.max(0, (digits || 4) - 1 - Math.floor(Math.log10(a)));
+                return v.toFixed(Math.min(6, d));
+            }
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => {
+                    try {
+                        c.destroy();
+                    } catch (e) {}
+                });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                if (typeof Chart === 'undefined') {
+                    const msg = document.createElement('div');
+                    msg.className = 'warn-msg';
+                    msg.textContent = '⚠️ 未能加载图表库（Chart.js CDN 不可达），图像已跳过，计算结果不受影响。';
+                    box.insertBefore(msg, wrap);
+                    chartBoxes.appendChild(box);
+                    return;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                try {
+                    charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = '<h4>📝 ' + title + '</h4>' + content;
+                resultOutput.appendChild(b);
+            }
+
+            const PALETTE = ['#4b6cb7', '#e67e22', '#27ae60', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d'];
+
+            // ===== 伏安特性：U = 2/4/6/8/10 V，两组距离 =====
+            const U_LIST = [2, 4, 6, 8, 10];
+            const VGROUPS_DEMO = [
+                { d: '5 cm',  UR: [0.909, 1.818, 2.727, 3.636, 4.545] },
+                { d: '10 cm', UR: [0.571, 1.143, 1.714, 2.286, 2.857] }
+            ];
+            let VGROUPS = VGROUPS_DEMO.map(g => ({ d: g.d, UR: g.UR.slice() }));
+
+            // ===== 光照特性：U' 固定 4 V =====
+            const LDIST_DEMO = ['5 cm', '10 cm', '15 cm', '20 cm', '25 cm', '遮光（暗）'];
+            const LE_DEMO = [1129, 423, 261, 202, 159, 0];
+            const LUR_DEMO = [3.333, 1.679, 1.196, 1.000, 0.846, 0.020];
+            let LDIST = LDIST_DEMO.slice(),
+                LE = LE_DEMO.slice(),
+                LUR = LUR_DEMO.slice();
+
+            function Rsample() {
+                const v = parseFloat($('#rsample').value);
+                return (isFinite(v) && v > 0) ? v : 1;
+            }
+
+            // ---------- 建表：伏安 ----------
+            function buildVTable() {
+                const head = $('#v-head'),
+                    body = $('#v-body');
+                head.innerHTML = '';
+                body.innerHTML = '';
+                let h = '<tr><th style="width:76px">距离</th><th style="width:96px">量</th>';
+                U_LIST.forEach(u => {
+                    h += '<th>U = ' + u + ' V</th>';
+                });
+                h += '</tr>';
+                head.innerHTML = h;
+
+                VGROUPS.forEach((g, gi) => {
+                    const tr1 = document.createElement('tr');
+                    tr1.className = 'gsep';
+                    const tdD = document.createElement('td');
+                    tdD.className = 'rowlab';
+                    tdD.rowSpan = 3;
+                    tdD.textContent = g.d;
+                    tr1.appendChild(tdD);
+                    const tdQ1 = document.createElement('td');
+                    tdQ1.className = 'qty';
+                    tdQ1.textContent = 'U_R (V) 实测';
+                    tr1.appendChild(tdQ1);
+                    U_LIST.forEach((u, j) => {
+                        const td = document.createElement('td');
+                        const inp = document.createElement('input');
+                        inp.type = 'number';
+                        inp.step = 'any';
+                        inp.id = 'vur-' + gi + '-' + j;
+                        inp.value = g.UR[j];
+                        inp.addEventListener('input', refreshV);
+                        td.appendChild(inp);
+                        tr1.appendChild(td);
+                    });
+                    body.appendChild(tr1);
+
+                    ['U−U_R (V)', 'I_ph (mA)'].forEach((lab, k) => {
+                        const tr = document.createElement('tr');
+                        const tdQ = document.createElement('td');
+                        tdQ.className = 'qty';
+                        tdQ.textContent = lab;
+                        tr.appendChild(tdQ);
+                        U_LIST.forEach((u, j) => {
+                            const td = document.createElement('td');
+                            td.className = 'calc';
+                            td.id = 'vout-' + gi + '-' + j + '-' + k;
+                            td.textContent = '—';
+                            tr.appendChild(td);
+                        });
+                        body.appendChild(tr);
+                    });
+                });
+                refreshV();
+            }
+            function refreshV() {
+                const R = Rsample();
+                VGROUPS.forEach((g, gi) => {
+                    U_LIST.forEach((u, j) => {
+                        const UR = parseFloat($('#vur-' + gi + '-' + j).value);
+                        const o1 = $('#vout-' + gi + '-' + j + '-0');
+                        const o2 = $('#vout-' + gi + '-' + j + '-1');
+                        if (isFinite(UR)) {
+                            const Up = u - UR;
+                            const I = UR / R;
+                            o1.textContent = num(Up, 4);
+                            o2.textContent = num(I, 4);
+                        } else {
+                            o1.textContent = '—';
+                            o2.textContent = '—';
+                        }
+                    });
+                });
+            }
+
+            // ---------- 建表：光照 ----------
+            function buildLTable() {
+                const head = $('#l-head'),
+                    body = $('#l-body');
+                head.innerHTML = '';
+                body.innerHTML = '';
+                let h = '<tr><th style="width:104px">量</th>';
+                LDIST.forEach(d => {
+                    h += '<th>' + d + '</th>';
+                });
+                h += '</tr>';
+                head.innerHTML = h;
+
+                const rowE = document.createElement('tr');
+                rowE.innerHTML = '<td class="qty">光强 E (lx)</td>';
+                LDIST.forEach((d, j) => {
+                    const td = document.createElement('td');
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.step = 'any';
+                    inp.id = 'le-' + j;
+                    inp.value = LE[j];
+                    td.appendChild(inp);
+                    rowE.appendChild(td);
+                });
+                body.appendChild(rowE);
+
+                const rowU = document.createElement('tr');
+                rowU.innerHTML = '<td class="qty">U_R (V) 实测</td>';
+                LDIST.forEach((d, j) => {
+                    const td = document.createElement('td');
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.step = 'any';
+                    inp.id = 'lur-' + j;
+                    inp.value = LUR[j];
+                    inp.addEventListener('input', refreshL);
+                    td.appendChild(inp);
+                    rowU.appendChild(td);
+                });
+                body.appendChild(rowU);
+
+                ['U = U_R + U′ (V)', 'I_ph (mA)'].forEach((lab, k) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td class="qty">' + lab + '</td>';
+                    LDIST.forEach((d, j) => {
+                        const td = document.createElement('td');
+                        td.className = 'calc';
+                        td.id = 'lout-' + j + '-' + k;
+                        td.textContent = '—';
+                        tr.appendChild(td);
+                    });
+                    body.appendChild(tr);
+                });
+                refreshL();
+            }
+            function refreshL() {
+                const R = Rsample();
+                const Up = parseFloat($('#uprime').value) || 0;
+                LDIST.forEach((d, j) => {
+                    const UR = parseFloat($('#lur-' + j).value);
+                    const o0 = $('#lout-' + j + '-0');
+                    const o1 = $('#lout-' + j + '-1');
+                    if (isFinite(UR)) {
+                        o0.textContent = num(UR + Up, 4);
+                        o1.textContent = num(UR / R, 4);
+                    } else {
+                        o0.textContent = '—';
+                        o1.textContent = '—';
+                    }
+                });
+            }
+
+            // ---------- 线性拟合 y = a x + b ----------
+            function linfit(pts) {
+                const n = pts.length;
+                if (n < 2) return null;
+                const mx = pts.reduce((a, p) => a + p.x, 0) / n;
+                const my = pts.reduce((a, p) => a + p.y, 0) / n;
+                let sxy = 0,
+                    sxx = 0;
+                pts.forEach(p => {
+                    sxy += (p.x - mx) * (p.y - my);
+                    sxx += (p.x - mx) * (p.x - mx);
+                });
+                const a = sxx > 0 ? sxy / sxx : NaN;
+                const b = my - a * mx;
+                const ss = pts.reduce((s, p) => s + Math.pow(p.y - (a * p.x + b), 2), 0);
+                const st = pts.reduce((s, p) => s + Math.pow(p.y - my, 2), 0);
+                return { a: a, b: b, r2: st > 0 ? 1 - ss / st : NaN, n: n, mx: mx, my: my };
+            }
+
+            // ---------- 主计算 ----------
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const R = Rsample();
+                const Pmax = parseFloat($('#pmax').value);
+                const UpFix = parseFloat($('#uprime').value);
+                const device = $('#device').value;
+                const warnings = [];
+
+                // --- 伏安 ---
+                const vrows = VGROUPS.map((g, gi) => {
+                    const pts = [];
+                    const detail = [];
+                    U_LIST.forEach((u, j) => {
+                        const UR = parseFloat($('#vur-' + gi + '-' + j).value);
+                        if (!isFinite(UR)) return;
+                        const Up = u - UR;
+                        const I = UR / R;
+                        pts.push({ x: Up, y: I, U: u, UR: UR });
+                        detail.push({ U: u, UR: UR, Up: Up, I: I, Rp: I > 0 ? Up / I : NaN });
+                    });
+                    const fit = linfit(pts);
+                    return { d: g.d, pts: pts, detail: detail, fit: fit };
+                }).filter(r => r.pts.length >= 2);
+
+                if (!vrows.length) warnings.push('伏安特性数据不足（每组至少 2 个电压点）。');
+                vrows.forEach(r => {
+                    if (isFinite(r.fit.b) && r.fit.a > 0 && Math.abs(r.fit.b) > 0.05 * Math.abs(r.fit.a) * Math.max.apply(null, r.pts.map(p => p.x))) {
+                        warnings.push('伏安特性（' + r.d + '）：拟合截距 b = ' + num(r.fit.b, 4) + ' mA 偏离 0 较多，曲线不过原点，检查读数或接触电阻。');
+                    }
+                });
+
+                // --- 光照 ---
+                const lpts = [];
+                LDIST.forEach((d, j) => {
+                    const E = parseFloat($('#le-' + j).value);
+                    const UR = parseFloat($('#lur-' + j).value);
+                    if (!isFinite(E) || !isFinite(UR)) return;
+                    const I = UR / R;
+                    lpts.push({ d: d, E: E, UR: UR, I: I, U: UR + UpFix, Rp: I > 0 ? UpFix / I : NaN });
+                });
+                if (lpts.length < 2) warnings.push('光照特性数据不足（至少 2 个点）。');
+
+                const litPts = lpts.filter(p => p.E > 0 && p.I > 0);
+                const gammaFit = litPts.length >= 2 ?
+                    linfit(litPts.map(p => ({ x: Math.log10(p.E), y: Math.log10(p.I) }))) : null;
+                const darkPt = lpts.filter(p => p.E === 0)[0] || null;
+
+                // ---------- 结果面板 ----------
+                let html = '<h3 class="result-title">' + device + ' 特性计算结果</h3>';
+                if (warnings.length) html += warnings.map(w => '<div class="warn-msg">⚠️ ' + w + '</div>').join('');
+
+                html += '<div class="result-item"><h4>换算公式 <span class="tag theory">式</span></h4>' +
+                    '<div style="font-size:0.88rem;color:#4a5d7a;font-family:Consolas,monospace;">' +
+                    'I<sub>ph</sub> = U<sub>R</sub> / R　（R = ' + num(R, 3) + ' kΩ，I 单位 mA）<br>' +
+                    'U′ = U − U<sub>R</sub>　（伏安特性）　|　U = U<sub>R</sub> + U′　（光照特性，U′ 固定 ' + num(UpFix, 3) + ' V）<br>' +
+                    'R<sub>p</sub> = U′ / I<sub>ph</sub>' +
+                    '</div></div>';
+
+                if (vrows.length) {
+                    html += '<div class="result-item"><h4>伏安特性汇总</h4><div style="overflow-x:auto;"><table class="sumtab"><thead><tr>' +
+                        '<th>距离</th><th>U (V)</th><th>U_R (V)</th><th>U′ = U−U_R (V)</th><th>I_ph (mA)</th><th>R_p (kΩ)</th>' +
+                        '</tr></thead><tbody>' +
+                        vrows.map(r => r.detail.map((p, i) =>
+                            '<tr>' + (i === 0 ? '<td rowspan="' + r.detail.length + '"><b>' + r.d + '</b></td>' : '') +
+                            '<td>' + fmt(p.U) + '</td><td>' + num(p.UR, 4) + '</td><td>' + num(p.Up, 4) + '</td>' +
+                            '<td>' + num(p.I, 4) + '</td><td>' + num(p.Rp, 4) + '</td></tr>').join('')).join('') +
+                        '</tbody></table></div>' +
+                        '<div class="badge-note">同一距离下 R_p 应基本不变（伏安特性为直线）；不同距离 R_p 不同（光强不同）。</div></div>';
+
+                    html += '<div class="result-item"><h4>伏安特性线性拟合 I<sub>ph</sub> = a·U′ + b</h4>' +
+                        '<div style="overflow-x:auto;"><table class="sumtab"><thead><tr>' +
+                        '<th>距离</th><th>斜率 a (mA/V)</th><th>截距 b (mA)</th><th>R²</th><th>点数</th><th>是否过原点</th>' +
+                        '</tr></thead><tbody>' +
+                        vrows.map(r => {
+                            const pass = isFinite(r.fit.b) && Math.abs(r.fit.b) <= 0.05 * Math.abs(r.fit.a) * Math.max.apply(null, r.pts.map(p => p.x));
+                            return '<tr><td>' + r.d + '</td><td><b>' + num(r.fit.a, 4) + '</b></td><td>' + num(r.fit.b, 4) + '</td>' +
+                                '<td>' + num(r.fit.r2, 5) + '</td><td>' + r.fit.n + '</td>' +
+                                '<td style="color:' + (pass ? '#1e8c4a' : '#b03a3a') + '">' + (pass ? '是（b≈0）' : '偏离') + '</td></tr>';
+                        }).join('') +
+                        '</tbody></table></div>' +
+                        '<div class="badge-note">斜率 a 即该光强下的电导 1/R<sub>p</sub>；截距 b 越接近 0，说明 I–U′ 直线越接近过原点。</div></div>';
+                }
+
+                if (lpts.length) {
+                    html += '<div class="result-item"><h4>光照特性汇总</h4><div style="overflow-x:auto;"><table class="sumtab"><thead><tr>' +
+                        '<th>距离</th><th>光强 E (lx)</th><th>U_R (V)</th><th>U (V)</th><th>I_ph (mA)</th><th>R_p (kΩ)</th>' +
+                        '</tr></thead><tbody>' +
+                        lpts.map(p => '<tr><td>' + p.d + '</td><td>' + fmt(p.E) + '</td><td>' + num(p.UR, 4) + '</td>' +
+                            '<td>' + num(p.U, 4) + '</td><td>' + num(p.I, 4) + '</td><td>' + num(p.Rp, 4) + '</td></tr>').join('') +
+                        '</tbody></table></div>' +
+                        (darkPt ? '<div class="badge-note">暗电流 I<sub>暗</sub> = ' + num(darkPt.I, 4) + ' mA，暗电阻 R<sub>暗</sub> = ' +
+                            num(darkPt.Rp, 2) + ' kΩ；与亮电阻相比相差约 ' + fmt(darkPt.Rp / (lpts.filter(p => p.E > 0)[0] || { Rp: darkPt.Rp }).Rp, 3) + ' 倍。</div>' : '') +
+                        '</div>';
+                }
+
+                if (gammaFit) {
+                    const gamma = gammaFit.a;
+                    const K = Math.pow(10, gammaFit.b);
+                    html += '<div class="result-item"><h4>光照特性经验式 I = K·E<sup>γ</sup></h4>' +
+                        '<div class="result-value" style="font-size:1.15rem;font-weight:700;">γ = ' + num(gamma, 4) + '，K = ' + sci(K, 4) + '</div>' +
+                        '<div style="font-size:0.84rem;color:#6b7c93;">lg I = lg K + γ·lg E 线性拟合，R² = ' + num(gammaFit.r2, 5) +
+                        '（' + gammaFit.n + ' 个点，不含暗点）</div>' +
+                        '<div class="badge-note">γ 一般在 0.5~1 之间；γ &lt; 1 说明光电流随光强增大而趋于饱和。</div></div>';
+                }
+
+                html += '<div class="result-equation">I<sub>ph</sub> = U<sub>R</sub>/R，U′ = U − U<sub>R</sub>，R<sub>p</sub> = U′/I<sub>ph</sub></div>';
+                resultOutput.innerHTML = html;
+
+                // ---------- 图 1：伏安特性 ----------
+                if (vrows.length) {
+                    addChartBox('📊 图1 · 伏安特性曲线（I_ph – U′，每条线一个距离）', () => {
+                        const ds = vrows.map((r, i) => ({
+                            label: r.d + '（灯泡 6 V）',
+                            data: r.pts.map(p => ({ x: p.x, y: p.y })),
+                            borderColor: PALETTE[i % PALETTE.length],
+                            backgroundColor: PALETTE[i % PALETTE.length],
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            tension: 0,
+                            fill: false,
+                            showLine: true
+                        }));
+                        const maxUp = Math.max.apply(null, vrows.reduce((a, r) => a.concat(r.pts.map(p => p.x)), [1]));
+                        const maxI = Math.max.apply(null, vrows.reduce((a, r) => a.concat(r.pts.map(p => p.y)), [0.001]));
+                        if (isFinite(Pmax) && Pmax > 0) {
+                            const lineMaxI = Pmax / maxUp * 1000;
+                            if (lineMaxI <= maxI * 3) {
+                                const pts = [];
+                                for (let k = 1; k <= 40; k++) {
+                                    const uu = maxUp * k / 40;
+                                    pts.push({ x: uu, y: Pmax / uu * 1000 });
+                                }
+                                ds.push({
+                                    label: '额定功率 ' + num(Pmax, 2) + ' W（I = P/U′）',
+                                    data: pts,
+                                    borderColor: '#dc2626',
+                                    borderWidth: 2,
+                                    borderDash: [6, 4],
+                                    pointRadius: 0,
+                                    fill: false,
+                                    showLine: true
+                                });
+                            }
+                        }
+                        return {
+                            type: 'scatter',
+                            data: { datasets: ds },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: { duration: 300 },
+                                scales: {
+                                    x: { type: 'linear', beginAtZero: true, title: { display: true, text: '光敏电阻两端电压 U′ = U − U_R (V)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                                    y: { beginAtZero: true, title: { display: true, text: '光电流 I_ph (mA)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                                },
+                                plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }
+                            }
+                        };
+                    }, '光敏电阻_伏安特性');
+                }
+
+                // ---------- 图 2：光照特性 ----------
+                if (lpts.length) {
+                    addChartBox('📊 图2 · 光照特性曲线（I_ph – E，U′ 固定）', () => ({
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'U′ = ' + num(UpFix, 3) + ' V',
+                                data: lpts.map(p => ({ x: p.E, y: p.I })),
+                                borderColor: '#e67e22',
+                                backgroundColor: '#e67e22',
+                                borderWidth: 2,
+                                pointRadius: 5,
+                                tension: 0.25,
+                                fill: false,
+                                showLine: true
+                            }, {
+                                label: '暗点（E = 0）',
+                                data: lpts.filter(p => p.E === 0).map(p => ({ x: p.E, y: p.I })),
+                                backgroundColor: '#5b6e8c',
+                                pointRadius: 6,
+                                pointStyle: 'rectRot',
+                                showLine: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            scales: {
+                                x: { type: 'linear', beginAtZero: true, title: { display: true, text: '光强 E (lx)', color: '#e67e22', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                                y: { beginAtZero: true, title: { display: true, text: '光电流 I_ph (mA)', color: '#e67e22', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                            },
+                            plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }
+                        }
+                    }), '光敏电阻_光照特性');
+                }
+
+                // ---------- 图 3：lg I – lg E ----------
+                if (gammaFit) {
+                    addChartBox('📈 图3 · lg I_ph – lg E 线性拟合（斜率即 γ）', () => {
+                        const xs = litPts.map(p => Math.log10(p.E));
+                        const x0 = Math.min.apply(null, xs),
+                            x1 = Math.max.apply(null, xs);
+                        return {
+                            type: 'scatter',
+                            data: {
+                                datasets: [{
+                                    label: '实测点',
+                                    data: litPts.map(p => ({ x: Math.log10(p.E), y: Math.log10(p.I) })),
+                                    backgroundColor: '#7c3aed',
+                                    pointRadius: 6,
+                                    showLine: false
+                                }, {
+                                    label: '拟合直线 γ = ' + num(gammaFit.a, 4),
+                                    data: [{ x: x0, y: gammaFit.a * x0 + gammaFit.b }, { x: x1, y: gammaFit.a * x1 + gammaFit.b }],
+                                    borderColor: '#7c3aed',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    fill: false,
+                                    showLine: true
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: { duration: 300 },
+                                scales: {
+                                    x: { type: 'linear', title: { display: true, text: 'lg E', color: '#7c3aed', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } },
+                                    y: { title: { display: true, text: 'lg I_ph', color: '#7c3aed', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                                },
+                                plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }
+                            }
+                        };
+                    }, '光敏电阻_lgI-lgE');
+                }
+
+                // ---------- 详细过程 ----------
+                let detail = '【实验电路与换算】\n';
+                detail += '  R_p（' + device + '）与取样电阻 R 串联，电源 U 可调，万用表测 R 上的电压 U_R。\n';
+                detail += '  I_ph = U_R / R = U_R / ' + num(R, 3) + ' kΩ　（U_R 用 V，I_ph 得 mA）\n';
+                detail += '  U′  = U − U_R　（伏安特性中 R_p 两端的实际电压）\n';
+                detail += '  R_p = U′ / I_ph\n\n';
+
+                if (vrows.length) {
+                    detail += '【伏安特性实验】灯泡 6 V\n';
+                    vrows.forEach(r => {
+                        detail += '  距离 ' + r.d + '：\n';
+                        r.detail.forEach(p => {
+                            detail += '    U = ' + fmt(p.U) + ' V, U_R = ' + num(p.UR, 4) + ' V → I_ph = ' + num(p.UR, 4) + '/' + num(R, 3) +
+                                ' = ' + num(p.I, 4) + ' mA, U′ = ' + fmt(p.U) + ' − ' + num(p.UR, 4) + ' = ' + num(p.Up, 4) +
+                                ' V → R_p = <span class="result-line">' + num(p.Rp, 4) + ' kΩ</span>\n';
+                        });
+                        detail += '    线性拟合 I_ph = a·U′ + b：a = <span class="result-line">' + num(r.fit.a, 4) + ' mA/V</span>，b = ' +
+                            num(r.fit.b, 4) + ' mA，R² = ' + num(r.fit.r2, 5) + '\n';
+                        detail += '    斜率 a = 1/R_p → R_p ≈ ' + num(1 / r.fit.a, 4) + ' kΩ\n\n';
+                    });
+                }
+
+                if (lpts.length) {
+                    detail += '【光照特性实验】灯泡 6 V，U′ 保持 ' + num(UpFix, 3) + ' V 不变（U = U_R + U′）\n';
+                    lpts.forEach(p => {
+                        detail += '  ' + p.d + '：E = ' + fmt(p.E) + ' lx, U_R = ' + num(p.UR, 4) + ' V → I_ph = ' + num(p.I, 4) +
+                            ' mA, U = ' + num(p.U, 4) + ' V, R_p = U′/I_ph = <span class="result-line">' + num(p.Rp, 4) + ' kΩ</span>\n';
+                    });
+                    detail += '\n';
+                }
+
+                if (gammaFit) {
+                    detail += '【光照特性经验式拟合】lg I_ph = lg K + γ·lg E（不含暗点）\n';
+                    detail += '  γ = <span class="result-line">' + num(gammaFit.a, 4) + '</span>，lg K = ' + num(gammaFit.b, 4) +
+                        ' → K = ' + sci(Math.pow(10, gammaFit.b), 4) + '，R² = ' + num(gammaFit.r2, 5) + '\n\n';
+                }
+
+                detail += '【数据处理与结论】\n';
+                detail += '  1) 伏安特性：同一距离下 I_ph 与 U′ 成正比（直线），R_p 基本不变；\n';
+                detail += '     拟合截距 b 应接近 0，即直线过原点 —— 若明显不过原点，检查接触电阻或读数。\n';
+                detail += '  2) 不同距离（不同光强）对应不同斜率：光强越大，直线越陡，R_p 越小。\n';
+                detail += '  3) 光照特性：U′ 一定时，I_ph 随 E 增大而增大，但逐渐趋于饱和，是非线性的；\n';
+                if (gammaFit) detail += '     经验式 I = K·E^γ 中 γ ≈ ' + num(gammaFit.a, 3) + '（介于 0.5~1），正体现这种饱和趋势。\n';
+                if (darkPt) detail += '  4) 暗电流 I_暗 = ' + num(darkPt.I, 4) + ' mA，暗电阻 R_暗 = ' + num(darkPt.Rp, 2) + ' kΩ，远大于亮电阻。\n';
+                detail += '  5) 工作点须满足 P = U′·I_ph ≤ ' + num(Pmax, 3) + ' W，否则可能烧坏元件。\n';
+                detail += '  6) 改变光强的方法：改变光源电压，或改变光源到光敏电阻的距离（点光源下光强与距离平方成反比）。\n\n';
+
+                detail += '【思考题】利用光敏电阻设计一个报警器\n';
+                detail += '  思路：把光敏电阻与一个固定电阻串联分压，取分压点电压送入比较器（或用三极管开关），\n';
+                detail += '        与设定的阈值电压比较；当光照变化使分压超过阈值时，输出翻转，驱动蜂鸣器/LED 报警。\n';
+                detail += '  要点：① 光敏电阻接成分压臂；② 比较器另一输入接可调基准（电位器）以设定光强阈值；\n';
+                detail += '        ③ 输出经三极管或继电器驱动负载；④ 遮光报警与见光报警可通过交换分压位置实现。\n';
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            buildVTable();
+            buildLTable();
+
+            ['#rsample', '#uprime'].forEach(s => on(s, 'input', () => {
+                refreshV();
+                refreshL();
+            }));
+            on('#device', 'change', () => {
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            on('#calculate-btn', 'click', calculate);
+            on('#fill-btn', 'click', () => {
+                $('#rsample').value = '1.00';
+                $('#pmax').value = '0.5';
+                $('#uprime').value = '4';
+                VGROUPS = VGROUPS_DEMO.map(g => ({ d: g.d, UR: g.UR.slice() }));
+                LDIST = LDIST_DEMO.slice();
+                LE = LE_DEMO.slice();
+                LUR = LUR_DEMO.slice();
+                buildVTable();
+                buildLTable();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            on('#clear-btn', 'click', () => {
+                if (!confirm('确定清空所有 U_R 读数吗？（距离、光强与参数保留）')) return;
+                document.querySelectorAll('input[id^="vur-"], input[id^="lur-"]').forEach(i => {
+                    i.value = '';
+                });
+                refreshV();
+                refreshL();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:36px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

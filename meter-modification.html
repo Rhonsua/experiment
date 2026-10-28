@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电表改装 · 校验折线 / 欧姆表直线表盘</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 4px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .formula-line {
+            background: #f4f7fb;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #2c3f55;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 1.1rem;
+            }
+        }
+
+        .grade-settings { padding:10px; margin:10px 0; background:#f4f7fb; border-radius:8px; }
+        .grade-settings summary { cursor:pointer; color:#405a80; font-size:.85rem; }
+        .grade-settings .grid2 { margin-top:12px; }
+        .table-scroll { overflow-x:auto; margin-top:8px; }
+        .data-section table { min-width:340px; }
+        .data-section input { min-width:78px; }
+        .remove-row { background:#fff; border:1px solid #e1d1d1; color:#a34a4a; cursor:pointer; padding:2px 6px; border-radius:5px; }
+        .btn-row { flex-wrap:wrap; }
+        .ghost-btn { padding:10px 12px; }
+        .empty-result { color:#6b7c93; text-align:center; padding:30px 6px; }
+        .dial-scroll { overflow:auto; max-height:560px; border:1px solid #e3e9f2; margin-top:12px; background:white; }
+        .dial-scroll svg { display:block; }
+        .export-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        button:focus-visible { outline:3px solid #9fbffc; outline-offset:2px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔌 电表改装 · 校验折线与欧姆表直线表盘</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 实测数据</h3>
+            <div class="instructions">
+                电流表、电压表：每点填写<b>标称值</b>和<b>标准表读数</b>，自动求 Δ = 标称值 − 标准表读数，按标称值从小到大连接成校验折线。<br>
+                欧姆表：填写<b>已知电阻 Rₓ</b>与<b>实测偏转格数 d</b>，在直线表盘上按实际格数标注阻值。
+            </div>
+            <section class="data-section" id="amm-section">
+                <h4 class="sub-title">① 电流表校验 <span class="hint">两列读数统一用 mA</span></h4>
+                <details class="grade-settings"><summary>准确度等级与灵敏度（选填仪器参数）</summary><div class="grid2"><div class="input-group"><label for="amm-range">改装表满量程 M <span class="unit">mA</span></label><input type="number" id="amm-range" value="5.00" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="amm-standard-range">标准表所用量程 Mₛ <span class="unit">mA</span></label><input type="number" id="amm-standard-range" value="20" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="amm-standard-class">标准表准确度等级 Kₛ <span class="unit">级</span></label><input type="number" id="amm-standard-class" value="0.5" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="amm-divisions">改装表满偏总格数 a <span class="unit">格</span></label><input type="number" id="amm-divisions" value="100" min="0" step="any" placeholder="填写仪器实际参数"></div></div><p class="badge-note">灵敏度需要满量程和总格数；定级另需标准表量程及等级，并应完成全量程校验。参数留空仍可绘制校验折线。</p></details>
+                <div class="table-scroll"><table class="mini" id="amm-table">
+                    <thead><tr><th>#</th><th>标称值 (mA)</th><th>标准表读数 (mA)</th><th>Δ (mA)</th><th>操作</th></tr></thead><tbody></tbody>
+                </table></div>
+                <button type="button" class="mini-add" data-add="amm">+ 添加电流表校验点</button>
+            </section>
+            <section class="data-section" id="volt-section">
+                <h4 class="sub-title">② 电压表校验 <span class="hint">两列读数统一用 V</span></h4>
+                <details class="grade-settings"><summary>准确度等级与灵敏度（选填仪器参数）</summary><div class="grid2"><div class="input-group"><label for="volt-range">改装表满量程 M <span class="unit">V</span></label><input type="number" id="volt-range" value="1.50" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="volt-standard-range">标准表所用量程 Mₛ <span class="unit">V</span></label><input type="number" id="volt-standard-range" value="2" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="volt-standard-class">标准表准确度等级 Kₛ <span class="unit">级</span></label><input type="number" id="volt-standard-class" value="0.5" min="0" step="any" placeholder="填写仪器实际参数"></div><div class="input-group"><label for="volt-divisions">改装表满偏总格数 a <span class="unit">格</span></label><input type="number" id="volt-divisions" value="100" min="0" step="any" placeholder="填写仪器实际参数"></div></div><p class="badge-note">灵敏度需要满量程和总格数；定级另需标准表量程及等级，并应完成全量程校验。参数留空仍可绘制校验折线。</p></details>
+                <div class="table-scroll"><table class="mini" id="volt-table">
+                    <thead><tr><th>#</th><th>标称值 (V)</th><th>标准表读数 (V)</th><th>Δ (V)</th><th>操作</th></tr></thead><tbody></tbody>
+                </table></div>
+                <button type="button" class="mini-add" data-add="volt">+ 添加电压表校验点</button>
+            </section>
+            <section class="data-section" id="ohm-section">
+                <h4 class="sub-title">③ 欧姆表标定 <span class="hint">按实测格数绘制表盘</span></h4>
+                <div class="badge-note">填写实际已知电阻与实测偏转格数，按标定曲线生成常用阻值分度的黑白表盘。</div>
+                <div class="grid2" style="margin-top:10px">
+                    <div class="input-group"><label for="ohm-multiplier">表盘读数倍率</label><select id="ohm-multiplier"><option value="1">×1</option><option value="10">×10</option><option value="100" selected>×100</option><option value="custom">自选倍率</option></select></div>
+                    <div class="input-group" id="ohm-custom-multiplier-group" hidden><label for="ohm-custom-multiplier">自选正倍率</label><input type="number" id="ohm-custom-multiplier" value="1000" min="0" step="any" inputmode="decimal" aria-describedby="ohm-multiplier-note"></div>
+                </div>
+                <p class="badge-note" id="ohm-multiplier-note">实际 Rₓ（Ω）= 表盘数字 × 倍率；例如刻度 15、倍率 ×100，读数为 1500 Ω。下表始终填实际 Ω。切换倍率只换算数字，不移动同一阻值对应的位置，也不代表已标定另一硬件量程；换挡后的新测量须重新填入。</p>
+                <details class="grade-settings"><summary>刻度生成与测量范围</summary><p class="badge-note">相邻实测点间采用保单调三次插值（PCHIP），曲线精确通过实测点；只有两个不同阻值时只能作线性插值。常用主、次刻线均按阻值求位置，不按等格数铺开。有限阻值范围外不外推；∞ 仅表示开路 0 格，不参与插值。少量测量点不能保证全量程精度，建议在变化快或跨度大的区间补测。原版实测表盘保留在结果的折叠参考中。</p></details>
+                <div class="table-scroll"><table class="mini" id="ohm-table">
+                    <thead><tr><th>#</th><th>已知电阻 Rₓ (Ω)</th><th>实测偏转格数 d (格)</th><th>操作</th></tr></thead><tbody></tbody>
+                </table></div>
+                <button type="button" class="mini-add" data-add="ohm">+ 添加欧姆表标定点</button>
+            </section>
+            <p class="badge-note">可以只填写其中一项；整行留空会跳过，填了一半的行会提示补齐。示例仅用于演示。</p>
+            <div class="btn-row">
+                <button type="button" id="calculate-btn" class="calculate-btn">📈 生成图表</button>
+                <button type="button" id="fill-btn" class="ghost-btn">填充示例</button>
+                <button type="button" id="clear-btn" class="ghost-btn">清空数据</button>
+            </div>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 校验结果与表盘</h3>
+            <div id="result-output" class="result-output" aria-live="polite">
+                <p class="empty-result">填写实测数据后，点击“生成图表”。</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+(() => {
+    'use strict';
+    const $ = s => document.querySelector(s);
+    const settings = {
+        amm: {name:'电流表', unit:'mA', headers:['标称值 (mA)','标准表读数 (mA)']},
+        volt: {name:'电压表', unit:'V', headers:['标称值 (V)','标准表读数 (V)']},
+        ohm: {name:'欧姆表', headers:['已知电阻 Rₓ (Ω)','实测偏转格数 d (格)']}
+    };
+    const charts = [], result = $('#result-output'), chartBoxes = $('#chart-container-box');
+    let lastOhmPoints=null;
+    const fmt = value => {
+        if (!Number.isFinite(value)) return '—';
+        if (value === 0) return '0';
+        return Math.abs(value) >= 1e7 || Math.abs(value) < 1e-5 ? value.toExponential(5) : String(Number(value.toPrecision(7)));
+    };
+    function element(tag, text, className) {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        if (className) node.className = className;
+        return node;
+    }
+    function clearResults(message='数据已修改，请重新点击“生成图表”。') {
+        lastOhmPoints=null;
+        charts.splice(0).forEach(chart => chart.destroy());
+        chartBoxes.replaceChildren();
+        result.replaceChildren(element('p',message,'empty-result'));
+    }
+    function refreshRows(key) {
+        const config = settings[key];
+        $(`#${key}-table tbody`).querySelectorAll('tr').forEach((tr,i) => {
+            tr.querySelector('.row-number').textContent = i+1;
+            tr.querySelectorAll('input').forEach((input,c) => input.setAttribute('aria-label',`${config.name}第 ${i+1} 行${config.headers[c]}`));
+            tr.querySelector('button').setAttribute('aria-label',`删除${config.name}第 ${i+1} 行`);
+            if (key !== 'ohm') {
+                const a = tr.querySelector('.in-m').value, b = tr.querySelector('.in-s').value;
+                const delta = a !== '' && b !== '' ? Number(a)-Number(b) : NaN;
+                tr.querySelector('.dout').textContent = Number.isFinite(delta) ? fmt(delta) : '—';
+            }
+        });
+    }
+    function addRow(key, values=['','']) {
+        const tr = document.createElement('tr');
+        tr.append(element('td','', 'row-number'));
+        for (let column=0; column<2; column++) {
+            const td = document.createElement('td'), input = document.createElement('input');
+            input.type='number'; input.step='any'; input.inputMode='decimal';
+            input.className=key==='ohm' ? (column===0?'in-r':'in-d') : (column===0?'in-m':'in-s');
+            input.value=values[column];
+            if(key==='ohm')input.min='0';
+            td.append(input); tr.append(td);
+        }
+        if(key!=='ohm')tr.append(element('td','—','dout'));
+        const td=document.createElement('td'), remove=element('button','×','remove-row');
+        remove.type='button';
+        remove.addEventListener('click',()=>{tr.remove();refreshRows(key);clearResults();});
+        td.append(remove);tr.append(td);$(`#${key}-table tbody`).append(tr);
+        refreshRows(key);
+    }
+    for(const key of Object.keys(settings)) {
+        for(let i=0;i<11;i++)addRow(key);
+        $(`#${key}-table`).addEventListener('input',()=>{refreshRows(key);clearResults();});
+        $(`[data-add="${key}"]`).addEventListener('click',()=>{addRow(key);clearResults();});
+    }
+    function readRows(key) {
+        const points=[], errors=[];
+        $(`#${key}-table tbody`).querySelectorAll('tr').forEach((tr,i)=>{
+            const inputs=[...tr.querySelectorAll('input')], values=inputs.map(input=>input.value);
+            if(values.every((value,c)=>value===''&&!inputs[c].validity.badInput))return;
+            if(values.some(value=>value==='')){errors.push(`第 ${i+1} 行请补齐两列数据。`);return;}
+            const [a,b]=values.map(Number);
+            if(![a,b].every(Number.isFinite)){errors.push(`第 ${i+1} 行请填写有限数字。`);return;}
+            if(key==='ohm'&&(a<0||b<0)){errors.push(`第 ${i+1} 行电阻和偏转格数不能为负数。`);return;}
+            if(key!=='ohm'&&!Number.isFinite(a-b)){errors.push(`第 ${i+1} 行数值过大，差值超出计算范围。`);return;}
+            points.push(key==='ohm'?{r:a,d:b,row:i+1}:{m:a,s:b,delta:a-b,row:i+1});
+        });
+        return {points,errors};
+    }
+    function resultTable(parent,headers,rows) {
+        const wrap=element('div',undefined,'table-scroll'), table=element('table',undefined,'mini');
+        const thead=document.createElement('thead'), head=document.createElement('tr'), body=document.createElement('tbody');
+        headers.forEach(text=>head.append(element('th',text)));thead.append(head);
+        rows.forEach(values=>{const tr=document.createElement('tr');values.forEach(value=>tr.append(element('td',String(value))));body.append(tr);});
+        table.append(thead,body);wrap.append(table);parent.append(wrap);
+    }
+    function box(title) {const node=element('div',undefined,'chart-box');node.append(element('h4',title));chartBoxes.append(node);return node;}
+    function download(url,name) {const link=document.createElement('a');link.href=url;link.download=name;link.click();}
+    function blobDownload(blob,name) {const url=URL.createObjectURL(blob);download(url,name);setTimeout(()=>URL.revokeObjectURL(url),1000);}
+    function calibrationChart(key, points) {
+        const {name,unit}=settings[key], node=box(`${name}校验折线`);
+        node.append(element('p',`横轴：标称值 (${unit})；纵轴：Δ = 标称值 − 标准表读数 (${unit})。按实测点连接，不进行拟合或平滑。`,'badge-note'));
+        if(typeof Chart==='undefined') {node.append(element('p','图表库未加载，请联网刷新后重新生成。上方计算结果仍可查看。','warn-msg'));return;}
+        const wrap=element('div',undefined,'chart-container'),canvas=document.createElement('canvas');
+        canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${name}标称值与示值误差的校验折线`);
+        wrap.append(canvas);node.append(wrap);
+        const sorted=[...points].sort((a,b)=>a.m-b.m||a.row-b.row);
+        try {
+            const chart=new Chart(canvas.getContext('2d'),{
+                type:'line',data:{datasets:[{label:`校验误差 Δ (${unit})`,data:sorted.map(p=>({x:p.m,y:p.delta})),borderColor:'#4b6cb7',backgroundColor:'#4b6cb7',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0,fill:false}]},
+                options:{responsive:true,maintainAspectRatio:false,animation:false,scales:{x:{type:'linear',title:{display:true,text:`标称值 (${unit})`}},y:{title:{display:true,text:`Δ = 标称值 − 标准表读数 (${unit})`},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>`Δ = ${fmt(context.parsed.y)} ${unit}`}}}}
+            });
+            charts.push(chart);
+            const btn=element('button','⬇️ 下载校验折线 PNG','download-btn');btn.type='button';
+            btn.addEventListener('click',()=>{const copy=document.createElement('canvas');copy.width=canvas.width;copy.height=canvas.height;const ctx=copy.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,copy.width,copy.height);ctx.drawImage(canvas,0,0);download(copy.toDataURL('image/png'),`${name}_校验折线.png`);});
+            node.append(btn);
+        } catch {wrap.remove();node.append(element('p','折线图生成失败，请刷新后重试。已计算的数据保留在上方。','warn-msg'));}
+    }
+    const NS='http://www.w3.org/2000/svg';
+    function svgElement(tag,attributes,text) {const node=document.createElementNS(NS,tag);for(const [key,value] of Object.entries(attributes))node.setAttribute(key,String(value));if(text!==undefined)node.textContent=text;return node;}
+    function ohmDial(points) {
+        const node=box('欧姆表直线表盘 · 实测刻度'), sorted=[...points].sort((a,b)=>a.d-b.d||b.r-a.r);
+        const maxD=Math.max(...points.map(p=>p.d));
+        if(maxD<=0){node.append(element('p','至少需要一个大于 0 格的实测读数，才能确定直线表盘的长度。','warn-msg'));return;}
+        const unique=[];
+        sorted.forEach(p=>{if(!unique.some(q=>q.d===p.d&&q.r===p.r))unique.push(p);});
+        const markers=[{d:0,label:'∞ Ω（开路）',r:Infinity},...unique.map(p=>({...p,label:fmt(p.r)+' Ω'}))];
+        const width=Math.max(960,markers.length*70+160),left=78,right=width-78,span=right-left,lanes=[];
+        for(const marker of markers) {
+            marker.x=left+(marker.d/maxD)*span;
+            const half=Math.max(26,Array.from(marker.label).length*4.8+12);
+            marker.center=Math.max(left+half,Math.min(right-half,marker.x));
+            let lane=0;while(lanes[lane]!==undefined&&marker.center-half<lanes[lane]+10)lane++;
+            lanes[lane]=marker.center+half;marker.lane=lane;
+        }
+        const axisY=80+lanes.length*27,height=axisY+125;
+        const svg=svgElement('svg',{viewBox:`0 0 ${width} ${height}`,width,height,role:'img','aria-labelledby':'ohm-dial-title ohm-dial-description',id:'ohm-dial','font-family':'Microsoft YaHei, PingFang SC, sans-serif'});
+        svg.append(svgElement('title',{id:'ohm-dial-title'},'欧姆表实测直线表盘'),svgElement('desc',{id:'ohm-dial-description'},'横向位置与实测偏转格数成正比；开路无穷大在 0 格，有限阻值按实测格数标注。'),svgElement('rect',{width,height,fill:'#fff'}));
+        svg.append(svgElement('text',{x:width/2,y:30,'text-anchor':'middle','font-size':21,'font-weight':700,fill:'#24344f'},'欧姆表直线表盘（Ω）'));
+        svg.append(svgElement('line',{x1:left,y1:axisY,x2:right,y2:axisY,stroke:'#24344f','stroke-width':3}));
+        for(const marker of markers) {
+            const labelY=axisY-35-marker.lane*27;
+            const group=svgElement('g',{'data-deflection':marker.d,'data-resistance':marker.r===Infinity?'infinity':marker.r,'data-x':marker.x});
+            group.append(svgElement('line',{x1:marker.x,y1:axisY-16,x2:marker.x,y2:axisY+5,stroke:'#24344f','stroke-width':2}));
+            group.append(svgElement('polyline',{points:`${marker.x},${axisY-19} ${marker.x},${labelY+7} ${marker.center},${labelY+7}`,fill:'none',stroke:'#9aabc1','stroke-width':1}));
+            group.append(svgElement('text',{x:marker.center,y:labelY,'text-anchor':'middle','font-size':16,fill:'#24344f'},marker.label));svg.append(group);
+        }
+        for(let i=0;i<=4;i++) {const x=left+span*i/4;svg.append(svgElement('line',{x1:x,y1:axisY+27,x2:x,y2:axisY+33,stroke:'#8b9ab0'}),svgElement('text',{x,y:axisY+54,'text-anchor':'middle','font-size':14,fill:'#5c6c82'},fmt(maxD*i/4)));}
+        svg.append(svgElement('text',{x:width/2,y:axisY+84,'text-anchor':'middle','font-size':16,fill:'#5c6c82'},'实测偏转格数 d（格）→'));
+        const wrap=element('div',undefined,'dial-scroll');wrap.append(svg);node.append(wrap);
+        node.append(element('p','每条阻值刻线的位置由实测偏转格数决定；下方格数辅助轴等距，电阻刻度不强制等距。可横向滚动查看并下载表盘。','badge-note'));
+        const zero=points.filter(p=>p.r===0);
+        if(!zero.length)node.append(element('p','未填写 0 Ω 短路读数，表盘右端只画到最大实测格数，不自动补零欧刻度。','warn-msg'));
+        if(points.some(p=>p.d===0))node.append(element('p','存在有限电阻对应 0 格的读数，与开路刻度重合，请核对读数与仪表分辨率。','warn-msg'));
+        if(unique.some((p,i)=>unique.slice(0,i).some(q=>q.d===p.d&&q.r!==p.r)))node.append(element('p','有相同偏转格数对应不同阻值，表盘已分行标注，请核对这些测量点。','warn-msg'));
+        if(sorted.some((p,i)=>i>0&&p.d>sorted[i-1].d&&p.r>sorted[i-1].r))node.append(element('p','存在偏转格数增大而阻值也增大的点，与串联式欧姆表的反向刻度关系不一致，请核对实测数据。','warn-msg'));
+        if(zero.some(p=>p.d<maxD))node.append(element('p','0 Ω 短路读数小于其他测量点的偏转格数，请核对调零和数据。','warn-msg'));
+        const getSource=()=>new XMLSerializer().serializeToString(svg);
+        const svgButton=element('button','⬇️ 下载表盘 SVG','download-btn');svgButton.type='button';svgButton.addEventListener('click',()=>blobDownload(new Blob([getSource()],{type:'image/svg+xml;charset=utf-8'}),'欧姆表_实测直线表盘.svg'));
+        const pngButton=element('button','⬇️ 下载表盘 PNG','download-btn');pngButton.type='button';
+        pngButton.addEventListener('click',()=>{
+            const url=URL.createObjectURL(new Blob([getSource()],{type:'image/svg+xml;charset=utf-8'})),image=new Image();
+            image.onload=()=>{try {const canvas=document.createElement('canvas');canvas.width=width*2;canvas.height=height*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);download(canvas.toDataURL('image/png'),'欧姆表_实测直线表盘.png');}catch{node.append(element('p','PNG 导出失败，可以使用 SVG 下载。','warn-msg'));}finally{URL.revokeObjectURL(url);}};
+            image.onerror=()=>{URL.revokeObjectURL(url);node.append(element('p','PNG 导出失败，可以使用 SVG 下载。','warn-msg'));};image.src=url;
+        });
+        const actions=element('div',undefined,'export-actions');actions.append(svgButton,pngButton);node.append(actions);
+    }
+    // 直接对实测 R–d 做 PCHIP；不套用理想欧姆表公式，不把开路作为有限插值点。
+    function ohmMeasuredScale(points) {
+        const sorted=[...points].sort((a,b)=>a.r-b.r||a.row-b.row),notes=[];
+        if(sorted.length<2)return {error:'至少需要两个不同阻值的实测点，才能生成刻度盘。'};
+        if(sorted.some(p=>!Number.isFinite(p.r)||!Number.isFinite(p.d)||p.r<0||p.d<=0))return {error:'有限电阻的偏转格数必须大于 0；0 格为开路位置。请核对读数与分辨率，原版保留输入记录。'};
+        if(sorted.some((p,i)=>i>0&&p.r===sorted[i-1].r&&p.d!==sorted[i-1].d))return {error:'同一阻值对应不同格数，请先核对重复测量，再生成可用刻度盘。原版保留所有读数。'};
+        const unique=sorted.filter((p,i)=>i===0||p.r!==sorted[i-1].r);
+        if(unique.length<2)return {error:'至少需要两个不同阻值的实测点，重复的同一测量点不能确定刻度。'};
+        if(unique.some((p,i)=>i>0&&p.d>=unique[i-1].d))return {error:'电阻增大时偏转格数应减小，请核对不单调或重合的读数。原版保留所有读数。'};
+        const minR=unique[0].r,maxR=unique[unique.length-1].r,maxD=unique[0].d,n=unique.length;
+        if(minR>0)notes.push('缺少 0 Ω 短路读数，右端只画到最小实测电阻；请补测后再确认零位。');
+        if(n===2)notes.push('只有两个不同阻值的实测点，暂用线性插值，无法确定真实的非线性分布；请增加标定点。');
+        // 线性归一化只改善数值条件，不改变插值形状或物理坐标。
+        const x=unique.map(p=>p.r/maxR),y=unique.map(p=>p.d/maxD),h=[],delta=[],slope=new Array(n);
+        for(let i=0;i<n-1;i++){h[i]=x[i+1]-x[i];delta[i]=(y[i+1]-y[i])/h[i];}
+        if(h.some(v=>!(v>0))||delta.some(v=>!Number.isFinite(v)||!(v<0)))return {error:'数据跨度或相邻点差异超出数值精度，请检查单位与有效数字后重新标定。'};
+        if(n===2)slope[0]=slope[1]=delta[0];
+        else {
+            for(let i=1;i<n-1;i++){
+                const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1],weight=w1/(w1+w2);
+                slope[i]=1/(weight/delta[i-1]+(1-weight)/delta[i]);
+            }
+            const endpoint=(a,b,da,db)=>{
+                const v=((2*a+b)*da-a*db)/(a+b);
+                if(Math.sign(v)!==Math.sign(da))return 0;
+                return Math.sign(da)!==Math.sign(db)&&Math.abs(v)>3*Math.abs(da)?3*da:v;
+            };
+            slope[0]=endpoint(h[0],h[1],delta[0],delta[1]);
+            slope[n-1]=endpoint(h[n-2],h[n-3],delta[n-2],delta[n-3]);
+        }
+        if(slope.some(v=>!Number.isFinite(v)))return {error:'插值超出数值精度，请检查单位与有效数字。'};
+        const at=r=>{
+            if(!Number.isFinite(r)||r<minR||r>maxR)return null;
+            let lo=0,hi=n-1;
+            while(lo<=hi){const mid=(lo+hi)>>1;if(unique[mid].r===r)return {...unique[mid],source:'measured',rows:[unique[mid].row]};if(unique[mid].r<r)lo=mid+1;else hi=mid-1;}
+            const i=lo-1,a=unique[i],b=unique[i+1],t=(r-a.r)/(b.r-a.r),t2=t*t,t3=t2*t;
+            const estimate=((2*t3-3*t2+1)*y[i]+(t3-2*t2+t)*h[i]*slope[i]+(-2*t3+3*t2)*y[i+1]+(t3-t2)*h[i]*slope[i+1])*maxD;
+            const d=Math.max(b.d,Math.min(a.d,estimate)); // 仅消除浮点舍入导致的边界越界。
+            return Number.isFinite(d)?{r,d,source:'interpolated',rows:[a.row,b.row]}:null;
+        };
+        return {notes,minR,maxR,maxD,at,unique,method:n===2?'linear':'pchip'};
+    }
+    function ohmMultiplier() {
+        const choice=$('#ohm-multiplier').value,input=$('#ohm-custom-multiplier');
+        return choice==='custom'?(input.value===''?NaN:Number(input.value)):Number(choice);
+    }
+    function ohmScaleMarks(model,multiplier) {
+        const maxValue=model.maxR/multiplier,minValue=model.minR/multiplier;
+        if(!Number.isFinite(maxValue)||maxValue<=0||(model.minR>0&&minValue===0))return null;
+        const major=new Map(),minor=new Map();
+        const add=(value,target)=>{
+            const r=value*multiplier;
+            if(!Number.isFinite(r))return;
+            const point=model.at(r);
+            if(point)target.set(r,{...point,value});
+        };
+        add(0,major);
+        let first=Math.min(0,Math.floor(Math.log10(maxValue))-2);
+        if(minValue>0)first=Math.max(first,Math.floor(Math.log10(minValue))-1);
+        // 每十倍区间按常用阻值分度；不是将指针格数等分。
+        for(let exponent=Math.max(-323,first);exponent<=Math.floor(Math.log10(maxValue));exponent++){
+            const unit=10**exponent;
+            for(const part of (exponent===1?[1,1.5,2,3,5]:[1,2,5]))add(Number((part*unit).toPrecision(14)),major);
+            const subdivisions=exponent>=1?[[1,10,.1]]:[[1,2,.2],[2,5,.5],[5,10,1]];
+            for(const [start,end,step] of subdivisions)for(let i=1;i<(end-start)/step;i++)add(Number(((start+i*step)*unit).toPrecision(14)),minor);
+        }
+        // 首个十倍区间之前按五等份阻值细分，例如 0–1 的 0.2、0.4…。
+        const firstUnit=10**Math.max(-323,first);
+        for(let i=1;i<5;i++)add(Number((i*firstUnit/5).toPrecision(14)),minor);
+        for(const r of [model.minR,model.maxR]){
+            const point=model.at(r);
+            major.set(r,{...point,value:r/multiplier,boundary:true,standard:major.has(r)});
+        }
+        for(const r of major.keys())minor.delete(r);
+        return {major:[...major.values()],minor:[...minor.values()]};
+    }
+    function ohmStandardDial(points) {
+        const multiplier=ohmMultiplier(),kind='×'+fmt(multiplier),node=box('欧姆表 · 可打印刻度盘');
+        node.dataset.ohmPrint='true';
+        if(!Number.isFinite(multiplier)||multiplier<=0){node.append(element('p','请填写大于 0 的有限倍率，例如 1、10、100 或 1000。','warn-msg'));return node;}
+        const model=ohmMeasuredScale(points);
+        if(model.error){node.append(element('p',model.error,'warn-msg'));return node;}
+        const ticks=ohmScaleMarks(model,multiplier);
+        if(!ticks){node.append(element('p','倍率与实测阻值相差过大，刻度数字超出可表示范围，请调整倍率。','warn-msg'));return node;}
+        const {notes,minR,maxR,maxD}=model,marks=ticks.major;
+        notes.forEach(note=>node.append(element('p',note,'warn-msg')));
+        node.append(element('p','实际 Rₓ（Ω）= 表盘数字 × '+fmt(multiplier)+'；已标定 '+fmt(minR)+'–'+fmt(maxR)+' Ω。虚线段未标定，不能据此读取有限阻值。','badge-note'));
+        const width=1680,height=320,left=90,right=1590,span=right-left,axisY=218;
+        const position=d=>left+d/maxD*span;
+        marks.push({r:Infinity,value:Infinity,d:0,source:'open-circuit',rows:[],boundary:true,standard:true});
+        for(const mark of marks){
+            mark.label=mark.r===Infinity?'∞':fmt(mark.value);mark.x=position(mark.d);
+            mark.half=Math.max(mark.r===Infinity?17:13,mark.label.length*6.8);mark.center=Math.max(mark.half+20,Math.min(width-mark.half-20,mark.x));
+        }
+        // 普通数字保持在原刻线上方；太密时减标，不将数字平均拉开。
+        // 仅两个标定边界/∞必须保留，必要时使用第二层短引线。
+        const lanes=[[],[],[]],placed=[];
+        const place=(mark,required)=>{
+            const order=required?(mark.standard?[0,1,2]:[1,2,0]):[0];
+            const lane=order.find(i=>lanes[i].every(other=>Math.abs(other.center-mark.center)>=other.half+mark.half+14));
+            if(lane===undefined)return false;
+            mark.lane=lane;mark.labelY=axisY-51-lane*39;lanes[lane].push(mark);placed.push(mark);return true;
+        };
+        marks.filter(m=>m.boundary).sort((a,b)=>a.d-b.d).forEach(m=>place(m,true));
+        marks.filter(m=>!m.boundary).sort((a,b)=>a.r-b.r).forEach(m=>place(m,false));
+        const svgID='ohm-standard-dial',svg=svgElement('svg',{id:svgID,viewBox:'0 0 '+width+' '+height,width,height,role:'img','aria-labelledby':svgID+'-title '+svgID+'-description','font-family':'Arial, Microsoft YaHei, sans-serif','data-multiplier':multiplier,'data-interpolation':model.method});
+        svg.append(svgElement('title',{id:svgID+'-title'},'欧姆表刻度盘 '+kind),svgElement('desc',{id:svgID+'-description'},'实际电阻等于刻度数字乘倍率。横坐标与实测偏转格数成正比；有限实测点间保单调插值，范围外不外推。无穷大为开路0格，不参与插值。'),svgElement('rect',{width,height,fill:'#fff'}));
+        svg.append(svgElement('text',{x:width/2,y:59,'text-anchor':'middle','font-size':37,'font-weight':700,fill:'#111'},'Ω'));
+        svg.append(svgElement('text',{x:width/2,y:282,'text-anchor':'middle','font-size':25,'font-weight':600,fill:'#111'},kind));
+        const low=position(model.at(maxR).d),high=position(model.at(minR).d);
+        if(low>left)svg.append(svgElement('line',{x1:left,y1:axisY,x2:low,y2:axisY,stroke:'#777','stroke-width':1,'stroke-dasharray':'5 5','data-role':'uncalibrated-gap'}));
+        svg.append(svgElement('line',{x1:low,y1:axisY,x2:high,y2:axisY,stroke:'#111','stroke-width':2}));
+        const usedX=placed.map(m=>m.x),drawn=[...placed];
+        for(const mark of marks.filter(m=>m.lane===undefined).sort((a,b)=>a.r-b.r)){
+            if(usedX.some(x=>Math.abs(x-mark.x)<4))continue;
+            usedX.push(mark.x);drawn.push(mark);
+        }
+        for(const mark of ticks.minor.sort((a,b)=>a.r-b.r)){
+            const x=position(mark.d);
+            if(usedX.some(v=>Math.abs(v-x)<4))continue;
+            usedX.push(x);
+            svg.append(svgElement('line',{x1:x,y1:axisY-13,x2:x,y2:axisY,stroke:'#111','stroke-width':1.1,'data-minor-value':mark.value,'data-resistance':mark.r,'data-deflection':mark.d}));
+        }
+        for(const mark of drawn.sort((a,b)=>a.d-b.d)){
+            const labeled=mark.lane!==undefined,g=svgElement('g',{'data-resistance':mark.r===Infinity?'infinity':mark.r,'data-scale-value':mark.value===Infinity?'infinity':mark.value,'data-deflection':mark.d,'data-source':mark.source,'data-rows':mark.rows.join(','),'data-x':mark.x,'data-labeled':labeled});
+            g.append(svgElement('line',{x1:mark.x,y1:axisY-(labeled?34:22),x2:mark.x,y2:axisY,stroke:'#111','stroke-width':labeled?2:1.3}));
+            if(labeled){
+                if(mark.lane>0||Math.abs(mark.center-mark.x)>1){
+                    const obstacles=placed.filter(other=>other.lane<mark.lane&&Math.abs(other.center-mark.x)<other.half+5);
+                    let leader=mark.center+','+(mark.labelY+7)+' ';
+                    if(obstacles.length){
+                        const route=mark.x<width/2?Math.max(...obstacles.map(p=>p.center+p.half))+10:Math.min(...obstacles.map(p=>p.center-p.half))-10;
+                        leader+=route+','+(mark.labelY+10)+' '+route+','+(axisY-42)+' ';
+                    }
+                    leader+=mark.x+','+(axisY-40);
+                    g.append(svgElement('polyline',{points:leader,fill:'none',stroke:'#555','stroke-width':.8}));
+                }
+                g.append(svgElement('text',{x:mark.center,y:mark.labelY,'text-anchor':'middle','font-size':mark.r===Infinity?30:22,fill:'#111','data-label-half':mark.half},mark.label));
+            }
+            svg.append(g);
+        }
+        const wrap=element('div',undefined,'dial-scroll');wrap.append(svg);node.append(wrap);
+        const details=element('details',undefined,'grade-settings');details.id='ohm-calibration-details';
+        details.append(element('summary','查看标定依据、精度局限与刻度数据'));
+        details.append(element('p','实测范围 '+fmt(minR)+'–'+fmt(maxR)+' Ω。横坐标 x = 90 + 1500d/'+fmt(maxD)+'，不随倍率改变。刻度数字 = Rₓ/'+fmt(multiplier)+'；左端 ∞ 为开路 0 格，右端对应 '+fmt(maxD)+' 格'+(minR===0?'（0 Ω 实测满偏）':'（最小实测电阻，尚缺 0 Ω 标定）')+'。','badge-note'));
+        details.append(element('p',model.method==='pchip'?'采用 R–d 平面的保单调三次 Hermite 插值（PCHIP），精确穿过每个实测点，相邻区间斜率连续且不超出端点格数；没有套用理想欧姆表公式。若实测关系本来近似直线，刻线也会接近等距，不人为弯曲。':'只有两个不同阻值，采用相邻点间线性插值；这两点不足以推断真实欧姆表曲线。','badge-note'));
+        details.append(element('p','插值刻线是未测阻值位置的估计，不是新增实测数据，也不证明全量程准确度。跨度大、曲率变化快的区间应补测。∞ 不参与插值；未标定范围没有有限阻值刻线。密集区会省略无法分辨的细线和数字，保留的刻线不移位。','badge-note'));
+        resultTable(details,['标定电阻 (Ω)','实测格数','原行号'],points.map(p=>[fmt(p.r),fmt(p.d),p.row]));
+        resultTable(details,['主刻度数字','实际电阻 (Ω)','格数','依据'],marks.sort((a,b)=>a.d-b.d).map(p=>[p.label,p.r===Infinity?'∞':fmt(p.r),fmt(p.d),p.source==='open-circuit'?'开路定义（不参与插值）':p.source==='measured'?'实测第 '+p.rows[0]+' 行':'第 '+p.rows.join('、')+' 行间插值']));
+        node.append(details);
+        const source=()=>new XMLSerializer().serializeToString(svg),actions=element('div',undefined,'export-actions'),filename='欧姆表_'+kind+'_实测刻度盘';
+        const svgButton=element('button','⬇️ 下载表盘 SVG','download-btn');svgButton.type='button';svgButton.addEventListener('click',()=>blobDownload(new Blob([source()],{type:'image/svg+xml;charset=utf-8'}),filename+'.svg'));
+        const pngButton=element('button','⬇️ 下载表盘 PNG','download-btn');pngButton.type='button';pngButton.addEventListener('click',()=>{
+            const url=URL.createObjectURL(new Blob([source()],{type:'image/svg+xml;charset=utf-8'})),image=new Image();
+            image.onload=()=>{try{const canvas=document.createElement('canvas');canvas.width=width*2;canvas.height=height*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);download(canvas.toDataURL('image/png'),filename+'.png');}catch{node.append(element('p','PNG 导出失败，可以使用 SVG 下载。','warn-msg'));}finally{URL.revokeObjectURL(url);}};
+            image.onerror=()=>{URL.revokeObjectURL(url);node.append(element('p','PNG 导出失败，可以使用 SVG 下载。','warn-msg'));};image.src=url;
+        });
+        actions.append(svgButton,pngButton);node.append(actions);
+        return node;
+    }
+
+    function instrumentResults(key,points,parent) {
+        const {unit}=settings[key], get=suffix=>{const input=$(`#${key}-${suffix}`);return input.value===''?null:Number(input.value);};
+        const range=get('range'), standard=get('standard-range'), klass=get('standard-class'), divisions=get('divisions');
+        const positive=value=>value!==null&&Number.isFinite(value)&&value>0;
+        const message=(text,kind='badge-note')=>parent.append(element('p',text,kind));
+        if(positive(range)&&positive(divisions)) {
+            const sensitivity=divisions/range;
+            if(Number.isFinite(sensitivity)) {const line=element('p',`灵敏度 S = a/M = ${fmt(divisions)}/${fmt(range)} = ${fmt(sensitivity)} 格/${unit}`);line.dataset.result=key+'-sensitivity';line.dataset.value=sensitivity;parent.append(line);}
+            else message('灵敏度超出计算范围，请核对仪器参数。','warn-msg');
+        } else message('灵敏度：请填写大于 0 的改装表满量程和满偏总格数。');
+        const valid=positive(range)&&positive(standard)&&klass!==null&&Number.isFinite(klass)&&klass>=0;
+        if(!valid){message('准确度等级：请填写有效的改装表满量程、标准表所用量程及标准表准确度等级（不能为负）。');return;}
+        if(points.length<2){message('定级至少需要两点完整校验数据，并应覆盖实际全量程。','warn-msg');return;}
+        if(points.some(p=>Math.abs(p.m)>range+range*1e-12||Math.abs(p.s)>standard+standard*1e-12)){message('校验读数超出填写的改装表或标准表量程，请核对实际所用量程；暂不定级。','warn-msg');return;}
+        const max=Math.max(...points.map(p=>Math.abs(p.delta))), deltaStandard=standard*klass/100, combined=Math.hypot(max,deltaStandard), raw=combined/range*100;
+        if(![deltaStandard,combined,raw].every(Number.isFinite)){message('定级结果超出计算范围，请核对参数。','warn-msg');return;}
+        const grade=[.1,.2,.5,1,1.5,2.5,5].find(value=>raw<=value+1e-12);
+        const detail=element('div',undefined,'uncertainty-box');
+        detail.append(element('h4','准确度等级 · 教材校验公式'));
+        message('按当前校验点计算；完整量程校验后再确认等级。');
+        for(const text of [`最大示值误差 |Δ|max = ${fmt(max)} ${unit}`,`标准表引入误差 Δₛ = MₛKₛ/100 = ${fmt(standard)} × ${fmt(klass)}/100 = ${fmt(deltaStandard)} ${unit}`,`合成最大误差 Δ合 = √(|Δ|max² + Δₛ²) = ${fmt(combined)} ${unit}`,`K计算 = Δ合/M × 100% = ${fmt(combined)}/${fmt(range)} × 100% = ${fmt(raw)} %`])detail.append(element('p',text));
+        const line=element('p',grade===undefined?'计算值超过 5%，超出本页常用等级表，暂不能定级。':`按常用等级向上取值：${grade.toFixed(1)} 级（计算值 ${fmt(raw)}%）。`);
+        line.dataset.result=key+'-grade';line.dataset.raw=raw;if(grade!==undefined)line.dataset.value=grade;
+        detail.append(line);parent.append(detail);
+    }
+    function updateOhmMultiplier() {
+        $('#ohm-custom-multiplier-group').hidden=$('#ohm-multiplier').value!=='custom';
+        if(!lastOhmPoints)return;
+        chartBoxes.querySelector('[data-ohm-print]')?.remove();
+        const node=ohmStandardDial(lastOhmPoints),reference=$('#ohm-original-reference');
+        if(reference)reference.before(node);
+    }
+    $('#ohm-multiplier').addEventListener('change',updateOhmMultiplier);
+    $('#ohm-custom-multiplier').addEventListener('input',updateOhmMultiplier);
+    document.querySelectorAll('.grade-settings input').forEach(input=>input.addEventListener('input',()=>clearResults()));
+    function calculate() {
+        clearResults('');result.replaceChildren();let hasData=false;
+        for(const key of Object.keys(settings)) {
+            const {points,errors}=readRows(key),{name,unit}=settings[key];
+            if(!points.length&&!errors.length)continue;
+            hasData=true;const section=element('section',undefined,'result-item');section.append(element('h4',name));result.append(section);
+            if(errors.length){errors.forEach(error=>section.append(element('p',error,'warn-msg')));continue;}
+            if(key==='ohm') {
+                section.append(element('p',points.length+' 个实测标定点；成品刻度盘见下方，标定数据与原版表盘可展开查看。','badge-note'));
+                lastOhmPoints=points;ohmStandardDial(points);ohmDial(points);
+                const original=chartBoxes.lastElementChild,reference=element('details',undefined,'grade-settings');
+                reference.id='ohm-original-reference';reference.append(element('summary','查看原版 · 完全按实测位置标注阻值'),original);chartBoxes.append(reference);
+                continue;
+            }
+            const max=Math.max(...points.map(p=>Math.abs(p.delta)));
+            section.append(element('p',`${points.length} 个校验点；最大示值误差 |Δ|max = ${fmt(max)} ${unit}`,'result-value'));
+            resultTable(section,['原行号',`标称值 (${unit})`,`标准表读数 (${unit})`,`Δ (${unit})`],points.map(p=>[p.row,fmt(p.m),fmt(p.s),fmt(p.delta)]));
+            section.append(element('p','Δ = 标称值 − 标准表读数；校正值 = −Δ，标称值 − Δ = 标准表读数。','badge-note'));
+            instrumentResults(key,points,section);
+            if(points.length<2){section.append(element('p','至少填写两组完整数据才能连接成折线。','warn-msg'));continue;}
+            calibrationChart(key,points);
+        }
+        if(!hasData)result.append(element('p','请至少填写一项实验的完整实测数据。','empty-result'));
+    }
+    $('#calculate-btn').addEventListener('click',calculate);
+    $('#fill-btn').addEventListener('click',()=>{
+        if([...document.querySelectorAll('.data-section input[type=number]')].some(input=>input.value!=='')&&!confirm('填充示例将替换当前三张表的数据及仪器参数，继续吗？'))return;
+        const example={amm:Array.from({length:11},(_,i)=>[i*.5,i*.5+[0,.012,.02,.026,.03,.032,.03,.026,.02,.012,0][i]]),volt:Array.from({length:11},(_,i)=>[Number((i*.15).toFixed(3)),Number((i*.15+[0,.002,.003,.004,.005,.006,.006,.006,.005,.004,0][i]).toFixed(3))]),ohm:[[0,20],[150,18.2],[300,16.7],[500,15],[750,13.3],[1000,12],[1500,10],[2250,8],[3500,6],[6000,4],[13500,2]]};
+        for(const [key,rows] of Object.entries(example)){$(`#${key}-table tbody`).replaceChildren();rows.forEach(row=>addRow(key,row));}
+        for(const [key,values] of Object.entries({amm:['5.00',20,.5,100],volt:['1.50',2,.5,100]}))['range','standard-range','standard-class','divisions'].forEach((suffix,i)=>{$(`#${key}-${suffix}`).value=values[i];});
+        clearResults('已填入演示数据与演示仪器参数（非实测）。点击“生成图表”查看示例。');
+    });
+    $('#clear-btn').addEventListener('click',()=>{
+        if([...document.querySelectorAll('.data-section input[type=number]')].some(input=>input.value!=='')&&!confirm('确定清空三张表及选填仪器参数吗？'))return;
+        for(const key of Object.keys(settings)){$(`#${key}-table tbody`).replaceChildren();for(let i=0;i<11;i++)addRow(key);}
+        document.querySelectorAll('.grade-settings input[type=number]').forEach(input=>input.value='');
+        clearResults('填写实测数据后，点击“生成图表”。');
+    });
+})();
+
+    </script>
+<script src="ai-import.js?v=6.5.4" defer></script>
+<script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

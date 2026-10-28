@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLC 串联电路稳态特性 · 幅频／相频／谐振（含设计助手）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        input[readonly] {
+            background: #f0f2f5;
+            color: #667;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        #capacitance-group[hidden], #inductance-group[hidden] {
+            display: none !important;
+        }
+        #data-table .cutoff-row td {
+            background: #fff8e6;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        table.mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.mini th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-size: 0.76rem;
+            font-weight: 700;
+            padding: 5px 3px;
+            border: 1px solid #e3e9f2;
+            text-align: center;
+        }
+        table.mini td {
+            border: 1px solid #e3e9f2;
+            padding: 3px;
+            text-align: center;
+        }
+        table.mini td input {
+            border: 1px solid #e3e9f2;
+            background: #fff;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+            border-radius: 5px;
+        }
+        table.mini td.theo {
+            font-size: 0.78rem;
+            color: #2b6ca3;
+            background: #f7fbff;
+        }
+        .del-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 1.1rem;
+            }
+        }
+        #data-table { overflow-x:auto; }
+        #data-table table { min-width:650px; }
+        #data-table input { min-width:78px; }
+        .time-unit-group { max-width:340px; margin-top:10px; }
+        .uncertainty-box { overflow-x:auto; }
+        .phase-measured { font-size:0.78rem; color:#1e8c4a; background:#f4fbf6; }
+        .chart-theory-toggle { display:inline-flex; align-items:center; gap:8px; margin:0 0 12px; color:var(--text); font-size:0.9rem; cursor:pointer; }
+        .chart-theory-toggle input { width:auto; padding:0; margin:0; flex:none; accent-color:var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📶 RLC 串联电路稳态特性 · 幅频／相频／谐振</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <b>RC：</b>U_R/U_S = 1/√(1+(1/ωRC)²)（式 2-17-5）；U_C/U_S = 1/√(1+(ωRC)²)（式 2-17-6）；f₀ = 1/(2πRC)<br>
+                <b>RL：</b>|Z| = √(R²+(ωL)²)（式 2-17-9）；φᵣ = −arctan(ωL/R)（Uᵣ 相对 Uₛ）；f₀ = R/(2πL)<br>
+                <b>RLC：</b>f₀ = 1/(2π√(LC))（式 2-17-17）；Q = (1/R)√(L/C)（式 2-17-18）；2Δf₀.₇ = f₀/Q（式 2-17-21）
+            </div>
+
+            <div class="sub-title"><span>① 电路类型</span><span class="hint">切换后载入对应默认记录表</span></div>
+            <select id="ctype">
+                <option value="RC" selected>RC 串联电路（高通 / 低通）</option>
+                <option value="RL">RL 串联电路</option>
+                <option value="RLC">RLC 串联电路（谐振）</option>
+            </select>
+
+            <div class="sub-title"><span>② 元件参数</span><span class="hint" id="component-hint">R、C；信号源幅度默认 1 V</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>电阻 R <span class="unit">Ω</span></label>
+                    <input type="number" id="Rv" value="1000" step="1">
+                </div>
+                <div class="input-group" id="capacitance-group">
+                    <label>电容 C <span class="unit">μF</span></label>
+                    <input type="number" id="Cv" value="0.1" step="0.001">
+                </div>
+                <div class="input-group" id="inductance-group" hidden>
+                    <label>电感 L <span class="unit">mH</span></label>
+                    <input type="number" id="Lv" value="0" step="0.01" disabled>
+                </div>
+                <div class="input-group">
+                    <label>信号源幅度 U_S <span class="unit">V</span></label>
+                    <input type="number" id="Us" value="1.000" step="0.001">
+                </div>
+            </div>
+            <div class="badge-note">U_S 可用有效值或峰峰值，只要与表中电压读数同一口径即可。</div>
+
+            <div class="sub-title"><span>③ 幅频／相频测量数据</span><span class="hint">f 为频率，Uᵣ 为电阻电压</span></div>
+            <div class="badge-note" id="meas-label" style="margin-bottom:8px;"></div>
+            <div class="badge-note" id="data-entry-hint" style="margin-bottom:8px;"></div>
+            <div class="input-group time-unit-group">
+                <label for="time-unit">实测时间差 Δt 单位</label>
+                <select id="time-unit"><option value="ms" selected>ms（毫秒）</option><option value="us">μs（微秒）</option><option value="s">s（秒）</option></select>
+                <div class="badge-note">切换单位时，已填的 Δt 会自动换算，物理时间差保持不变。</div>
+            </div>
+            <div id="data-table"></div>
+            <div class="badge-note">以 Uₛ 为参考：<b>Δt = tₛ − tᵣ</b>（取最近的同向过零点或对应峰值）。<b>Uᵣ 超前 Uₛ 填正值，滞后填负值</b>。自动计算 φᵣ = 360° × f × Δt（换成秒），与原页面“电流超前为正”的约定一致。请取 |Δt| ≤ T/2、T = 1/f；Δt 留空不会当作 0°。例如 f = 1000 Hz、Δt = +0.125 ms 时，φᵣ = +45°。</div>
+
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="clear-btn" class="ghost-btn">清空数据</button>
+            </div>
+
+            <div class="sub-title"><span>④ 拓展实验设计助手</span><span class="hint">按目标频率反求元件值</span></div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>设计目标</label>
+                    <select id="design-mode">
+                        <option value="rc" selected>RC 高通/低通：给定 f₀ 与 C 求 R</option>
+                        <option value="rl">RL 低通：给定 f₀ 与 L 求 R</option>
+                        <option value="rlc-bw">RLC 带通：给定 f₀ 与 2Δf₀.₇ 求 R、C</option>
+                        <option value="rlc-q">RLC：给定 f₀ 与 Q 求 R</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>目标频率 f₀ <span class="unit">Hz</span></label>
+                    <input type="number" id="d-f0" value="1000" step="1">
+                </div>
+            </div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>通频带 2Δf₀.₇ <span class="unit">Hz</span></label>
+                    <input type="number" id="d-bw" value="500" step="1">
+                </div>
+                <div class="input-group">
+                    <label>品质因数 Q <span class="unit">—</span></label>
+                    <input type="number" id="d-q" value="10" step="0.1">
+                </div>
+            </div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>已知 C（RC 用）<span class="unit">μF</span></label>
+                    <input type="number" id="d-C" value="0.1" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>已知 L（RL/RLC 用）<span class="unit">mH</span></label>
+                    <input type="number" id="d-L" value="10" step="0.01">
+                </div>
+            </div>
+            <button class="mini-add" id="design-btn">🧮 计算所需元件值</button>
+            <div id="design-out" class="badge-note" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const PI = Math.PI;
+            const ave = a => a.reduce((x, y) => x + y, 0) / a.length;
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+            function fmt(v, d) {
+                if (!isFinite(v)) return '—';
+                if (v === 0) return '0';
+                const a = Math.abs(v);
+                if (a >= 1e6 || a < 1e-3) return v.toExponential(3);
+                return v.toFixed(d === undefined ? (a >= 1000 ? 1 : a >= 100 ? 2 : 3) : d);
+            }
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            const theoryVisibility = new Map();
+            function destroyCharts() {
+                charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                if (typeof Chart === 'undefined') {
+                    const note=document.createElement('p'); note.className='warn-msg'; note.textContent='图表库未加载，请联网刷新后重试。计算结果和时间差换算不受影响。'; box.append(note); chartBoxes.append(box); return;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                const theoryLabel = document.createElement('label');
+                theoryLabel.className = 'chart-theory-toggle';
+                const theoryCheckbox = document.createElement('input');
+                theoryCheckbox.type = 'checkbox';
+                theoryCheckbox.checked = theoryVisibility.get(fileName) !== false;
+                theoryCheckbox.setAttribute('aria-label', title + '：显示理论曲线（含参考线）');
+                theoryLabel.append(theoryCheckbox, document.createTextNode('显示理论曲线（含参考线）'));
+                box.insertBefore(theoryLabel, wrap);
+                const config = buildConfig();
+                const allDatasets = config.data.datasets.slice();
+                const visibleDatasets = () => allDatasets.filter(dataset => theoryCheckbox.checked || !dataset.isTheory);
+                config.data.datasets = visibleDatasets();
+                try {
+                    const chart = new Chart(canvas.getContext('2d'), config);
+                    charts.push(chart);
+                    theoryCheckbox.addEventListener('change', () => {
+                        theoryVisibility.set(fileName, theoryCheckbox.checked);
+                        chart.data.datasets = visibleDatasets();
+                        chart.update('none');
+                    });
+                } catch (_) {
+                    const note=document.createElement('p'); note.className='warn-msg'; note.textContent='图表生成失败，请刷新后重试。计算结果保留在上方。'; box.append(note); btn.remove(); theoryLabel.remove();
+                }
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(b);
+            }
+
+            // ---------- 各电路的示例数据 ----------
+            const DEMO = {
+                RC: {
+                    R: 1000, C: 0.1, L: 0, Us: 1.000,
+                    rows: [{f:300, U:0.1850}, {f:500, U:0.3025}, {f:1000, U:0.5308},
+                           {U:0.7053, cutoff:true}, {f:3000, U:0.8810}, {f:5000, U:0.9533}]
+                },
+                RL: {
+                    R: 100, C: 0, L: 10, Us: 1.000,
+                    rows: [{f:300, U:0.9839}, {f:500, U:0.9568}, {f:1000, U:0.8460},
+                           {f:1592, U:0.7042}, {f:3000, U:0.4702}, {f:5000, U:0.3023}]
+                },
+                RLC: {
+                    R: 25, C: 10, L: 10, Us: 1.000,
+                    rows: [0.1, 0.5, 0.707, 1, 0.707, 0.5, 0.1].map(U => ({U}))
+                }
+            };
+
+            function measName(type) {
+                return type === 'RC' ? 'U_R（高通输出）' : (type === 'RL' ? 'U_R（输出）' : 'U_R（谐振曲线）');
+            }
+
+            // ---------- 数据表 ----------
+            function makeRow(r) {
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    `<td><input type="number" class="in-f" step="any" value="${r.f === undefined ? '' : r.f}"></td>` +
+                    `<td><input type="number" class="in-U" step="any" value="${r.U === undefined ? '' : r.U}"></td>` +
+                    `<td><input type="number" class="in-dt" step="any" value="${r.dt === undefined ? '' : r.dt}" aria-label="U_R 相对 U_S 的时间差 Δt"></td>` +
+                    `<td class="phase-measured mp">—</td><td class="theo tv">—</td><td class="theo tp">—</td>` +
+                    `<td><button type="button" class="del-btn" aria-label="删除">×</button></td>`;
+                const frequency = tr.querySelector('.in-f');
+                frequency.placeholder = r.cutoff ? '截止频率，自填' : '填写频率';
+                if (r.cutoff) {
+                    tr.classList.add('cutoff-row');
+                    frequency.title = '截止频率 f₀（Hz），请自行填写';
+                    frequency.setAttribute('aria-label', '截止频率 f₀（Hz），请自行填写');
+                }
+                tr.querySelector('.del-btn').addEventListener('click', () => {
+                    const tb = tr.parentNode;
+                    if (tb.querySelectorAll('tr').length > 3) { tr.remove(); invalidateResult(); }
+                    else alert('至少保留 3 组数据');
+                });
+                return tr;
+            }
+            function buildTable(rows) {
+                const box = $('#data-table');
+                box.innerHTML = '';
+                const tb = document.createElement('table');
+                tb.className = 'mini';
+                tb.innerHTML = `<thead><tr>
+                    <th>f (Hz)</th>
+                    <th>Uᵣ (V)</th>
+                    <th>Δt (<span class="time-unit-label">${timeUnitLabel()}</span>)</th>
+                    <th>φᵣ 自动(°)</th>
+                    <th>Uᵣ 理论(V)</th>
+                    <th>φᵣ 理论(°)</th>
+                    <th>操作</th></tr></thead><tbody></tbody>`;
+                const body = tb.querySelector('tbody');
+                rows.forEach(r => body.appendChild(makeRow(r)));
+                const add = document.createElement('button');
+                add.type = 'button';
+                add.className = 'mini-add';
+                add.textContent = '+ 添加数据点';
+                add.addEventListener('click', () => { body.appendChild(makeRow({})); invalidateResult(); });
+                box.appendChild(tb);
+                box.appendChild(add);
+            }
+            const TIME_FACTORS = {ms:1e-3,us:1e-6,s:1};
+            let previousTimeUnit = $('#time-unit').value;
+            function timeUnitLabel() { return $('#time-unit').value === 'us' ? 'μs' : $('#time-unit').value; }
+            function phaseFromTime(f, raw) {
+                if (raw.trim() === '') return {dt:NaN, phi:NaN, error:''};
+                if (!Number.isFinite(f) || f <= 0) return {dt:Number(raw), phi:NaN, error:'请先填写大于 0 的频率 f'};
+                const dt = Number(raw), seconds = dt * TIME_FACTORS[$('#time-unit').value];
+                const phi = (f * seconds) * 360;
+                if (!Number.isFinite(dt) || !Number.isFinite(phi)) return {dt, phi:NaN, error:'时间差或换算相位无效，请核对数值和单位'};
+                if (Math.abs(phi) > 180 + 1e-9) return {dt, phi:NaN, error:'时间差超过半个周期，请取最近同向过零点或对应峰值并核对单位'};
+                return {dt, phi, error:''};
+            }
+            function invalidateResult() {
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">数据已修改，请点击“开始计算”更新 Uᵣ 幅频和相频图。</p>';
+                destroyCharts();
+            }
+            function readRows() {
+                const out = [];
+                document.querySelectorAll('#data-table tbody tr').forEach((tr, index) => {
+                    const f = parseFloat(tr.querySelector('.in-f').value);
+                    const U = parseFloat(tr.querySelector('.in-U').value);
+                    const phase = phaseFromTime(f, tr.querySelector('.in-dt').value);
+                    if (isFinite(f) && f > 0) out.push({f, U:isFinite(U) && U >= 0 ? U : NaN, ...phase, row:index+1});
+                });
+                out.sort((a,b) => a.f-b.f);
+                return out;
+            }
+            $('#time-unit').addEventListener('change', () => {
+                const next = $('#time-unit').value;
+                const entries = [...document.querySelectorAll('.in-dt')].filter(input => input.value !== '');
+                const converted = entries.map(input => Number(input.value) * (TIME_FACTORS[previousTimeUnit] / TIME_FACTORS[next]));
+                if (converted.some(value => !Number.isFinite(value))) { $('#time-unit').value=previousTimeUnit; alert('时间差数值过大，无法换算该单位。'); return; }
+                entries.forEach((input,i) => { input.value=Number(converted[i].toPrecision(14)).toString(); });
+                previousTimeUnit = next;
+                document.querySelectorAll('.time-unit-label').forEach(label => { label.textContent=timeUnitLabel(); });
+                refreshTheoryCells(); invalidateResult();
+            });
+
+            // ---------- 理论模型 ----------
+            // 统一：X = ωL − 1/(ωC)；φ 定义为电流相对电压的相位（正 = 电流超前 = 容性）
+            function model(type, f, P) {
+                const w = 2 * PI * f;
+                const XL = w * P.L, XC = type === 'RL' ? 0 : 1 / (w * P.C), X = XL - XC;
+                if (type === 'RC') {
+                    const z = Math.hypot(P.R, XC);
+                    return {
+                        Z: z,
+                        // U_R/U_S（高通，式 2-17-5）
+                        ratio: P.R / z,
+                        // U_C/U_S（低通，式 2-17-6）
+                        ratio2: XC / z,
+                        // 电流超前电压的相位（°）：φ = arctan(XC/R)
+                        phiLead: Math.atan2(XC, P.R) * 180 / PI
+                    };
+                }
+                if (type === 'RL') {
+                    const z = Math.hypot(P.R, XL);
+                    return {
+                        Z: z,
+                        ratio: P.R / z,          // U_R/U_S（式 2-17-10）
+                        ratio2: XL / z,          // U_L/U_S（式 2-17-11）
+                        // 感性：电流滞后，超前相位为负
+                        phiLead: -Math.atan2(XL, P.R) * 180 / PI
+                    };
+                }
+                const z = Math.hypot(P.R, X);
+                return {
+                    Z: z,
+                    ratio: P.R / z,              // U_R/U_S
+                    ratio2: XC / z,              // U_C/U_S
+                    ratio3: XL / z,              // U_L/U_S
+                    // 约定：φ 为电流相对电压的相位（正 = 电流超前 = 容性）
+                    // X<0 容性 → φ>0；X>0 感性 → φ<0；X=0 谐振 → φ=0
+                    phiLead: -Math.atan2(X, P.R) * 180 / PI
+                };
+            }
+
+            // 由实测数据插值求 U/U_S = 0.7071 对应的频率
+            function crossHalf(rows, ratioTarget, rising) {
+                for (let i = 0; i < rows.length - 1; i++) {
+                    const a = rows[i], b = rows[i + 1];
+                    if (!isFinite(a.ratio) || !isFinite(b.ratio)) continue;
+                    const hit = rising ? (a.ratio < ratioTarget && b.ratio >= ratioTarget)
+                        : (a.ratio >= ratioTarget && b.ratio < ratioTarget);
+                    if (hit) {
+                        const w = (ratioTarget - a.ratio) / (b.ratio - a.ratio);
+                        return a.f + w * (b.f - a.f);
+                    }
+                }
+                return NaN;
+            }
+
+            // ---------- 载入示例 ----------
+            function loadDemo(type) {
+                const d = DEMO[type];
+                $('#Rv').value = d.R;
+                $('#Cv').value = d.C;
+                $('#Lv').value = d.L;
+                $('#Us').value = d.Us.toFixed(3);
+                $('#capacitance-group').hidden = type === 'RL';
+                $('#inductance-group').hidden = type === 'RC';
+                $('#Cv').disabled = type === 'RL';
+                $('#Lv').disabled = type === 'RC';
+                $('#component-hint').textContent = (type === 'RC' ? 'R、C' : type === 'RL' ? 'R、L' : 'R、L、C') + '；信号源幅度默认 1 V';
+                buildTable(d.rows);
+                $('#meas-label').innerHTML = `当前电路：<b>${type}</b>；表中 U 为 <b>${measName(type)}</b> 的电压读数。`;
+                $('#data-entry-hint').textContent = type === 'RC'
+                    ? '默认频率：300、500、1000、[截止频率自行填写]、3000、5000 Hz。黄色行用于填写截止频率，电阻电压和时间差 Δt 可按实测填写。'
+                    : type === 'RLC'
+                        ? '默认 U：0.1、0.5、0.707、1、0.707、0.5、0.1 V；请按对应幅值自行填写频率，时间差 Δt 可选填。'
+                        : '频率、电阻电压和时间差 Δt 均可按实测填写。';
+                refreshTheoryCells();
+                invalidateResult();
+            }
+
+            // 实时刷新表中的理论列
+            function refreshTheoryCells() {
+                const type = $('#ctype').value;
+                const P = readParams();
+                document.querySelectorAll('#data-table tbody tr').forEach(tr => {
+                    const f = parseFloat(tr.querySelector('.in-f').value);
+                    const tc = tr.querySelector('.tv'), tp = tr.querySelector('.tp'), mp = tr.querySelector('.mp');
+                    const phase = phaseFromTime(f, tr.querySelector('.in-dt').value);
+                    mp.textContent = phase.error ? '请核对 Δt' : Number.isFinite(phase.phi) ? num(phase.phi,2) : '—';
+                    mp.title = phase.error || (Number.isFinite(phase.phi) ? 'φᵣ = 360° × f × Δt（秒）' : '填写频率与时间差后自动换算');
+                    if (isFinite(f) && f > 0 && P) {
+                        const m = model(type, f, P);
+                        tc.textContent = num(P.Us * m.ratio, 4);
+                        tp.textContent = num(m.phiLead, 2);
+                    } else {
+                        tc.textContent = '—';
+                        tp.textContent = '—';
+                    }
+                });
+            }
+            function readParams() {
+                const type = $('#ctype').value;
+                const R = parseFloat($('#Rv').value);
+                const C = type === 'RL' ? 0 : parseFloat($('#Cv').value) * 1e-6;
+                const L = type === 'RC' ? 0 : parseFloat($('#Lv').value) * 1e-3;
+                const Us = parseFloat($('#Us').value);
+                if (![R, C, L, Us].every(Number.isFinite) || !(R > 0) || !(Us > 0) ||
+                    (type !== 'RL' && !(C > 0)) || (type !== 'RC' && !(L > 0))) return null;
+                return { R, C, L, Us };
+            }
+            $('#data-table').addEventListener('input', () => { refreshTheoryCells(); invalidateResult(); });
+            ['#Rv', '#Cv', '#Lv', '#Us'].forEach(s => $(s).addEventListener('input', () => { refreshTheoryCells(); invalidateResult(); }));
+            $('#ctype').addEventListener('change', () => loadDemo($('#ctype').value));
+
+            // ---------- 设计助手 ----------
+            $('#design-btn').addEventListener('click', () => {
+                const mode = $('#design-mode').value;
+                const f0 = parseFloat($('#d-f0').value);
+                const bw = parseFloat($('#d-bw').value);
+                const Qd = parseFloat($('#d-q').value);
+                const Cin = (parseFloat($('#d-C').value) || 0) * 1e-6;
+                const Lin = (parseFloat($('#d-L').value) || 0) * 1e-3;
+                const out = [];
+                if (!(f0 > 0)) { $('#design-out').innerHTML = '请输入有效的目标频率 f₀'; return; }
+                const w0 = 2 * PI * f0;
+                if (mode === 'rc') {
+                    if (!(Cin > 0)) { $('#design-out').innerHTML = '请输入已知电容 C'; return; }
+                    const R = 1 / (w0 * Cin);
+                    out.push(`RC 电路 f₀ = 1/(2πRC) → <b>R = 1/(2πf₀C) = ${fmt(R)} Ω</b>`);
+                    out.push(`取 C = ${num(Cin * 1e6, 4)} μF、f₀ = ${fmt(f0)} Hz`);
+                    out.push(`校核：f₀ = 1/(2π×${fmt(R)}×${sci(Cin, 3)}) = ${fmt(1 / (2 * PI * R * Cin))} Hz`);
+                    out.push(`高通用 U_R 输出、低通用 U_C 输出，两者截止频率相同；截止处 U = 0.7071U_S，φ = ±45°`);
+                } else if (mode === 'rl') {
+                    if (!(Lin > 0)) { $('#design-out').innerHTML = '请输入已知电感 L'; return; }
+                    const R = w0 * Lin;
+                    out.push(`RL 电路 f₀ = R/(2πL) → <b>R = 2πf₀L = ${fmt(R)} Ω</b>`);
+                    out.push(`取 L = ${num(Lin * 1e3, 4)} mH、f₀ = ${fmt(f0)} Hz`);
+                    out.push(`校核：f₀ = R/(2πL) = ${fmt(R / (2 * PI * Lin))} Hz，截止处 U_R = U_L = 0.7071U_S，φ = 45°`);
+                } else if (mode === 'rlc-bw') {
+                    if (!(Lin > 0)) { $('#design-out').innerHTML = '请输入已知电感 L'; return; }
+                    if (!(bw > 0)) { $('#design-out').innerHTML = '请输入通频带 2Δf₀.₇'; return; }
+                    const Q = f0 / bw;
+                    const C = 1 / (w0 * w0 * Lin);
+                    const R = (1 / Q) * Math.sqrt(Lin / C);
+                    out.push(`RLC 带通：Q = f₀/2Δf₀.₇ = ${fmt(f0)}/${fmt(bw)} = <b>${num(Q, 3)}</b>`);
+                    out.push(`取 L = ${num(Lin * 1e3, 4)} mH → <b>C = 1/((2πf₀)²L) = ${fmt(C * 1e6)} μF</b>`);
+                    out.push(`<b>R = (1/Q)√(L/C) = ${fmt(R)} Ω</b>`);
+                    out.push(`校核：f₀ = 1/(2π√(LC)) = ${fmt(1 / (2 * PI * Math.sqrt(Lin * C)))} Hz`);
+                    out.push(`通频带校核：f₀/Q = ${fmt(f0 / Q)} Hz（要求 ${fmt(bw)} Hz）`);
+                } else {
+                    if (!(Lin > 0)) { $('#design-out').innerHTML = '请输入已知电感 L'; return; }
+                    if (!(Qd > 0)) { $('#design-out').innerHTML = '请输入 Q 值'; return; }
+                    const C = 1 / (w0 * w0 * Lin);
+                    const R = (1 / Qd) * Math.sqrt(Lin / C);
+                    out.push(`RLC：Q = (1/R)√(L/C) → <b>R = (1/Q)√(L/C) = ${fmt(R)} Ω</b>`);
+                    out.push(`取 L = ${num(Lin * 1e3, 4)} mH → C = ${fmt(C * 1e6)} μF`);
+                    out.push(`通频带 2Δf₀.₇ = f₀/Q = ${fmt(f0 / Qd)} Hz`);
+                    out.push(`谐振时 U_C = U_L = Q·U_S = ${num(Qd, 3)} U_S（注意元件耐压）`);
+                }
+                $('#design-out').innerHTML = out.map(s => '• ' + s).join('<br>');
+            });
+
+            // ---------- 主计算 ----------
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const type = $('#ctype').value;
+                const P = readParams();
+                if (!P) return alert('请填写有效的 ' + (type === 'RC' ? 'R、C、U_S' : type === 'RL' ? 'R、L、U_S' : 'R、C、L、U_S') + '（均需大于 0）');
+
+                const rows = readRows();
+                if (rows.length < 3) {
+                    resultOutput.innerHTML = `<h3 class="result-title">RLC 串联电路计算结果</h3>
+                        <div class="warn-msg">数据不足：请填写频率 f 和对应电阻电压 Uᵣ，至少需要 3 组有效数据才能描绘幅频特性。</div>`;
+                    return;
+                }
+
+                const warnings = rows.filter(r => r.error).map(r => `第 ${r.row} 行：${r.error}，该行暂不参加实测相频图；幅频数据保留。`);
+                if (!rows.some(r => Number.isFinite(r.phi))) warnings.push('尚未填写有效时间差 Δt：相频图没有实测数据，可勾选“显示理论曲线”查看理论参考，不会把空白时间差当作 0°。');
+                else if (rows.filter(r => Number.isFinite(r.phi)).length < 2) warnings.push('有效时间差只有 1 组：相频图只标出一个实测点，补测后可连接实测相频曲线。');
+                // 实测比值
+                rows.forEach(r => {
+                    r.ratio = isFinite(r.U) ? r.U / P.Us : NaN;
+                    const m = model(type, r.f, P);
+                    r.thRatio = m.ratio;
+                    r.thPhi = m.phiLead;
+                });
+                const withU = rows.filter(r => isFinite(r.ratio));
+                if (withU.length < 3) {
+                    resultOutput.innerHTML = `<h3 class="result-title">RLC 串联电路计算结果</h3>
+                        <div class="warn-msg">缺少电压读数：请至少填入 3 组非负的电阻电压 Uᵣ。</div>`;
+                    return;
+                }
+
+                // ---------- 特征频率 ----------
+                // 各电路的特征频率不同：RC 为 1/(2πRC)，RL 为 R/(2πL)，RLC 为 1/(2π√(LC))
+                const w0 = type === 'RC' ? 1 / (P.R * P.C) : type === 'RL' ? P.R / P.L : 1 / Math.sqrt(P.L * P.C);
+                let f0th;
+                if (type === 'RC') f0th = 1 / (2 * PI * P.R * P.C);
+                else if (type === 'RL') f0th = P.R / (2 * PI * P.L);
+                else f0th = w0 / (2 * PI);
+                const rowsm = rows.map(r => ({ f: r.f, ratio: r.ratio, phi: r.phi }));
+
+                let html = `<h3 class="result-title">${type} 串联电路稳态特性结果</h3>`;
+
+                if (type === 'RC' || type === 'RL') {
+                    const f0mHigh = crossHalf(rowsm, Math.SQRT1_2, type === 'RC');
+                    // RL 的 U_R 随 f 单调下降，故用下降沿
+                    const dev = isFinite(f0mHigh) ? (f0mHigh - f0th) / f0th * 100 : NaN;
+                    html += `<div class="result-item"><h4>① 截止频率理论值 <span class="tag theory">${type === 'RC' ? 'f₀ = 1/(2πRC)' : 'f₀ = R/(2πL)'}</span></h4>
+                        <div class="result-value">f₀ = ${fmt(f0th)} Hz</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        ${type === 'RC'
+                            ? `R = ${fmt(P.R)} Ω, C = ${num(P.C * 1e6, 4)} μF → f₀ = 1/(2π×${fmt(P.R)}×${sci(P.C, 3)}) = ${fmt(f0th)} Hz`
+                            : `R = ${fmt(P.R)} Ω, L = ${num(P.L * 1e3, 4)} mH → f₀ = R/(2πL) = ${fmt(f0th)} Hz`}</div></div>`;
+
+                    html += `<div class="result-item"><h4>② 由实测幅频特性求出的截止频率 <span class="tag exp">U = 0.7071U_S</span></h4>
+                        <div class="result-value">f₀(实验) = ${isFinite(f0mHigh) ? fmt(f0mHigh) + ' Hz' : '未测到（数据未跨越 0.7071U_S）'}</div>
+                        ${isFinite(f0mHigh) ? `<div style="font-size:0.82rem;color:#6b7c93;">与理论值相差 ${num(dev, 2)}%</div>` : ''}</div>`;
+
+                    if (!isFinite(f0mHigh)) {
+                        warnings.push('表中数据没有跨越 U/U_S = 0.7071，无法由实验数据定出截止频率，建议在该频率附近补测几点。');
+                    }
+                    const f0t = f0th;
+                    const mAt = model(type, f0t, P);
+                    html += `<div class="result-item"><h4>③ 截止频率处的特征值</h4>
+                        <div>|Z| = ${fmt(mAt.Z)} Ω，U/U_S = ${num(mAt.ratio, 4)}，
+                        ${type === 'RC' ? `U_C/U_S = ${num(mAt.ratio2, 4)}` : `U_L/U_S = ${num(mAt.ratio2, 4)}`}，
+                        φ = ${num(mAt.phiLead, 2)}°（${mAt.phiLead > 0 ? '电流超前，容性' : '电流滞后，感性'}）</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">理论上此时 U_R = 另一元件电压 = U_S/√2 ≈ 0.7071U_S，|φ| = 45°</div></div>`;
+
+                    html += `<div class="result-item"><h4>④ 输出元件与滤波类型</h4>
+                        <div>${type === 'RC'
+                            ? `取 U_R 为输出 → <b>高通滤波</b>（高频易通过）；取 U_C 为输出 → <b>低通滤波</b>（低频易通过）`
+                            : `取 U_R 为输出 → 高频衰减（相对为低通）；取 U_L 为输出 → <b>高通</b>，且 RL 电路 U_R 随 f 增大而减小，与 RC 相反`}</div></div>`;
+                } else {
+                    // RLC
+                    const Q = (1 / P.R) * Math.sqrt(P.L / P.C);
+                    const bw = f0th / Q;
+                    const s = Math.sqrt(4 * Q * Q + 1);
+                    const f1th = f0th / (2 * Q) * (s - 1);
+                    const f2th = f0th / (2 * Q) * (s + 1);
+                    const peak = withU.reduce((a, b) => b.ratio > a.ratio ? b : a);
+                    const half = peak.ratio * Math.SQRT1_2;
+                    const f1m = crossHalf(rowsm, half, true);
+                    const f2m = crossHalf(rowsm, half, false);
+                    const bwM = (isFinite(f1m) && isFinite(f2m)) ? f2m - f1m : NaN;
+                    const Qm = isFinite(bwM) ? peak.f / bwM : NaN;
+
+                    html += `<div class="result-item"><h4>① 谐振频率 <span class="tag theory">式 2-17-17</span></h4>
+                        <div class="result-value">f₀ = 1/(2π√(LC)) = ${fmt(f0th)} Hz</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">L = ${num(P.L * 1e3, 4)} mH, C = ${num(P.C * 1e6, 4)} μF；ω₀ = ${fmt(w0)} rad/s</div></div>`;
+
+                    html += `<div class="result-item"><h4>② 品质因数与通频带 <span class="tag theory">式 2-17-18 / 2-17-21</span></h4>
+                        <div class="result-value">Q = (1/R)√(L/C) = ${num(Q, 4)}　→　2Δf₀.₇ = f₀/Q = ${fmt(bw)} Hz</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">f₁ = ${fmt(f1th)} Hz，f₂ = ${fmt(f2th)} Hz（f₂−f₁ = 2Δf₀.₇）</div></div>`;
+
+                    html += `<div class="result-item"><h4>③ 谐振时的特点</h4>
+                        <div>ω₀L = 1/(ω₀C) = ${fmt(w0 * P.L)} Ω → φ = 0，电压与电流同相，电路呈纯电阻性</div>
+                        <div>|Z|<sub>min</sub> = R = ${fmt(P.R)} Ω，I<sub>m</sub> = U_S/R = ${fmt(P.Us / P.R)} A（电流最大）</div>
+                        <div>U_C = U_L = Q·U_S = ${num(Q, 3)} × ${fmt(P.Us)} = <b>${fmt(Q * P.Us)} V</b>（是电源电压的 ${num(Q, 3)} 倍，注意元件耐压）</div></div>`;
+
+                    html += `<div class="result-item"><h4>④ 由实测曲线求谐振参数 <span class="tag exp">半功率法</span></h4>
+                        <div class="result-value">f₀(实验) = ${fmt(peak.f)} Hz　（峰值 U_R/U_S = ${num(peak.ratio, 4)}）</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        半功率电平 = 峰值/√2 = ${num(half, 4)}<br>
+                        f₁ = ${isFinite(f1m) ? fmt(f1m) + ' Hz' : '未跨越'}，f₂ = ${isFinite(f2m) ? fmt(f2m) + ' Hz' : '未跨越'}<br>
+                        ${isFinite(bwM) ? `实测 2Δf₀.₇ = ${fmt(bwM)} Hz（理论 ${fmt(bw)} Hz，相差 ${num((bwM - bw) / bw * 100, 2)}%）<br>
+                        实测 Q = f₀/(2Δf₀.₇) = ${num(Qm, 4)}（理论 ${num(Q, 4)}）` : '实测数据未同时跨越两个半功率点，无法求出通频带'}</div></div>`;
+
+                    const phiAtPeak = peak.phi;
+                    html += `<div class="result-item"><h4>⑤ 相频特性</h4>
+                        <div>谐振时 φ = ${isFinite(phiAtPeak) ? num(phiAtPeak, 2) + '°' : '—'}（应接近 0）</div>
+                        <div style="font-size:0.82rem;color:#6b7c93;">
+                        f &lt; f₀ 时 X = ωL−1/(ωC) &lt; 0 → 电路呈<b>容性</b>，电流<b>超前</b>电压（φ &gt; 0）；<br>
+                        f &gt; f₀ 时 X &gt; 0 → 电路呈<b>感性</b>，电流<b>滞后</b>电压（φ &lt; 0）；<br>
+                        f = f₀ 时 X = 0，φ = 0，电压与电流同相。</div></div>`;
+
+                    if (isFinite(bwM) && Qm < 1) warnings.push('实测 Q = ' + num(Qm, 3) + ' 小于 1，谐振峰很平缓；若希望观察到明显选频特性，可减小 R 以提高 Q。');
+                    if (Math.abs(peak.f - f0th) / f0th > 0.08) warnings.push(`实测峰值频率 ${fmt(peak.f)} Hz 与理论谐振频率 ${fmt(f0th)} Hz 相差 ${num(Math.abs(peak.f - f0th) / f0th * 100, 1)}%，建议在 f₀ 附近增加采样点。`);
+                }
+
+                // ---------- 对比表 ----------
+                html += `<div class="uncertainty-box"><h4>📐 实测值与理论值对比</h4>
+                    <table>
+                        <thead><tr><th>f (Hz)</th><th>Uᵣ 实测(V)</th><th>Uᵣ 理论(V)</th><th>相对偏差</th><th>Δt (${timeUnitLabel()})</th><th>φᵣ 换算(°)</th><th>φᵣ 理论(°)</th></tr></thead>
+                        <tbody>` +
+                    rows.map(r => {
+                        const m = model(type, r.f, P);
+                        const d = isFinite(r.ratio) ? (r.ratio - m.ratio) / m.ratio * 100 : NaN;
+                        const dp = isFinite(r.phi) ? (r.phi - m.phiLead) : NaN;
+                        return `<tr><td>${fmt(r.f)}</td>
+                            <td>${isFinite(r.U) ? num(r.U, 4) : '—'}</td>
+                            <td>${num(P.Us * m.ratio, 4)}</td>
+                            <td>${isFinite(d) ? num(d, 2) + ' %' : '—'}</td>
+                            <td>${isFinite(r.dt) ? fmt(r.dt,6) : '—'}</td>
+                            <td>${isFinite(r.phi) ? num(r.phi, 2) : '—'}</td>
+                            <td>${num(m.phiLead, 2)}</td></tr>`;
+                    }).join('') +
+                    `</tbody></table>
+                    <div style="margin-top:8px;font-size:0.82rem;">
+                        平均 |相对偏差| = ${num(ave(withU.map(r => Math.abs((r.ratio - model(type, r.f, P).ratio) / model(type, r.f, P).ratio * 100))), 3)}%
+                        ${(() => {
+                            const ph = rows.filter(r => isFinite(r.phi));
+                            if (!ph.length) return '';
+                            return '　|Δφ| 平均 = ' + num(ave(ph.map(r => Math.abs(r.phi - model(type, r.f, P).phiLead))), 3) + '°';
+                        })()}
+                    </div></div>`;
+
+                resultOutput.innerHTML = html;
+                if (warnings.length) {
+                    // 警告需在结果面板顶部显示
+                    resultOutput.insertAdjacentHTML('afterbegin', warnings.map(w => `<div class="warn-msg">⚠️ ${w}</div>`).join(''));
+                }
+
+                // ---------- 图表 ----------
+                const fMin = Math.min(...rows.map(r => r.f));
+                const fMax = Math.max(...rows.map(r => r.f));
+                const lo = fMin * 0.8, hi = fMax * 1.2;
+                const N = 240;
+                const curveR = [], curveP = [], curve2 = [];
+                for (let i = 0; i <= N; i++) {
+                    // 对数间隔，便于观察宽频段
+                    const f = lo * Math.pow(hi / lo, i / N);
+                    const m = model(type, f, P);
+                    curveR.push({ x: f, y: P.Us * m.ratio });
+                    curve2.push({ x: f, y: m.ratio2 });
+                    curveP.push({ x: f, y: m.phiLead });
+                }
+                const ptsR = rows.filter(r => isFinite(r.U)).map(r => ({ x: r.f, y: r.U }));
+                const ptsP = rows.filter(r => isFinite(r.phi)).map(r => ({ x: r.f, y: r.phi }));
+                const ds = [{
+                    label: `理论 Uᵣ（${type}）`, isTheory: true,
+                    data: curveR, borderColor: '#4b6cb7', borderWidth: 2.5, pointRadius: 0, showLine: true, fill: false, order: 1
+                }];
+                ds.push({ label: '实测 Uᵣ', data: ptsR, borderColor: '#e74c3c', backgroundColor: '#e74c3c', borderWidth: 1.5, pointRadius: 5, showLine: true, tension: 0, fill: false, order: 0 });
+                ds.push({
+                    label: 'Uₛ/√2（理论半功率/截止电平）', isTheory: true,
+                    data: [{ x: lo, y: P.Us * Math.SQRT1_2 }, { x: hi, y: P.Us * Math.SQRT1_2 }],
+                    borderColor: '#ff9f43', borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, showLine: true, order: 3
+                });
+                addChartBox('📈 图1 · Uᵣ 幅频特性 Uᵣ – f（对数频率轴）', () => ({
+                    type: 'scatter',
+                    data: { datasets: ds },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } },
+                            tooltip: { callbacks: { label: c => `${c.dataset.label}: f=${num(c.parsed.x, 1)} Hz, Uᵣ=${num(c.parsed.y, 4)} V` } }
+                        },
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                title: { display: true, text: 'f (Hz，对数轴)' },
+                                ticks: { callback: v => (v >= 1000 ? (v / 1000) + 'k' : v) }
+                            },
+                            y: { title: { display: true, text: 'Uᵣ (V)' }, beginAtZero: true }
+                        }
+                    }
+                }), type + '_Ur幅频特性');
+
+                addChartBox('📉 图2 · Uᵣ 相频特性 φᵣ – f（正 = Uᵣ 超前 Uₛ）', () => ({
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: `理论 φ（${type}）`, isTheory: true,
+                            data: curveP, borderColor: '#8e44ad', borderWidth: 2.5, pointRadius: 0, showLine: true, fill: false
+                        }, {
+                            label: '实测 φᵣ（由 Δt 换算）',
+                            data: ptsP, borderColor: '#e74c3c', backgroundColor: '#e74c3c', borderWidth: 1.5, pointRadius: 5, showLine: true, tension: 0, fill: false
+                        }, {
+                            label: 'φ = 0（谐振/纯电阻）', isTheory: true,
+                            data: [{ x: lo, y: 0 }, { x: hi, y: 0 }],
+                            borderColor: '#b0bec5', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, showLine: true
+                        }].concat(type === 'RLC' ? [{
+                            label: `谐振频率 f₀ = ${fmt(f0th)} Hz`, isTheory: true,
+                            data: [{ x: f0th, y: -90 }, { x: f0th, y: 90 }],
+                            borderColor: '#27ae60', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, showLine: true
+                        }] : [])
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } },
+                            tooltip: { callbacks: { label: c => `${c.dataset.label}: f=${num(c.parsed.x, 1)} Hz, φ=${num(c.parsed.y, 2)}°` } }
+                        },
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                title: { display: true, text: 'f (Hz，对数轴)' },
+                                ticks: { callback: v => (v >= 1000 ? (v / 1000) + 'k' : v) }
+                            },
+                            y: { title: { display: true, text: 'φᵣ = arg(Uᵣ/Uₛ) (°)' }, suggestedMin: -90, suggestedMax: 90 }
+                        }
+                    }
+                }), type + '_Ur相频特性');
+
+                // ---------- 详细过程 ----------
+                const ratioName = 'U_R/U_S';
+                let detail = `【原理公式】以下 φ_R 为 U_R 相对 U_S 的相位，符号与指导书的电压对电流相位相反。\n`;
+                detail += `  RC： |Z| = √(R²+(1/ωC)²)                       (2-17-2)\n`;
+                detail += `       U_R/U_S = 1/√(1+(1/ωRC)²)  高通            (2-17-5)\n`;
+                detail += `       U_C/U_S = 1/√(1+(ωRC)²)    低通            (2-17-6)\n`;
+                detail += `       φ_R = arctan[1/(ωRC)]，f₀ = 1/(2πRC)          (2-17-7)\n`;
+                detail += `  RL： |Z| = √(R²+(ωL)²)                         (2-17-9)\n`;
+                detail += `       U_R/U_S = R/√(R²+(ωL)²)                  (2-17-10)\n`;
+                detail += `       U_L/U_S = ωL/√(R²+(ωL)²)                 (2-17-11)\n`;
+                detail += `       φ_R = −arctan(ωL/R)，f₀ = R/(2πL)              (2-17-12)(2-17-13)\n`;
+                detail += `  RLC：|Z| = √(R²+(ωL−1/(ωC))²)                  (2-17-15)\n`;
+                detail += `       φ_R = −arctan[(ωL−1/(ωC))/R]                (2-17-16)\n`;
+                detail += `       f₀ = 1/(2π√(LC))，Q = (1/R)√(L/C)          (2-17-17)(2-17-18)\n`;
+                detail += `       谐振时 U_C = U_L = Q·U_S                    (2-17-19)(2-17-20)\n`;
+                detail += `       2Δf₀.₇ = f₀/Q                              (2-17-21)\n\n`;
+
+                detail += `【电路参数】${type} 串联电路\n`;
+                detail += `  R = ${fmt(P.R)} Ω,  C = ${num(P.C * 1e6, 6)} μF = ${sci(P.C, 4)} F,  L = ${num(P.L * 1e3, 6)} mH = ${sci(P.L, 4)} H\n`;
+                detail += `  U_S = ${fmt(P.Us)} V，ω₀ = ${type === 'RC' ? '1/(RC)' : type === 'RL' ? 'R/L' : '1/√(LC)'} = ${fmt(w0)} rad/s\n\n`;
+
+                detail += `【元件电抗】以几个频率点为例\n`;
+                detail += `  f(Hz)      ω(rad/s)      X_C(Ω)        X_L(Ω)        |Z|(Ω)       φ(°)      U/U_S\n`;
+                [rows[0].f, rows[Math.floor(rows.length / 2)].f, rows[rows.length - 1].f].forEach(f => {
+                    const w = 2 * PI * f, XC = type === 'RL' ? 0 : 1 / (w * P.C), XL = w * P.L, m = model(type, f, P);
+                    detail += `  ${String(fmt(f)).padEnd(10)} ${fmt(w).padEnd(13)} ${(type === 'RL' ? '—' : fmt(XC)).padEnd(13)} ${(type === 'RC' ? '—' : fmt(XL)).padEnd(13)} ${fmt(m.Z).padEnd(12)} ${num(m.phiLead, 2).padEnd(9)} ${num(m.ratio, 4)}\n`;
+                });
+                detail += `\n`;
+
+                if (type === 'RLC') {
+                    const Q = (1 / P.R) * Math.sqrt(P.L / P.C);
+                    const bw = f0th / Q;
+                    const s = Math.sqrt(4 * Q * Q + 1);
+                    detail += `【RLC 谐振参数】\n`;
+                    detail += `  f₀ = 1/(2π√(LC)) = 1/(2π√(${sci(P.L, 4)}×${sci(P.C, 4)})) = <span class="result-line">${fmt(f0th)} Hz</span>\n`;
+                    detail += `  Q = (1/R)√(L/C) = (1/${fmt(P.R)})×√(${sci(P.L, 4)}/${sci(P.C, 4)}) = <span class="result-line">${num(Q, 5)}</span>\n`;
+                    detail += `  2Δf₀.₇ = f₀/Q = ${fmt(f0th)}/${num(Q, 5)} = <span class="result-line">${fmt(bw)} Hz</span>\n`;
+                    detail += `  半功率点：f = f₀/(2Q)·(√(4Q²+1) ∓ 1)\n`;
+                    detail += `    √(4Q²+1) = ${num(s, 6)}\n`;
+                    detail += `    f₁ = ${fmt(f0th)}/(2×${num(Q, 4)})×(${num(s, 5)}−1) = ${fmt(f0th / (2 * Q) * (s - 1))} Hz\n`;
+                    detail += `    f₂ = ${fmt(f0th)}/(2×${num(Q, 4)})×(${num(s, 5)}+1) = ${fmt(f0th / (2 * Q) * (s + 1))} Hz\n`;
+                    detail += `    校核 f₂−f₁ = ${fmt(f0th / (2 * Q) * (s + 1) - f0th / (2 * Q) * (s - 1))} Hz = f₀/Q ✓\n`;
+                    detail += `  谐振时：ω₀L = ${fmt(w0 * P.L)} Ω，1/(ω₀C) = ${fmt(1 / (w0 * P.C))} Ω，二者相等 → φ = 0\n`;
+                    detail += `    |Z|min = R = ${fmt(P.R)} Ω，I_m = U_S/R = ${fmt(P.Us / P.R)} A\n`;
+                    detail += `    U_C = U_L = Q·U_S = ${num(Q, 4)}×${fmt(P.Us)} = <span class="result-line">${fmt(Q * P.Us)} V</span>（${num(Q, 3)} 倍电源电压）\n`;
+                    detail += `  选频特性：Q 越大，通频带越窄，选频能力越强；R 越大 Q 越小、通频带越宽、滤波性能越差。\n\n`;
+                } else {
+                    const f0thD = type === 'RC' ? 1 / (2 * PI * P.R * P.C) : P.R / (2 * PI * P.L);
+                    const m0 = model(type, f0thD, P);
+                    detail += `【截止频率】\n`;
+                    detail += `  f₀ = ${type === 'RC' ? '1/(2πRC)' : 'R/(2πL)'} = <span class="result-line">${fmt(f0thD)} Hz</span>\n`;
+                    detail += `  该频率处：U/U_S = ${num(m0.ratio, 6)}（=U_S/√2），另一元件比值 = ${num(m0.ratio2, 6)}，φ = ${num(m0.phiLead, 2)}°\n`;
+                    detail += `  即 U_R 与另一元件电压相等，均为 U_S/√2，故 0.7071U_S 可作为"能通过"的下限判据。\n\n`;
+                }
+
+                detail += `【实测与理论对比】\n`;
+                detail += `  f(Hz)     U_R实测  U_R/U_S实测 U_R/U_S理论 偏差(%)    φ_R换算(°) φ_R理论(°) Δφ(°)\n`;
+                rows.forEach(r => {
+                    const m = model(type, r.f, P);
+                    const d = isFinite(r.ratio) ? (r.ratio - m.ratio) / m.ratio * 100 : NaN;
+                    detail += `  ${String(fmt(r.f)).padEnd(9)} ${num(r.U, 4).padEnd(8)} ${num(r.ratio, 4).padEnd(11)} ${num(m.ratio, 4).padEnd(11)} `
+                        + `${(isFinite(d) ? num(d, 2) : '—').padEnd(9)} ${(isFinite(r.phi) ? num(r.phi, 2) : '—').padEnd(9)} ${num(m.phiLead, 2).padEnd(9)} ${isFinite(r.phi) ? num(r.phi - m.phiLead, 2) : '—'}\n`;
+                });
+                detail += `\n`;
+
+                detail += `【相位差的示波器测法】\n`;
+                detail += `  φ_R = 360° × f × Δt(s)，T = 1/f；时间单位 ${timeUnitLabel()} 换成秒的系数为 ${TIME_FACTORS[$('#time-unit').value]}。\n`;
+                detail += `  Δt = t_S − t_R：U_R 超前 U_S 为正，滞后为负；电阻电压 U_R 与电流同相。\n`;
+                rows.forEach(r => {
+                    if (Number.isFinite(r.dt)) detail += `  第 ${r.row} 行：f = ${fmt(r.f)} Hz，Δt = ${fmt(r.dt,6)} ${timeUnitLabel()} → φ_R = ${r.error ? '未采用（'+r.error+'）' : '360×'+fmt(r.f)+'×'+fmt(r.dt,6)+'×'+TIME_FACTORS[$('#time-unit').value]+' = '+num(r.phi,4)+'°'}\n`;
+                });
+                detail += `  |Δt| ≤ T/2（即 |φ_R| ≤ 180°）；空白 Δt 不计入实测相频曲线。\n\n`;
+
+                detail += `【讨论】\n`;
+                if (type === 'RC') detail += `  RC 电路：ω 增大时 I 与 U_R 增大、U_C 减小；因此 U_R 输出为高通、U_C 输出为低通，两者截止频率同为 1/(2πRC)。\n`;
+                if (type === 'RL') detail += `  RL 电路：与 RC 相反，ω 增大时 U_R 减小、U_L 增大；φ_R 从 0 单调降到 −90°，始终为感性（电流滞后）。\n`;
+                if (type === 'RLC') detail += `  RLC 电路：f<f₀ 呈容性（φ>0，电流超前），f=f₀ 呈纯电阻（φ=0，电流最大），f>f₀ 呈感性（φ<0，电流滞后）。\n`;
+                detail += `  各元件电压不是代数和关系：U_S = √(U_R² + (U_L−U_C)²)，因为电压间存在相位差。\n`;
+                detail += `  示波器两通道接地点必须接在电路同一点，否则会短路部分电路。\n`;
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            function clearData() {
+                document.querySelectorAll('#data-table tbody tr').forEach(tr => {
+                    tr.querySelector('.in-f').value = '';
+                    tr.querySelector('.in-U').value = '';
+                    tr.querySelector('.in-dt').value = '';
+                });
+                refreshTheoryCells();
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            }
+
+            $('#calculate-btn').addEventListener('click', calculate);
+            $('#clear-btn').addEventListener('click', () => {
+                if (confirm('确定清空数据表中的测量数据吗？')) clearData();
+            });
+
+            // 初始化
+            loadDemo('RC');
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

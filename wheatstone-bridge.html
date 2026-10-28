@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>惠斯通电桥 · 测电阻（含灵敏度与不确定度）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            font-size: 1.45rem;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .control-panel {
+            flex: 1 1 430px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+        .results-panel {
+            flex: 2 1 560px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .sub-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 18px 0 10px;
+            padding: 6px 10px;
+            background: #eef2f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .sub-title .hint {
+            font-weight: 500;
+            font-size: 0.78rem;
+            color: #6b7c93;
+        }
+        .mini-add {
+            margin: 6px 0 2px;
+            padding: 5px 12px;
+            background: #eef2f9;
+            color: var(--primary);
+            border: 1.5px solid #cddcee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .mini-add:hover {
+            background: #e2eaf7;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .calculate-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .calculate-btn:hover {
+            background: #219a52;
+        }
+        .ghost-btn {
+            padding: 14px 20px;
+            background: #fff;
+            color: var(--text);
+            border: 1.5px solid #cdd7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ghost-btn:hover {
+            background: #f4f7fb;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 900px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-item h4 {
+            font-size: 0.88rem;
+            color: #5b6e8c;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-equation {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box h4 {
+            color: #9a7d0a;
+            margin-bottom: 6px;
+        }
+        .uncertainty-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+        .uncertainty-box th,
+        .uncertainty-box td {
+            border: 1px solid #eadfa8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .uncertainty-box th {
+            background: #fdf6d8;
+            font-weight: 700;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.86rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .detail-box .warn-line {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+            color: #2c4a63;
+        }
+        .instructions b {
+            color: #1a2a4a;
+        }
+        .warn-msg {
+            background: #fdecec;
+            border-left: 4px solid var(--danger);
+            color: #b03a3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .ok-msg {
+            background: #eafaf0;
+            border-left: 4px solid var(--success);
+            color: #1e8c4a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .tag.exp {
+            background: #e8f4fc;
+            color: #2b6ca3;
+        }
+        .tag.theory {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        .tag.err {
+            background: #fdecec;
+            color: #c0392b;
+        }
+        .badge-note {
+            font-size: 0.78rem;
+            color: #6b7c93;
+            margin-top: 6px;
+        }
+        .formula-line {
+            background: #f4f7fb;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #2c3f55;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        /* ---------- 整行面板 ---------- */
+        .panel {
+            flex: 1 1 100%;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+
+        /* ---------- 测量数据表 ---------- */
+        .dtable-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        table.dtable {
+            width: 100%;
+            min-width: 780px;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+        }
+        table.dtable th,
+        table.dtable td {
+            border-bottom: 1px solid #eef2f7;
+            border-right: 1px solid #eef2f7;
+            padding: 6px 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        table.dtable thead th {
+            background: #eef2f9;
+            color: #445a7a;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        table.dtable thead th.grp-before {
+            background: #e3f0fa;
+            color: #2b6ca3;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+        }
+        table.dtable thead th.grp-after {
+            background: #f2eafd;
+            color: #7c3aed;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+        }
+        table.dtable thead th.rowhead { background: #eef2f9; }
+        table.dtable th:last-child,
+        table.dtable td:last-child { border-right: none; }
+        table.dtable tbody tr:last-child td { border-bottom: none; }
+        table.dtable td.rowlab {
+            font-weight: 700;
+            color: var(--text);
+            background: #f8fafc;
+            font-size: 0.88rem;
+        }
+        table.dtable td input {
+            width: 100%;
+            min-width: 66px;
+            padding: 6px 4px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        table.dtable td.cell-before input { background: #f8fcff; }
+        table.dtable td.cell-after input { background: #fcfaff; }
+
+        /* ---------- 汇总表 ---------- */
+        .sumtab {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 6px;
+        }
+        .sumtab th,
+        .sumtab td {
+            border: 1px solid #e3e9f2;
+            padding: 5px 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .sumtab th {
+            background: #f4f7fb;
+            color: #4a5d7a;
+            font-weight: 700;
+        }
+
+        @media (max-width: 620px) {
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 1.15rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🌉 惠斯通电桥 · 测电阻（含电桥灵敏度与不确定度）</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="panel">
+            <h3 class="panel-title">📋 ① 仪器常数</h3>
+            <div class="instructions">
+                <b>平衡条件：</b>R_x = (R₁/R₂)·R₀ = k·R₀　（式 2-12-1）<br>
+                <b>滑线式电桥：</b>R₁/R₂ = L₁/L₂，故 R_x = (L₁/L₂)·R₀　（式 2-12-4）<br>
+                <b>本实验两段电阻丝默认 1 : 1</b>（滑键置于电阻丝中央，k = 1）；把 R_x 与 R₀ 对调再测一次，取两次乘积开方：<b>R_x = √(R₀·R₀′)</b>　（式 2-12-6）
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>电源电压 E <span class="unit">V</span></label>
+                    <input type="number" id="emf" value="1.0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>电阻丝总长 L <span class="unit">cm</span></label>
+                    <input type="number" id="L-total" value="100.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>AD 段长 L₁ <span class="unit">cm</span></label>
+                    <input type="number" id="L1" value="50.00" step="0.01">
+                </div>
+            </div>
+            <div class="grid3">
+                <div class="input-group">
+                    <label>L₂ = L − L₁ <span class="unit">cm</span></label>
+                    <input type="text" id="L2" value="50.00" readonly style="background:#f0f2f5;color:#667;">
+                </div>
+                <div class="input-group">
+                    <label>两段电阻丝之比 <span class="unit">L₁ : L₂</span></label>
+                    <input type="text" id="k-ratio" value="1.000 : 1.000" readonly style="background:#f0f2f5;color:#667;">
+                </div>
+                <div class="input-group">
+                    <label>比例系数 k <span class="unit">= L₁/L₂</span></label>
+                    <input type="text" id="k-val" value="1.0000" readonly style="background:#f0f2f5;color:#667;">
+                </div>
+            </div>
+            <div class="grid2">
+                <div class="input-group">
+                    <label>电阻箱残余误差 b <span class="unit">Ω</span></label>
+                    <input type="number" id="box-zero" value="0.030" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>旋钮数 m 的统计方式</label>
+                    <select id="m-mode">
+                        <option value="nonzero" selected>只数非零示数的旋钮</option>
+                        <option value="span">最高非零位～最低非零位之间的全部旋钮</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sub-title" style="margin:14px 0 8px;"><span>电阻箱各旋钮允差 f<sub>i</sub></span><span class="hint">1 ppm = 10⁻⁶</span></div>
+            <table class="sumtab">
+                <thead>
+                    <tr><th>档位</th><th>×10000</th><th>×1000</th><th>×100</th><th>×10</th><th>×1</th><th>×0.1</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>允差</td>
+                        <td>1000 ppm</td><td>1000 ppm</td><td>1000 ppm</td>
+                        <td>2000 ppm</td><td>5000 ppm</td><td>50000 ppm</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="badge-note">电阻箱 B 类不确定度 <b>ΔR₀ = Σ(R<sub>i</sub>·f<sub>i</sub>) + m·b</b>：把 R₀ 拆到各旋钮，逐项算「该旋钮阻值 × 允差」再求和，最后加上 m·b（m 为用到的旋钮个数）。</div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📋 ② 测量数据（四组：510 / 820 / 3k / 51k）</h3>
+            <div class="badge-note" style="margin:0 0 10px;">
+                每一组都要填<b>对调前</b>和<b>对调后</b>的 ΔR 与 ΔI；I<sub>m</sub>、I<sub>m</sub>′ 是<b>平衡时检流计偏离零点的数值</b>（实际读数里含噪声，需按自己的读数填）。
+            </div>
+            <div class="dtable-wrap">
+                <table class="dtable">
+                    <thead>
+                        <tr class="grp">
+                            <th class="rowhead" rowspan="2">待测电阻</th>
+                            <th class="grp-before" colspan="4">对调前（R<sub>x</sub> 接 A、B）</th>
+                            <th class="grp-after" colspan="4">对调后（R<sub>x</sub> 与 R₀ 互换）</th>
+                        </tr>
+                        <tr>
+                            <th>R₀ (Ω)</th>
+                            <th>ΔR (Ω)</th>
+                            <th>ΔI (μA)</th>
+                            <th>I<sub>m</sub> (μA)</th>
+                            <th>R₀′ (Ω)</th>
+                            <th>ΔR′ (Ω)</th>
+                            <th>ΔI′ (μA)</th>
+                            <th>I<sub>m</sub>′ (μA)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-body"></tbody>
+                </table>
+            </div>
+            <div class="badge-note">电桥灵敏度 S = ΔI / (ΔR/R₀) = ΔI·R₀/ΔR（式 2-12-2）；S′ 用对调后的 R₀′、ΔR′、ΔI′ 计算。</div>
+            <div class="btn-row">
+                <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+                <button id="fill-btn" class="ghost-btn">↺ 恢复示例数据</button>
+                <button id="clear-btn" class="ghost-btn">🗑 清空数据</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">📊 ③ 计算结果（含详细步骤）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            const $ = s => document.querySelector(s);
+            const ave = a => a.reduce((x, y) => x + y, 0) / a.length;
+            const num = (v, d) => (isFinite(v) ? v.toFixed(d) : '—');
+            const sci = (v, d = 4) => (isFinite(v) ? v.toExponential(d) : '—');
+
+            // 有效数字不多于 4 位的友好显示
+            function fmt(v, digits) {
+                if (!isFinite(v)) return '—';
+                const a = Math.abs(v);
+                if (a === 0) return '0';
+                if (a >= 1e5 || a < 1e-3) return v.toExponential(3);
+                return v.toFixed(digits === undefined ? (a >= 1000 ? 1 : a >= 100 ? 2 : 3) : digits);
+            }
+
+            const resultOutput = $('#result-output');
+            const chartBoxes = $('#chart-container-box');
+            const charts = [];
+            function destroyCharts() {
+                charts.forEach(c => { try { c.destroy(); } catch (e) {} });
+                charts.length = 0;
+                chartBoxes.innerHTML = '';
+            }
+            function addChartBox(title, buildConfig, fileName) {
+                const box = document.createElement('div');
+                box.className = 'chart-box';
+                const h = document.createElement('h4');
+                h.textContent = title;
+                box.appendChild(h);
+                const wrap = document.createElement('div');
+                wrap.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                wrap.appendChild(canvas);
+                box.appendChild(wrap);
+                const btn = document.createElement('button');
+                btn.className = 'download-btn';
+                btn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                btn.addEventListener('click', () => {
+                    const t = document.createElement('canvas');
+                    t.width = canvas.width;
+                    t.height = canvas.height;
+                    const tc = t.getContext('2d');
+                    tc.fillStyle = '#ffffff';
+                    tc.fillRect(0, 0, t.width, t.height);
+                    tc.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = fileName + '_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.png';
+                    link.href = t.toDataURL('image/png');
+                    link.click();
+                });
+                box.appendChild(btn);
+                chartBoxes.appendChild(box);
+                charts.push(new Chart(canvas.getContext('2d'), buildConfig()));
+            }
+            function addDetailBox(title, content) {
+                const b = document.createElement('div');
+                b.className = 'detail-box';
+                b.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(b);
+            }
+
+            // L₂ 自动联动
+            // ---------- 比例：L₁ : L₂（默认 1 : 1） ----------
+            function syncRatio() {
+                const L = parseFloat($('#L-total').value);
+                const l1 = parseFloat($('#L1').value);
+                const l2 = L - l1;
+                $('#L2').value = isFinite(l2) ? l2.toFixed(2) : '';
+                if (isFinite(L) && L > 0 && isFinite(l1) && l1 > 0 && l2 > 0) {
+                    const k = l1 / l2;
+                    $('#k-ratio').value = '1.000 : ' + (1 / k).toFixed(3);
+                    $('#k-val').value = k.toFixed(4);
+                } else {
+                    $('#k-ratio').value = '';
+                    $('#k-val').value = '';
+                }
+            }
+            ['L-total', 'L1'].forEach(id => $('#' + id).addEventListener('input', syncRatio));
+
+            // ---------- 四组测量数据 ----------
+            const DEMO = [
+                { label: '510 Ω',  nominal: 510,   R0: 510.0,  dR: 1.0,  dI: 2.0, Im: 0.10, R0b: 510.2,  dRb: 1.0,  dIb: 1.9, Imb: 0.10 },
+                { label: '820 Ω',  nominal: 820,   R0: 820.0,  dR: 2.0,  dI: 2.4, Im: 0.10, R0b: 819.5,  dRb: 2.0,  dIb: 2.3, Imb: 0.10 },
+                { label: '3 kΩ',   nominal: 3000,  R0: 3000.0, dR: 10.0, dI: 3.2, Im: 0.10, R0b: 2998.0, dRb: 10.0, dIb: 3.1, Imb: 0.10 },
+                { label: '51 kΩ',  nominal: 51000, R0: 51000,  dR: 200,  dI: 3.6, Im: 0.10, R0b: 50980,  dRb: 200,  dIb: 3.5, Imb: 0.10 }
+            ];
+            const FIELDS = [
+                { k: 'R0',  cls: 'cell-before' },
+                { k: 'dR',  cls: 'cell-before' },
+                { k: 'dI',  cls: 'cell-before' },
+                { k: 'Im',  cls: 'cell-before' },
+                { k: 'R0b', cls: 'cell-after' },
+                { k: 'dRb', cls: 'cell-after' },
+                { k: 'dIb', cls: 'cell-after' },
+                { k: 'Imb', cls: 'cell-after' }
+            ];
+            function buildTable() {
+                const body = $('#data-body');
+                body.innerHTML = '';
+                DEMO.forEach((row, i) => {
+                    const tr = document.createElement('tr');
+                    const lab = document.createElement('td');
+                    lab.className = 'rowlab';
+                    lab.textContent = row.label;
+                    tr.appendChild(lab);
+                    FIELDS.forEach(f => {
+                        const td = document.createElement('td');
+                        td.className = f.cls;
+                        const inp = document.createElement('input');
+                        inp.type = 'number';
+                        inp.step = 'any';
+                        inp.id = 'f-' + i + '-' + f.k;
+                        inp.value = row[f.k];
+                        td.appendChild(inp);
+                        tr.appendChild(td);
+                    });
+                    body.appendChild(tr);
+                });
+            }
+            function setAll(useDemo) {
+                DEMO.forEach((row, i) => {
+                    FIELDS.forEach(f => {
+                        const el = $('#f-' + i + '-' + f.k);
+                        if (el) el.value = useDemo ? row[f.k] : '';
+                    });
+                });
+            }
+            function readRow(i) {
+                const o = {};
+                FIELDS.forEach(f => { o[f.k] = parseFloat($('#f-' + i + '-' + f.k).value); });
+                return o;
+            }
+
+            // ---------- 电阻箱：按各旋钮允差求 B 类不确定度 ----------
+            // ΔR₀ = Σ(R_i·f_i) + m·b
+            const DIALS = [
+                { place: 10000, f: 1000e-6 },
+                { place: 1000,  f: 1000e-6 },
+                { place: 100,   f: 1000e-6 },
+                { place: 10,    f: 2000e-6 },
+                { place: 1,     f: 5000e-6 },
+                { place: 0.1,   f: 50000e-6 }
+            ];
+            function boxUncertainty(R, b, mode) {
+                let rest = R;
+                const dials = [];
+                DIALS.forEach(d => {
+                    let digit = Math.floor(rest / d.place + 1e-9);
+                    if (!isFinite(digit) || digit < 0) digit = 0;
+                    if (digit > 9) digit = 9;
+                    rest -= digit * d.place;
+                    if (digit > 0) {
+                        dials.push({ place: d.place, digit: digit, value: digit * d.place, f: d.f, term: digit * d.place * d.f });
+                    }
+                });
+                const sum = dials.reduce((a, u) => a + u.term, 0);
+                let m;
+                if (mode === 'span') {
+                    if (!dials.length) {
+                        m = 0;
+                    } else {
+                        const hi = dials[0].place;
+                        const lo = dials[dials.length - 1].place;
+                        m = DIALS.filter(d => d.place <= hi && d.place >= lo).length;
+                    }
+                } else {
+                    m = dials.length;
+                }
+                return { dials: dials, sum: sum, m: m, mTerm: m * b, total: sum + m * b };
+            }
+            // 文字化：×100 档读 5、×10 档读 1 …
+            function dialList(u) {
+                if (!u.dials.length) return '（R₀ = 0，未用旋钮）';
+                return u.dials.map(d => '×' + d.place + ' 档读 ' + d.digit).join('、');
+            }
+            // 表达式：500×1000ppm + 10×2000ppm + …
+            function dialExpr(u) {
+                if (!u.dials.length) return '0';
+                return u.dials.map(d => d.value + '×' + (d.f * 1e6) + 'ppm').join(' + ');
+            }
+            // 数值：0.500000 + 0.020000 + …
+            function dialNums(u) {
+                if (!u.dials.length) return '0';
+                return u.dials.map(d => num(d.term, 6)).join(' + ');
+            }
+
+            // ---------- 主计算 ----------
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyCharts();
+
+                const E = parseFloat($('#emf').value);
+                const L = parseFloat($('#L-total').value);
+                const L1 = parseFloat($('#L1').value);
+                const bZero = parseFloat($('#box-zero').value) || 0;
+                const mMode = $('#m-mode').value;
+
+                const warnings = [];
+                if (!isFinite(L) || L <= 0) return alert('请填写电阻丝总长 L');
+                if (!isFinite(L1) || L1 <= 0 || L1 >= L) return alert('请填写 AD 段长 L₁（需满足 0 < L₁ < L）');
+                const L2 = L - L1;
+                const k1 = L1 / L2;          // 对调前
+                const k2 = 1 / k1;           // 对调后（滑键位置互补）
+
+                // 读取四组数据
+                const rows = [];
+                DEMO.forEach((d, i) => {
+                    const v = readRow(i);
+                    const keys = ['R0', 'dR', 'dI', 'Im', 'R0b', 'dRb', 'dIb', 'Imb'];
+                    if (!keys.every(k => isFinite(v[k]))) {
+                        warnings.push(d.label + '：数据不完整，已跳过该组。');
+                        return;
+                    }
+                    if (v.R0 <= 0 || v.R0b <= 0 || v.dR <= 0 || v.dRb <= 0) {
+                        warnings.push(d.label + '：R₀、R₀′、ΔR、ΔR′ 必须为正数，已跳过该组。');
+                        return;
+                    }
+                    const S = v.dI / (v.dR / v.R0);        // μA，式 2-12-2
+                    const Sb = v.dIb / (v.dRb / v.R0b);    // μA
+                    const uA = boxUncertainty(v.R0, bZero, mMode);
+                    const uB = boxUncertainty(v.R0b, bZero, mMode);
+                    const dR0 = uA.total;
+                    const dR0b = uB.total;
+                    const t1 = dR0 / v.R0;
+                    const t2 = dR0b / v.R0b;
+                    const t3 = v.Im / S;
+                    const t4 = v.Imb / Sb;
+                    const Rx1 = k1 * v.R0;
+                    const Rx2 = k2 * v.R0b;
+                    const Rx = Math.sqrt(v.R0 * v.R0b);    // 式 2-12-6
+                    const ER = 0.5 * Math.sqrt(t1 * t1 + t2 * t2 + t3 * t3 + t4 * t4);
+                    const UR = Rx * ER;
+                    const relErr = (Rx - d.nominal) / d.nominal * 100;
+                    rows.push(Object.assign({}, d, v, {
+                        uA: uA, uB: uB, S: S, Sb: Sb, dR0: dR0, dR0b: dR0b,
+                        t1: t1, t2: t2, t3: t3, t4: t4,
+                        Rx1: Rx1, Rx2: Rx2, Rx: Rx, ER: ER, UR: UR, relErr: relErr
+                    }));
+                });
+
+                if (!rows.length) {
+                    resultOutput.innerHTML = '<h3 class="result-title">惠斯通电桥测量结果</h3>' +
+                        '<div class="warn-msg">没有可用的数据：请至少完整填写一组（对调前 + 对调后）。</div>';
+                    return;
+                }
+
+                const ratioDev = Math.abs(L1 / L2 - 1);
+                if (ratioDev > 0.02) {
+                    warnings.push('两段电阻丝之比为 ' + (L1 / L2).toFixed(3) + ' : 1，偏离 1 : 1。本实验默认滑键置于电阻丝中央（k = 1），此时测量相对误差最小。');
+                }
+
+                // ---------- 结果面板 ----------
+                let html = '<h3 class="result-title">惠斯通电桥测量结果</h3>';
+                if (warnings.length) html += warnings.map(w => '<div class="warn-msg">⚠️ ' + w + '</div>').join('');
+
+                html += '<div class="result-item"><h4>公共条件 <span class="tag theory">式 2-12-6</span></h4>' +
+                    '<div style="font-size:0.85rem;color:#4a5d7a;">' +
+                    'L = ' + num(L, 2) + ' cm，L₁ = ' + num(L1, 2) + ' cm，L₂ = ' + num(L2, 2) + ' cm ' +
+                    '→ 两段电阻丝之比 <b>1 : ' + num(L2 / L1, 3) + '</b>（k₁ = ' + num(k1, 4) + '，对调后 k₂ = 1/k₁ = ' + num(k2, 4) + '）<br>' +
+                    '电阻箱：残余误差 b = ' + num(bZero, 4) + ' Ω；ΔR₀ = Σ(R<sub>i</sub>·f<sub>i</sub>) + m·b（' +
+                    (mMode === 'span' ? 'm 按最高非零位～最低非零位之间的全部旋钮计' : 'm 只数非零示数的旋钮') + '）' +
+                    '</div></div>';
+
+                html += '<div class="result-item"><h4>四组结果汇总</h4>' +
+                    '<div style="overflow-x:auto;"><table class="sumtab">' +
+                    '<thead><tr><th>待测电阻</th><th>R_x (Ω)</th><th>S (μA)</th><th>S′ (μA)</th>' +
+                    '<th>E_R (%)</th><th>U_R (Ω)</th><th>结果表示</th><th>相对标称</th></tr></thead><tbody>' +
+                    rows.map(r => '<tr>' +
+                        '<td>' + r.label + '</td>' +
+                        '<td><b>' + fmt(r.Rx) + '</b></td>' +
+                        '<td>' + num(r.S, 1) + '</td>' +
+                        '<td>' + num(r.Sb, 1) + '</td>' +
+                        '<td>' + num(r.ER * 100, 4) + '</td>' +
+                        '<td>' + fmt(r.UR) + '</td>' +
+                        '<td>(' + fmt(r.Rx) + ' ± ' + fmt(r.UR) + ') Ω</td>' +
+                        '<td>' + num(r.relErr, 3) + ' %</td>' +
+                        '</tr>').join('') +
+                    '</tbody></table></div></div>';
+
+                html += '<div class="uncertainty-box"><h4>📐 不确定度公式</h4>' +
+                    '<div style="font-size:0.9rem;font-family:Consolas,monospace;line-height:1.9;">' +
+                    'S = ΔI / (ΔR/R₀) = ΔI·R₀/ΔR<br>' +
+                    'ΔR₀ = Σ(R<sub>i</sub>·f<sub>i</sub>) + m·b（电阻箱各旋钮允差逐项求和）<br>' +
+                    'E_R = ½·√[(ΔR₀/R₀)² + (ΔR₀′/R₀′)² + (I<sub>m</sub>/S)² + (I<sub>m</sub>′/S′)²]<br>' +
+                    'U_R = R_x · E_R' +
+                    '</div>' +
+                    '<div style="margin-top:8px;font-size:0.83rem;color:#9a7d0a;">' +
+                    'I<sub>m</sub>：平衡时检流计偏离零点的数值；R<sub>i</sub> 为各旋钮阻值，f<sub>i</sub> 为该档允差，m 为用到的旋钮数，b 为残余误差。' +
+                    '</div></div>';
+
+                resultOutput.innerHTML = html;
+
+                // ---------- 图表 ----------
+                addChartBox('📊 图1 · 四组电阻的电桥灵敏度 S 与 S′', () => ({
+                    type: 'bar',
+                    data: {
+                        labels: rows.map(r => r.label),
+                        datasets: [
+                            { label: '对调前 S (μA)', data: rows.map(r => r.S), backgroundColor: '#4b6cb7', borderRadius: 6 },
+                            { label: '对调后 S′ (μA)', data: rows.map(r => r.Sb), backgroundColor: '#a78bfa', borderRadius: 6 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true, title: { display: true, text: '灵敏度 S (μA)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                        },
+                        plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }
+                    }
+                }), '惠斯通电桥_灵敏度对比');
+
+                addChartBox('📊 图2 · 相对不确定度 E_R 与相对标称偏差', () => ({
+                    type: 'bar',
+                    data: {
+                        labels: rows.map(r => r.label),
+                        datasets: [
+                            { label: 'E_R (%)', data: rows.map(r => r.ER * 100), backgroundColor: '#27ae60', borderRadius: 6 },
+                            { label: '|相对标称偏差| (%)', data: rows.map(r => Math.abs(r.relErr)), backgroundColor: '#e67e22', borderRadius: 6 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true, title: { display: true, text: '百分比 (%)', color: '#4b6cb7', font: { weight: 'bold' } }, grid: { color: '#eef2f7' } }
+                        },
+                        plugins: { legend: { labels: { usePointStyle: true, boxWidth: 11, font: { size: 11 } } } }
+                    }
+                }), '惠斯通电桥_不确定度');
+
+                // ---------- 详细过程 ----------
+                let detail = '【原理公式】\n';
+                detail += '  电桥平衡条件：R_x = (R₁/R₂)·R₀ = k·R₀                        (2-12-1)\n';
+                detail += '  滑线式电桥：  R₁/R₂ = L₁/L₂\n';
+                detail += '                → R_x1 = (L₁/L₂)·R₀ = k₁·R₀                  (2-12-4)\n';
+                detail += '  对调 R_x 与 R₀ 后重新平衡：R_x2 = k₂·R₀′（k₂ = 1/k₁）        (2-12-5)\n';
+                detail += '  取两次乘积开方：R_x = √(R_x1·R_x2) = √(R₀·R₀′)             (2-12-6)\n';
+                detail += '  电桥灵敏度：  S = ΔI / (ΔR/R₀) = ΔI·R₀/ΔR                  (2-12-2)\n';
+                detail += '  电阻箱 B 类不确定度：ΔR₀ = Σ(R_i·f_i) + m·b\n';
+                detail += '      （把 R₀ 拆到各旋钮，逐项算「该旋钮阻值 R_i × 该档允差 f_i」求和，再加 m·b）\n';
+                detail += '  相对不确定度：E_R = ½√[(ΔR₀/R₀)² + (ΔR₀′/R₀′)² + (I_m/S)² + (I_m′/S′)²]\n';
+                detail += '  扩展不确定度：U_R = R_x · E_R\n\n';
+
+                detail += '【仪器常数与公共参数】\n';
+                detail += '  E = ' + num(E, 3) + ' V,  L = ' + num(L, 2) + ' cm,  L₁ = ' + num(L1, 2) + ' cm,  L₂ = ' + num(L2, 2) + ' cm\n';
+                detail += '  k₁ = L₁/L₂ = ' + num(k1, 6) + ',  k₂ = 1/k₁ = ' + num(k2, 6) + '（两段电阻丝之比 1 : ' + num(L2 / L1, 4) + '）\n';
+                detail += '  电阻箱：残余误差 b = ' + num(bZero, 4) + ' Ω\n';
+                detail += '  旋钮允差：×10000 / ×1000 / ×100 = 1000 ppm，×10 = 2000 ppm，×1 = 5000 ppm，×0.1 = 50000 ppm\n';
+                detail += '  m 统计方式：' + (mMode === 'span' ? '最高非零位～最低非零位之间的全部旋钮（含中间为 0 的档）' : '只数非零示数的旋钮') + '\n\n';
+
+                rows.forEach((r, idx) => {
+                    detail += '【第 ' + (idx + 1) + ' 组】' + r.label + '（标称 ' + fmt(r.nominal) + ' Ω）\n';
+                    detail += '  对调前：R₀ = ' + num(r.R0, 2) + ' Ω,  ΔR = ' + num(r.dR, 4) + ' Ω,  ΔI = ' + num(r.dI, 4) + ' μA,  I_m = ' + num(r.Im, 4) + ' μA\n';
+                    detail += '    R_x1 = k₁·R₀ = ' + num(k1, 6) + ' × ' + num(r.R0, 2) + ' = ' + fmt(r.Rx1) + ' Ω\n';
+                    detail += '    S = ΔI/(ΔR/R₀) = ' + num(r.dI, 4) + ' / (' + num(r.dR, 4) + '/' + num(r.R0, 2) + ') = <span class="result-line">' + num(r.S, 2) + ' μA</span>\n';
+                    detail += '  对调后：R₀′ = ' + num(r.R0b, 2) + ' Ω,  ΔR′ = ' + num(r.dRb, 4) + ' Ω,  ΔI′ = ' + num(r.dIb, 4) + ' μA,  I_m′ = ' + num(r.Imb, 4) + ' μA\n';
+                    detail += '    R_x2 = k₂·R₀′ = ' + num(k2, 6) + ' × ' + num(r.R0b, 2) + ' = ' + fmt(r.Rx2) + ' Ω\n';
+                    detail += '    S′ = ΔI′/(ΔR′/R₀′) = <span class="result-line">' + num(r.Sb, 2) + ' μA</span>\n';
+                    detail += '  R_x = √(R₀·R₀′) = √(' + num(r.R0, 2) + ' × ' + num(r.R0b, 2) + ') = <span class="result-line">' + fmt(r.Rx) + ' Ω</span>\n';
+                    detail += '  （校核：√(R_x1·R_x2) = ' + fmt(Math.sqrt(r.Rx1 * r.Rx2)) + ' Ω，与 R_x 一致）\n';
+                    detail += '  ΔR₀ = Σ(R_i·f_i) + m·b ：\n';
+                    detail += '    用到的旋钮：' + dialList(r.uA) + '  → m = ' + r.uA.m + '\n';
+                    detail += '    Σ(R_i·f_i) = ' + dialExpr(r.uA) + '\n';
+                    detail += '               = ' + dialNums(r.uA) + ' = ' + num(r.uA.sum, 6) + ' Ω\n';
+                    detail += '    m·b = ' + r.uA.m + ' × ' + num(bZero, 4) + ' = ' + num(r.uA.mTerm, 6) + ' Ω\n';
+                    detail += '    ΔR₀ = ' + num(r.uA.sum, 6) + ' + ' + num(r.uA.mTerm, 6) + ' = <span class="result-line">' + num(r.dR0, 6) + ' Ω</span>  → ΔR₀/R₀ = ' + sci(r.t1, 4) + '\n';
+                    detail += '  ΔR₀′ = Σ(R_i′·f_i) + m′·b ：\n';
+                    detail += '    用到的旋钮：' + dialList(r.uB) + '  → m′ = ' + r.uB.m + '\n';
+                    detail += '    Σ(R_i′·f_i) = ' + dialExpr(r.uB) + ' = ' + num(r.uB.sum, 6) + ' Ω\n';
+                    detail += '    m′·b = ' + r.uB.m + ' × ' + num(bZero, 4) + ' = ' + num(r.uB.mTerm, 6) + ' Ω\n';
+                    detail += '    ΔR₀′ = <span class="result-line">' + num(r.dR0b, 6) + ' Ω</span>  → ΔR₀′/R₀′ = ' + sci(r.t2, 4) + '\n';
+                    detail += '  I_m/S  = ' + num(r.Im, 4) + '/' + num(r.S, 2) + ' = ' + sci(r.t3, 4) + '\n';
+                    detail += '  I_m′/S′ = ' + num(r.Imb, 4) + '/' + num(r.Sb, 2) + ' = ' + sci(r.t4, 4) + '\n';
+                    detail += '  E_R = ½√[(' + sci(r.t1, 3) + ')² + (' + sci(r.t2, 3) + ')² + (' + sci(r.t3, 3) + ')² + (' + sci(r.t4, 3) + ')²]\n';
+                    detail += '      = <span class="result-line">' + sci(r.ER, 4) + '</span>（' + num(r.ER * 100, 4) + '%）\n';
+                    detail += '  U_R = R_x·E_R = ' + fmt(r.Rx) + ' × ' + sci(r.ER, 4) + ' = <span class="result-line">' + fmt(r.UR) + ' Ω</span>\n';
+                    detail += '  结果表示：R_x = (' + fmt(r.Rx) + ' ± ' + fmt(r.UR) + ') Ω\n';
+                    detail += '  相对标称值 ' + fmt(r.nominal) + ' Ω 的误差 = ' + num(r.relErr, 3) + ' %\n\n';
+                });
+
+                detail += '【讨论】\n';
+                detail += '  1) 电桥灵敏度 S 越大，I_m/S 这一项越小，由"平衡判断不准"带来的误差就越小；\n';
+                detail += '     提高电源电压 E、选用更灵敏的检流计都能增大 S。\n';
+                detail += '  2) 电阻箱 B 类不确定度 ΔR₀ = Σ(R_i·f_i) + m·b 随 R₀ 增大而增大，\n';
+                detail += '     所以大电阻（如 51 kΩ）的相对不确定度不一定比小电阻差——要看 ΔR₀/R₀ 与 I_m/S 谁占主导。\n';
+                detail += '  3) 滑键置于电阻丝中央（两段 1 : 1，k = 1）时相对误差最小；\n';
+                detail += '     对调 R_x 与 R₀ 再测一次，可消除电阻丝不均匀带来的系统误差（式 2-12-6）。\n';
+                detail += '  4) 常见误差来源：接触电阻与引线电阻、检流计零点漂移、平衡点判断不准。\n';
+
+                addDetailBox('完整计算过程', detail);
+            }
+
+            buildTable();
+            syncRatio();
+
+            $('#calculate-btn').addEventListener('click', calculate);
+            $('#fill-btn').addEventListener('click', () => {
+                setAll(true);
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+            $('#clear-btn').addEventListener('click', () => {
+                if (!confirm('确定清空四组数据吗？')) return;
+                setAll(false);
+                resultOutput.innerHTML = '<p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>';
+                destroyCharts();
+            });
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

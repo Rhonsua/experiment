@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>灵魂动物鉴定 · 七灵共生</title>
+<style>
+ :root {
+ --bg: #1a1520; --card: #241e2a; --gold: #f0c060; --purple: #b89fff; --accent: #e87d3e;
+ --text: #e0d8ec; --muted: #8a7e9a; --border: #3a3045; --green: #6a9b4a;
+ --wolf: #cb9e6f; --fox: #e8a87c; --deer: #a6c9a1; --cat: #b5b8d0; --bear: #8c6b53; --eagle: #c0cfe0;
+ --maggot: #b87333; --rainbow: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #ffdde1);
+ }
+ * { margin:0; padding:0; box-sizing:border-box; }
+ body {
+ font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+ background: var(--bg);
+ background-image: radial-gradient(ellipse at 30% 10%, rgba(232,125,62,.06) 0%, transparent 50%),
+ radial-gradient(ellipse at 70% 90%, rgba(106,155,74,.04) 0%, transparent 50%);
+ color: var(--text); min-height: 100vh;
+ display: flex; align-items: center; justify-content: center;
+ padding: 16px; padding-top: 64px; position: relative;
+ }
+
+ .shop-bar {
+ position: fixed; top:0; left:0; right:0; z-index: 100;
+ background: var(--bg); border-bottom: 1px solid var(--border);
+ padding: 0 16px; height: 48px;
+ display: flex; align-items: center; justify-content: space-between;
+ box-shadow: 0 2px 16px rgba(0,0,0,.4);
+ }
+ .shop-bar .brand {
+ font-size: 14px; font-weight: 800; letter-spacing: 2px;
+ background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold));
+ -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+ text-decoration: none;
+ }
+ .shop-bar .nav-links { display: flex; gap: 16px; align-items: center; }
+ .shop-bar .nav-links a { font-size: 11px; color: var(--muted); text-decoration: none; transition: color .2s; }
+ .shop-bar .nav-links a:hover { color: var(--gold); }
+ .shop-bar .nav-links a.active { color: var(--gold); border-bottom: 1px solid var(--gold); }
+
+ .container {
+ max-width: 560px; width: 100%;
+ background: var(--card); border-radius: 24px;
+ padding: 36px 28px; border: 1px solid var(--border);
+ box-shadow: 0 4px 32px rgba(0,0,0,.3); position:relative; overflow:hidden;
+ }
+ .container::before {
+ content:''; position:absolute; top:0; left:0; right:0; height:3px;
+ background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+ }
+
+ .version-select { text-align: center; }
+ .intro-badge { display:inline-block; font-size:10px; letter-spacing:3px; color:var(--accent); border:1px solid var(--accent); border-radius:20px; padding:4px 14px; margin-bottom:12px; }
+ .version-select h1 { font-size: 24px; margin-bottom: 6px; }
+ .version-select .sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+ .version-cards { display: flex; gap: 12px; }
+ .ver-card {
+ flex:1; border: 2px solid var(--border); border-radius: 16px;
+ padding: 24px 16px; cursor: pointer; transition: all .2s;
+ text-align: center; background: transparent; font-family: inherit; color:inherit;
+ }
+ .ver-card:hover { border-color: var(--accent); background: rgba(232,125,62,.06); }
+ .ver-card .icon { font-size: 36px; margin-bottom: 10px; }
+ .ver-card .title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+ .ver-card .info { font-size: 12px; color: var(--muted); }
+
+ .progress-wrap { margin-bottom: 28px; }
+ .progress-bar { height: 6px; background: var(--border); border-radius: 3px; }
+ .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }
+ .progress-text { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: right; }
+ .q-num { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing:1px; margin-bottom: 6px; }
+ .q-text { font-size: 20px; font-weight: 600; margin-bottom: 24px; line-height: 1.4; }
+ .options { display: flex; flex-direction: column; gap: 10px; }
+ .opt-btn {
+ background: transparent; border: 2px solid var(--border); border-radius: 14px;
+ padding: 16px 18px; font-size: 15px; color: var(--text); cursor: pointer;
+ transition: all .15s; text-align: left; font-family: inherit;
+ display: flex; align-items: center; gap: 12px;
+ }
+ .opt-btn:hover { border-color: var(--accent); background: rgba(232,125,62,.08); }
+ .opt-letter {
+ width: 30px; height: 30px; border-radius: 8px;
+ background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center;
+ font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0;
+ }
+ .opt-btn:hover .opt-letter { background: var(--accent); color: #fff; }
+
+ .loading-wrap { text-align: center; padding: 40px 0; }
+ .loading-animal { font-size: 64px; animation: bounce .6s infinite alternate; margin-bottom: 16px; display: inline-block; }
+ @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+ .loading-text { font-size: 14px; color: var(--muted); }
+
+ .result { text-align: center; }
+ .result-emoji { font-size: 80px; margin-bottom: 6px; animation: popIn .5s ease; }
+ @keyframes popIn { 0% { transform: scale(0); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+ .result-name { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+ .result-name.wolf { color: var(--wolf); }
+ .result-name.fox { color: var(--fox); }
+ .result-name.deer { color: var(--deer); }
+ .result-name.cat { color: var(--cat); }
+ .result-name.bear { color: var(--bear); }
+ .result-name.eagle { color: var(--eagle); }
+ .result-name.maggot { color: var(--maggot); text-shadow: 0 0 4px #b87333aa; }
+ .result-name.rainbow-maggot { background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #ffdde1, #a1c4fd); background-clip: text; -webkit-background-clip: text; color: transparent; text-shadow: none; font-weight: 800; letter-spacing: 2px; }
+ .result-tagline { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+ .result-desc {
+ text-align: left; background: rgba(255,255,255,.02); border-radius: 14px;
+ padding: 20px; font-size: 14px; line-height: 1.8; border: 1px solid var(--border);
+ }
+ .result-desc strong { color: var(--accent); }
+ .result-meta { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+ .meta-badge { font-size: 12px; padding: 6px 14px; border-radius: 20px; background: rgba(255,255,255,.03); color: var(--muted); border:1px solid var(--border); }
+ .reveal-zone { margin-top: 24px; padding: 18px; border: 2px dashed var(--border); border-radius: 14px; cursor: pointer; transition: all .3s; font-size: 13px; color: var(--muted); background: rgba(0,0,0,.2);}
+ .reveal-zone:hover { border-color: var(--accent); background: rgba(232,125,62,.05);}
+ .reveal-zone.show { border-style: solid; border-color: var(--accent); cursor: default; background: rgba(232,125,62,.1);}
+
+ .btn { font-family: inherit; border: none; border-radius: 14px; padding: 14px 28px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
+ .btn-main { background: var(--accent); color: #fff; margin-top: 16px; }
+ .btn-main:hover { background: #d4722f; }
+ .btn-ghost { background: transparent; border: 2px solid var(--border); color: var(--text); margin-top: 12px; }
+ .btn-ghost:hover { border-color: var(--accent); }
+ .home-link { display: block; text-align: center; margin-top: 16px; font-size: 12px; color: var(--muted); text-decoration: none; }
+ .home-link:hover { color: var(--gold); }
+ .notice { font-size: 11px; color: var(--muted); text-align: center; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); }
+ .hidden-badge { background: rgba(255,215,0,0.15); color: #ffd966; border-color: #ffd966; }
+ @media (max-width:420px) { .container { padding: 24px 18px; } .version-cards { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<nav class="shop-bar">
+ <a href="index.html" class="brand">霧 雨 魔 法 店(AI改版)</a>
+ <div class="nav-links">
+   <a href="index.html" class="active">返回主页</a>
+ </div>
+</nav>
+
+<div class="container" id="app"></div>
+
+<script>
+// ---------- 七种动物 ----------
+const ANIMALS = [
+  { id: 'wolf', name: '狼', emoji: '🐺', colorClass: 'wolf', tagline: '孤傲与协作的化身', 
+    desc: '你拥有狼的灵魂：兼具领袖气质与团队精神。直觉敏锐，既有独自闯荡的勇气，也懂得合作共赢。你善于制定战略，对认定的目标执着，同时也忠诚于自己的「族群」。荒野的风声是你的背景音，冷静的外表下藏着炙热的决心。',
+    traits: ['直觉敏锐', '团队意识', '隐忍坚韧', '战略眼光'] },
+  { id: 'fox', name: '狐狸', emoji: '🦊', colorClass: 'fox', tagline: '机智灵动的幻术师',
+    desc: '你的灵魂像狐狸一样聪慧灵动，擅长在复杂环境里找到最优解。你讨厌蛮力，喜欢用机智和幽默化解难题，拥有令人羡慕的适应力和社交直觉。表面随性，内心却早已算好下一步。永远保持好奇心，也擅长在黑夜中发光。',
+    traits: ['灵活应变', '高情商', '好奇心重', '创意十足'] },
+  { id: 'deer', name: '鹿', emoji: '🦌', colorClass: 'deer', tagline: '温柔而敏锐的森林哲人',
+    desc: '你的灵魂温和静谧，像林间轻盈的鹿。你拥有细腻的感知力，善于倾听，总能察觉到别人忽略的情绪细节。你追求平和但不软弱，面对危险时异常警觉。你不喜欢冲突，但会为守护珍视的事物优雅地反抗。',
+    traits: ['温和治愈', '直觉敏锐', '宁静致远', '优雅坚韧'] },
+  { id: 'cat', name: '猫', emoji: '🐱', colorClass: 'cat', tagline: '独立又慵懒的哲学家',
+    desc: '你骨子里是一只猫：独立、神秘、偶尔傲娇，但从不缺乏温柔。你喜欢按自己的节奏生活，享受独处的惬意，却在关键时刻表现出惊人的洞察力。你不对谁讨好，也不轻易妥协，看似慵懒其实对世界保持敏锐的观察。',
+    traits: ['独立自主', '好奇心', '界限分明', '随性自由'] },
+  { id: 'bear', name: '熊', emoji: '🐻', colorClass: 'bear', tagline: '沉稳可靠的大地守护者',
+    desc: '你的灵魂像熊一样宽厚而强大。平时温和敦厚，很少主动攻击，但拥有惊人的忍耐力和爆发力。你是朋友眼中最踏实的依靠，擅长储存能量，在关键时刻能扛起整个世界。享受自然和简单的快乐，是稳重的生活家。',
+    traits: ['沉稳可靠', '防御力强', '热爱生活', '重情义'] },
+  { id: 'eagle', name: '鹰', emoji: '🦅', colorClass: 'eagle', tagline: '高瞻远瞩的孤高旅者',
+    desc: '你的灵魂像鹰一样锐利而自由。你习惯站在高处俯瞰全局，拥有超凡的远见和分析力。不随波逐流，信任自己的判断，追求真理和高度。有时候显得孤傲，但那是为了更清醒地飞翔。一旦锁定目标，便会俯冲而下，一击即中。',
+    traits: ['高瞻远瞩', '决策果断', '追求卓越', '冷静自持'] },
+  { id: 'maggot', name: '蛆', emoji: '🪰', colorClass: 'maggot', tagline: '⚙️ 务实主义 · 自然工程师 ⚙️',
+    desc: '你的灵魂是蛆——别急着否定，这是务实、坚韧和不矫情的象征。蛆在自然界扮演着至关重要的分解者角色，化腐朽为神奇。你不在意他人眼光，该吃吃该睡睡，闷声干大事。环境再差也能活得精彩，拥有惊人的反脆弱性。这不是讽刺，是真心赞美。',
+    traits: ['适应力超强', '抗压王者', '务实转化', '低调奉献'] }
+];
+
+// ---------- 题目库 ----------
+const quickRaw = [
+  { q:'周末下午你一般在干嘛？', opts:['出门浪', '家里瘫', '看心情', '不知道'] },
+  { q:'朋友聚餐的时候你是？', opts:['活跃气氛', '安静吃饭', '看跟谁', '负责拍照'] },
+  { q:'做决定靠什么？', opts:['直觉', '分析', '问别人', '先拖着'] },
+  { q:'早上闹钟响了你？', opts:['秒起', '再睡会', '看情况', '不用闹钟'] },
+  { q:'有一天空闲你会？', opts:['安排好', '随缘过', '约朋友', '纯躺平'] },
+  { q:'你喜欢什么环境？', opts:['城市', '山里', '海边', '家里'] }
+];
+const proExtra = [
+  { q:'朋友找你倒苦水，你通常？', opts:['帮分析', '先共情', '讲自己', '默默听'] },
+  { q:'说到冒险，你想到的是？', opts:['极限运动', '异国旅行', '试新事物', '算了安全第一'] },
+  { q:'你的节奏更像哪种？', opts:['猎豹冲刺', '乌龟稳进', '蜜蜂忙不停', '猫随心走'] },
+  { q:'晚上入睡前你一般在？', opts:['刷手机', '看书', '想事情', '秒睡'] },
+  { q:'你要点外卖了，你会？', opts:['秒选常吃的', '翻半小时', '让朋友决定', '哪家优惠点哪家'] },
+  { q:'突然停电没网了，你会？', opts:['焦虑找事做', '拿本书看', '出门走走', '直接睡觉'] },
+  { q:'你觉得自己身上哪种气质最突出？', opts:['搞笑', '沉稳', '温柔', '懒得形容'] },
+  { q:'给你一个亿，你第一件事？', opts:['立刻辞职', '先藏起来', '告诉家人', '不敢想象'] },
+  { q:'你相信星座吗？', opts:['深信不疑', '完全不信', '偶尔看看', '星座是什么'] },
+  { q:'你觉得这个测试准吗？', opts:['我先看看结果', '肯定不准但玩一下', '我猜结果都一样', '准不准不重要'] }
+];
+
+let mode = null;
+let questions = [];
+let idx = 0;
+let answersIndices = [];
+
+function buildQuestions() {
+  if (mode === 'quick') return [...quickRaw];
+  else if (mode === 'pro') return [...quickRaw, ...proExtra];
+  return [];
+}
+
+function restart() { 
+  mode = null; 
+  idx = 0; 
+  answersIndices = []; 
+  questions = []; 
+  render(); 
+}
+
+function pick(ver) {
+  mode = ver;
+  questions = buildQuestions();
+  idx = 0;
+  answersIndices = [];
+  render();
+}
+
+function answer(optIndex) {
+  answersIndices.push(optIndex);
+  idx++;
+  render();
+}
+
+// ---------- 七种动物权重计算 ----------
+function computeWolfScore(optText) { let s=0; if(optText.includes('出门')||optText.includes('活跃')||optText.includes('极限')||optText.includes('冲刺')||optText.includes('猎豹')||optText.includes('辞职')) s+=2; if(optText.includes('秒起')||optText.includes('挑战')||optText.includes('活跃气氛')) s+=1; return s; }
+function computeFoxScore(optText) { let s=0; if(optText.includes('看心情')||optText.includes('看跟谁')||optText.includes('直觉')||optText.includes('灵活')||optText.includes('机智')||optText.includes('有趣')) s+=2; if(optText.includes('翻半小时')||optText.includes('看情况')||optText.includes('随缘')) s+=1; return s; }
+function computeDeerScore(optText) { let s=0; if(optText.includes('安静')||optText.includes('温柔')||optText.includes('共情')||optText.includes('看书')||optText.includes('睡觉')||optText.includes('纯躺')) s+=2; if(optText.includes('家里瘫')||optText.includes('再睡会')||optText.includes('秒睡')) s+=1; return s; }
+function computeCatScore(optText) { let s=0; if(optText.includes('自己待')||optText.includes('独处')||optText.includes('随缘过')||optText.includes('刷手机')||optText.includes('懒得形容')) s+=2; if(optText.includes('猫随心')||optText.includes('自由')||optText.includes('负责拍照')) s+=1; return s; }
+function computeBearScore(optText) { let s=0; if(optText.includes('先拖着')||optText.includes('安全第一')||optText.includes('算了')||optText.includes('稳妥')||optText.includes('藏起来')) s+=2; if(optText.includes('常吃')||optText.includes('优惠')||optText.includes('不敢想象')||optText.includes('躺平')) s+=1; return s; }
+function computeEagleScore(optText) { let s=0; if(optText.includes('分析')||optText.includes('规划')||optText.includes('目标')||optText.includes('效率')||optText.includes('远见')) s+=2; if(optText.includes('想事情')||optText.includes('准时')||optText.includes('安排')) s+=1; return s; }
+
+// 蛆的特性：躺平、懒散、务实、不挑剔、不在意眼光，增加“不知道”、“随缘”等
+function computeMaggotScore(optText) { 
+  let s=0;
+  if(optText.includes('家里瘫')||optText.includes('纯躺平')||optText.includes('再睡会')||optText.includes('秒睡')||optText.includes('直接睡觉')) s+=3;
+  if(optText.includes('懒得形容')||optText.includes('不敢想象')||optText.includes('先拖着')||optText.includes('看情况')||optText.includes('不知道')) s+=2;
+  if(optText.includes('安静吃饭')||optText.includes('默默听')||optText.includes('随缘')||optText.includes('随缘过')) s+=1;
+  return s;
+}
+
+function getAllScores() {
+  let scores = [0,0,0,0,0,0,0];
+  for (let i = 0; i < questions.length; i++) {
+    const optText = questions[i].opts[answersIndices[i]];
+    scores[0] += computeWolfScore(optText);
+    scores[1] += computeFoxScore(optText);
+    scores[2] += computeDeerScore(optText);
+    scores[3] += computeCatScore(optText);
+    scores[4] += computeBearScore(optText);
+    scores[5] += computeEagleScore(optText);
+    scores[6] += computeMaggotScore(optText);
+  }
+  // 调整蛆的衰减系数为0.8（原来0.4太低），使其概率略低于常规但依然可遇见
+  scores[6] = scores[6] * 0.8;
+  return scores;
+}
+
+function weightedRandomSelect(scores) {
+  let total = 0;
+  for (let s of scores) total += Math.max(0, s);
+  if (total <= 0) return 0;
+  let rand = Math.random() * total;
+  let accum = 0;
+  for (let i = 0; i < scores.length; i++) {
+    accum += Math.max(0, scores[i]);
+    if (rand < accum) return i;
+  }
+  return 0;
+}
+
+function computeFinalAnimal() {
+  if (!questions.length || answersIndices.length !== questions.length) return ANIMALS[0];
+  const rawScores = getAllScores();
+  let selectedIdx = weightedRandomSelect(rawScores);
+  let baseAnimal = ANIMALS[selectedIdx];
+  
+  // 专业版：如果抽中普通蛆，8%概率升级为七彩蛆
+  if (mode === 'pro' && baseAnimal.id === 'maggot') {
+    if (Math.random() < 0.08) {
+      return {
+        id: 'rainbow-maggot',
+        name: '🌈七彩蛆🌈',
+        emoji: '🐛✨',
+        colorClass: 'rainbow-maggot',
+        tagline: '❀ SSR 终极隐藏款 ❀ 传说级的灵魂异彩',
+        desc: '🌠 宇宙级罕见！你触发了万中无一的【七彩蛆】灵魂。七彩蛆是魔法与现实的交汇，代表着超越世俗认知的创造力、荒诞诗意与极致幸运。它象征在腐朽中开出繁花，在不可能中孕育彩虹。你拥有天马行空的脑洞、颠覆常规的勇气，以及让人惊叹的“离谱但合理”的气质。这是魔法店迄今为止最稀有的鉴定结果，值得截图炫耀！',
+        traits: ['SSR限定', '彩虹之力', '荒诞诗意', '绝对幸运']
+      };
+    }
+  }
+  return baseAnimal;
+}
+
+async function showLoading() {
+  const a = document.getElementById('app');
+  const loadingIcons = ['🐺','🦊','🦌','🐱','🐻','🦅','🪰','🌈'];
+  a.innerHTML = '<div class="loading-wrap"><div class="loading-animal" id="lanim">🔮</div><p class="loading-text">正在解析灵魂光谱，寻找图腾...</p></div>';
+  const lanim = document.getElementById('lanim');
+  for (let i = 0; i < 14; i++) {
+    await sleep(110 + Math.random() * 170);
+    lanim.textContent = loadingIcons[i % loadingIcons.length];
+  }
+  await sleep(280);
+  showResult();
+}
+
+function showResult() {
+  const animal = computeFinalAnimal();
+  const isHidden = (animal.id === 'maggot');
+  const isSSR = (animal.id === 'rainbow-maggot');
+  const a = document.getElementById('app');
+  const traitsHtml = animal.traits.map(t => `<span class="meta-badge ${isSSR ? 'hidden-badge' : ''}">${t}</span>`).join('');
+  
+  let extraBadge = '';
+  if (isSSR) extraBadge = '<div style="margin-bottom: 12px;"><span style="background: linear-gradient(135deg,#ffb347,#ffdd77); padding:4px 14px; border-radius: 40px; font-size:12px; font-weight:bold; color:#3a2a1f;">✨ SSR 传说限定 ✨</span></div>';
+  else if (isHidden) extraBadge = '<div style="margin-bottom: 12px;"><span style="background:#b8733344; border:1px solid #b87333; padding:4px 14px; border-radius: 40px; font-size:12px;">🪰 稀有动物 · 蛆之魂 🪰</span></div>';
+  
+  a.innerHTML = `
+    <div class="result">
+      ${extraBadge}
+      <div class="result-emoji">${animal.emoji}</div>
+      <div class="result-name ${animal.colorClass}">${animal.name}</div>
+      <div class="result-tagline">${animal.tagline}</div>
+      <div class="result-desc">
+        <p><strong>「灵魂共鸣」</strong><br>${animal.desc}</p>
+        <p style="margin-top:12px; font-size:13px; border-left: 3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--accent')}; padding-left:12px;">
+          ✦ 根据 ${questions.length} 道题，你的灵魂与 <strong>${animal.name}</strong> 产生共振。<br>
+          ✦ ${isSSR ? '恭喜捕获 SSR 七彩蛆！这份缘分万中无一。' : (isHidden ? '你遇见了稀有动物「蛆」，务实主义者的荣光。' : '常规兽灵之一，映照出你的内在品质。')}
+        </p>
+      </div>
+      <div class="result-meta">${traitsHtml}</div>
+      <div class="reveal-zone" id="revealZone" onclick="toggleReveal('${animal.id}')">🔮 点击查看隐藏款奥秘</div>
+      <button class="btn btn-main" onclick="shareResult('${animal.name}', '${animal.emoji}')">📋 复制结果分享好友</button>
+      <button class="btn btn-ghost" onclick="restart()">🔄 重新鉴定</button>
+      <p class="notice">✨ 普通蛆是七种动物之一，多选躺平、随性选项更容易遇见；专业版中蛆有8%概率升级为SSR七彩蛆。</p>
+    </div>`;
+}
+
+function toggleReveal(animalId) {
+  const el = document.getElementById('revealZone');
+  if (el.classList.contains('show')) return;
+  el.classList.add('show');
+  let content = '';
+  if (animalId === 'rainbow-maggot') {
+    content = `<strong>🌈 七彩蛆 SSR 降临秘闻 🌈</strong><br>你在专业版中触发了蛆的 8% 超稀有升级，得以一睹七彩蛆真容！<br><br>⭐ 普通蛆作为七种动物之一，出现概率适中（受选项倾向影响），而七彩蛆仅专业版+蛆+8%概率，极其罕见。<br>🎉 多选「家里瘫」「纯躺平」「再睡会」「懒得形容」等选项，蛆的分数会更高！`;
+  } else if (animalId === 'maggot') {
+    content = `<strong>🪰 普通蛆 · 稀有动物</strong><br>蛆是七种灵魂动物之一，偏向于务实、躺平、随性的选择会提高它的分数。<br><br>✨ 更稀有的 SSR 七彩蛆只在专业版中，当你抽中蛆后，有 8% 的概率升级为七彩蛆。`;
+  } else {
+    content = `<strong>📜 魔法店鉴定笔记</strong><br>• 七种动物：狼、狐狸、鹿、猫、熊、鹰、蛆（稀有）。<br>• 蛆有自己的特性分（躺平、务实、随性），总分略低于常规动物，因此出现概率稍低。<br>• 专业版额外福利：如果最终抽中蛆，有 8% 的概率进化为 SSR「七彩蛆」。<br>• 快分享给朋友，看看谁能先遇到蛆，更看谁能进化成七彩蛆！`;
+  }
+  el.innerHTML = `<div style="font-size:13px; line-height:1.7;">${content}</div>`;
+}
+
+async function shareResult(animalName, animalEmoji) {
+  const text = `我在霧雨魔法店测出了灵魂动物：${animalEmoji} ${animalName}！${animalName.includes('七彩') ? 'SSR隐藏款！！！' : (animalName === '蛆' ? '稀有动物蛆！' : '你也来测测看，也许能遇见罕见的蛆或七彩蛆～')} ${window.location.href}`;
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('✨ 结果已复制，快去分享！');
+    } catch(e) { prompt('复制这段文字：', text); }
+  } else { prompt('复制这段文字：', text); }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function render() {
+  const appDiv = document.getElementById('app');
+  if (!appDiv) return;
+  if (mode === null) {
+    appDiv.innerHTML = `
+      <div class="version-select">
+        <div class="intro-badge">🐾 七灵共生 · 蛆稀有限定</div>
+        <h1>🌙 灵魂动物鉴定</h1>
+        <p class="sub">六种常规图腾 + 稀有「蛆」 · 专业版SSR「七彩蛆」</p>
+        <div class="version-cards">
+          <button class="ver-card" onclick="pick('quick')"><div class="icon">⚡</div><div class="title">快速版</div><div class="info">${quickRaw.length} 道题 </div></button>
+          <button class="ver-card" onclick="pick('pro')"><div class="icon">🔮</div><div class="title">专业版</div><div class="info">${quickRaw.length + proExtra.length} 道题</div></button>
+        </div>
+        <p class="notice">💡 多选「家里瘫」「纯躺平」「再睡会」「懒得形容」等，蛆的匹配度更高！</p>
+      </div>`;
+    return;
+  }
+  if (idx < questions.length) {
+    const q = questions[idx];
+    const pct = Math.round((idx / questions.length) * 100);
+    appDiv.innerHTML = `
+      <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${questions.length}</div></div>
+      <div class="q-num">第 ${idx+1} 题 · 选择你的本能</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((opt, i) => `<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${String.fromCharCode(65+i)}</span>${opt}</button>`).join('')}
+      </div>`;
+    return;
+  }
+  showLoading();
+}
+
+window.pick = pick;
+window.answer = answer;
+window.restart = restart;
+window.shareResult = shareResult;
+window.toggleReveal = toggleReveal;
+
+render();
+</script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+</body>
+</html>

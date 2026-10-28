@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>液体粘度 · 落球法（独立拟合图 + 白色背景下载）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 400px;
+            min-width: 350px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2 1 550px;
+            min-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+        }
+        .data-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .data-row input {
+            flex: 1 1 50px;
+            min-width: 45px;
+            padding: 8px 4px;
+            font-size: 0.85rem;
+        }
+        .data-row .unit {
+            font-size: 0.7rem;
+            color: #888;
+            white-space: nowrap;
+            margin: 0 2px;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .add-btn {
+            padding: 9px 18px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 14px;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 800px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        .result-equation {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 350px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .uncertainty-box {
+            background: #fffdf0;
+            border: 1.5px solid #e8d44d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+        .uncertainty-box .comp-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dotted #e8d44d55;
+            font-size: 0.83rem;
+            color: #555;
+        }
+        .uncertainty-box .comp-row:last-child {
+            border-bottom: none;
+        }
+        .uncertainty-box .comp-label {
+            font-weight: 600;
+            color: #7a6a00;
+        }
+        .uncertainty-box .comp-val {
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            color: #333;
+        }
+        .uncertainty-box .ub-total {
+            font-weight: 700;
+            color: #c0392b;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1.5px solid #e8d44d;
+            font-size: 0.9rem;
+        }
+        .group-card {
+            background: #fff;
+            border: 1.5px solid #dde;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            border-left: 5px solid var(--primary);
+        }
+        .group-card h4 {
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .group-card .eta-final {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e8c4a;
+            margin-top: 4px;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .highlight-L {
+            background: #fffbe6;
+            border: 2px solid #f0c040;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>💧 液体粘度（落球法）· 独立拟合图 + 白色背景下载</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数设置</h3>
+            <div class="instructions">
+                <p>η = (ρ - ρ₀)·g·d² / [18·v·(1 + K·d/D)]<br>
+                    v = L / t (cm/s)，K=2.4，g=9.794 m/s²<br>
+                    <strong>L为统一下落距离，所有数据共用。</strong></p>
+            </div>
+            <div class="highlight-L">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>📏 统一下落距离 L <span class="unit">cm</span></label>
+                    <input type="number" id="L-unified" value="20.0" step="0.1">
+                </div>
+            </div>
+            <div class="input-group"><label>小球密度 ρ <span class="unit">×10³ kg/m³</span></label><input type="number" id="rho" value="7.8" step="0.1"></div>
+            <div class="input-group"><label>液体密度 ρ₀ <span class="unit">×10³ kg/m³</span></label><input type="number" id="rho0" value="0.957" step="0.001"></div>
+            <div class="input-group"><label>管径 D <span class="unit">mm</span></label><input type="number" id="D" value="22.0" step="0.1"></div>
+            <h4>📐 仪器误差（用于B类不确定度）</h4>
+            <div class="input-group"><label>Δd (小球直径) <span class="unit">mm</span></label><input type="number" id="delta-d" value="0.01" step="0.001"></div>
+            <div class="input-group"><label>Δρ₀ (液体密度) <span class="unit">×10³ kg/m³</span></label><input type="number" id="delta-rho0" value="0.001" step="0.0001"></div>
+            <div class="input-group"><label>Δt (时间测量) <span class="unit">s</span></label><input type="number" id="delta-t" value="0.01" step="0.001"></div>
+            <div class="input-group"><label>ΔD (管径) <span class="unit">mm</span></label><input type="number" id="delta-D" value="0.02" step="0.001"></div>
+            <div class="input-group"><label>ΔL (下落距离) <span class="unit">cm</span></label><input type="number" id="delta-L" value="0.05" step="0.001"></div>
+            <h4>📊 实验数据 (温度T, 直径d, 时间t)</h4>
+            <div id="viscosity-data-inputs"></div>
+            <button class="add-btn" onclick="addRow()">+ 添加数据行</button>
+            <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（按温度分组，独立不确定度）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+            const resultOutput = $('#result-output');
+            const chartContainerBox = $('#chart-container-box');
+            let activeChart = null;
+            const g = 9.794,
+                K = 2.4;
+
+            function ave(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+            function Ls0(x, y) {
+                const ax = ave(x),
+                    ay = ave(y),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length,
+                    ax2 = x.reduce((s, v) => s + v * v, 0) / x.length;
+                const den = ax2 - ax * ax;
+                return { a: (axy - ax * ay) / den, b: ay - (axy - ax * ay) / den * ax };
+            }
+
+            function LSR(x, y) {
+                const ax = ave(x),
+                    ay = ave(y),
+                    ax2 = ave(x.map(v => v * v)),
+                    ay2 = ave(y.map(v => v * v)),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length;
+                return (axy - ax * ay) / Math.sqrt((ax2 - ax * ax) * (ay2 - ay * ay));
+            }
+
+            function calcEtaSingle(d_mm, t_s, L_cm, D_mm, rho_in, rho0_in) {
+                const A = rho_in - rho0_in;
+                const den = 180 * L_cm * (1 + K * d_mm / D_mm);
+                return A * g * d_mm * d_mm * t_s / den;
+            }
+
+            function destroyChart() {
+                if (activeChart) {
+                    activeChart.destroy();
+                    activeChart = null;
+                }
+                chartContainerBox.innerHTML = '';
+            }
+
+            function drawFitChart(xd, yd, a, b, xl, yl, title) {
+                destroyChart();
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h4>📈 粘度-温度拟合曲线</h4>`;
+
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                chartBox.appendChild(container);
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                downloadBtn.addEventListener('click', () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = `粘度拟合曲线_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    link.click();
+                });
+                chartBox.appendChild(downloadBtn);
+                chartContainerBox.appendChild(chartBox);
+
+                const ctx = canvas.getContext('2d');
+                const xMin = Math.min(...xd),
+                    xMax = Math.max(...xd);
+                const xFit = [xMin - (xMax - xMin) * 0.1, xMax + (xMax - xMin) * 0.1];
+
+                activeChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '各温度平均η',
+                            data: xd.map((x, i) => ({ x, y: yd[i] })),
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 6,
+                            pointBorderColor: '#2c3e50',
+                            pointBorderWidth: 1.5,
+                        }, {
+                            label: `η(T)=${a.toFixed(6)}T+${b.toFixed(6)}`,
+                            data: [{ x: xFit[0], y: a * xFit[0] + b }, { x: xFit[1], y: a * xFit[1] + b }],
+                            type: 'line',
+                            borderColor: '#e74c3c',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: false }, legend: { labels: { usePointStyle: true } } },
+                        scales: {
+                            x: { title: { display: true, text: xl } },
+                            y: { title: { display: true, text: yl } },
+                        },
+                    },
+                });
+            }
+
+            function addDetailBox(title, content) {
+                const box = document.createElement('div');
+                box.className = 'detail-box';
+                box.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(box);
+            }
+
+            window.addRow = function(defaults = {}) {
+                const cont = $('#viscosity-data-inputs');
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                const T_val = defaults.T !== undefined ? defaults.T : 25.0;
+                const d_val = defaults.d !== undefined ? defaults.d : 1.20;
+                const t_val = defaults.t !== undefined ? defaults.t : 8.0;
+                row.innerHTML = `
+                    <input type="number" class="t-input" placeholder="温度" value="${T_val}" step="0.1"><span class="unit">°C</span>
+                    <input type="number" class="d-input" placeholder="直径d" value="${d_val}" step="0.01"><span class="unit">mm</span>
+                    <input type="number" class="t-ms-input" placeholder="时间t" value="${t_val}" step="0.01"><span class="unit">s</span>
+                    <button class="remove-btn" onclick="this.closest('.data-row').remove();updateBtns();">×</button>`;
+                cont.appendChild(row);
+                updateBtns();
+            };
+
+            function updateBtns() {
+                const rows = document.querySelectorAll('#viscosity-data-inputs .data-row');
+                rows.forEach((r) => {
+                    const btn = r.querySelector('.remove-btn');
+                    if (btn) btn.style.display = rows.length === 1 ? 'none' : '';
+                });
+            }
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyChart();
+                const rho = parseFloat($('#rho').value);
+                const rho0 = parseFloat($('#rho0').value);
+                const D = parseFloat($('#D').value);
+                const L_unified = parseFloat($('#L-unified').value);
+                const d_d = parseFloat($('#delta-d').value) || 0.01;
+                const d_rho0 = parseFloat($('#delta-rho0').value) || 0.001;
+                const d_t_meas = parseFloat($('#delta-t').value) || 0.01;
+                const d_D = parseFloat($('#delta-D').value) || 0.02;
+                const d_L = parseFloat($('#delta-L').value) || 0.05;
+
+                if (isNaN(rho) || isNaN(rho0) || isNaN(D) || isNaN(L_unified) || L_unified <= 0)
+                    return alert('请填写有效的常数和统一L值');
+                const rows = document.querySelectorAll('#viscosity-data-inputs .data-row');
+                const rawData = [];
+                rows.forEach(r => {
+                    const T = parseFloat(r.querySelector('.t-input').value);
+                    const d = parseFloat(r.querySelector('.d-input').value);
+                    const t = parseFloat(r.querySelector('.t-ms-input').value);
+                    if (!isNaN(T) && !isNaN(d) && !isNaN(t) && t > 0 && d > 0) rawData.push({ T, d, t });
+                });
+                if (rawData.length === 0) return alert('无有效数据');
+
+                const tempMap = new Map();
+                rawData.forEach(item => {
+                    if (!tempMap.has(item.T)) tempMap.set(item.T, []);
+                    tempMap.get(item.T).push({ d: item.d, t: item.t });
+                });
+                const sortedTemps = [...tempMap.keys()].sort((a, b) => a - b);
+
+                let detail = `【公式】η = (ρ-ρ₀)·g·d² / [18·v·(1+K·d/D)] , v = L/t\n`;
+                detail += `简化式: η = A·g·d²·t / [180·L·(1+K·d/D)] , A=ρ-ρ₀(输入单位差值)\n`;
+                detail += `参数: ρ=${rho}×10³ kg/m³, ρ₀=${rho0}×10³ kg/m³, D=${D}mm, L=${L_unified}cm, K=2.4, g=9.794\n`;
+                detail += `仪器误差: Δd=${d_d}mm, Δρ₀=${d_rho0}×10³ kg/m³, Δt=${d_t_meas}s, ΔD=${d_D}mm, ΔL=${d_L}cm\n\n`;
+
+                const groupResults = [];
+
+                detail += `【步骤1】逐行计算各数据点的η值\n`;
+                rawData.forEach((item, idx) => {
+                    const eta = calcEtaSingle(item.d, item.t, L_unified, D, rho, rho0);
+                    detail += `数据${idx+1}: T=${item.T}°C, d=${item.d}mm, t=${item.t}s → η=${eta.toFixed(8)} Pa·s\n`;
+                });
+                detail += `\n【步骤2】按温度分组，计算各组平均η及不确定度\n`;
+
+                sortedTemps.forEach(T => {
+                    const items = tempMap.get(T);
+                    const n = items.length;
+                    const etas = items.map(it => calcEtaSingle(it.d, it.t, L_unified, D, rho, rho0));
+                    const avgEta = ave(etas);
+                    const d_avg = ave(items.map(it => it.d));
+                    const t_avg = ave(items.map(it => it.t));
+
+                    let uA = 0;
+                    if (n > 1) {
+                        const stdEta = Math.sqrt(etas.reduce((s, e) => s + (e - avgEta) ** 2, 0) / (n - 1));
+                        uA = stdEta / Math.sqrt(n);
+                    }
+
+                    const A_in = rho - rho0;
+                    const d_mm = d_avg;
+                    const t_s = t_avg;
+                    const L_cm = L_unified;
+                    const D_mm = D;
+                    const alpha = K / D_mm;
+                    const C = A_in * g / (180 * L_cm);
+                    const denom_d = 1 + alpha * d_mm;
+
+                    // 偏导数
+                    const dEta_dd = C * d_mm * (2 + alpha * d_mm) / (denom_d * denom_d) * t_s;
+                    const dEta_dt = C * d_mm * d_mm / denom_d;
+                    const dEta_dL = -C * d_mm * d_mm * t_s / (L_cm * denom_d);
+                    const dEta_dD = C * d_mm * d_mm * t_s * K * d_mm / (D_mm * D_mm * denom_d * denom_d);
+                    const dEta_drho0 = -g * d_mm * d_mm * t_s / (180 * L_cm * denom_d);
+
+                    // 各不确定度分量（带符号，与偏导数同号）
+                    const comp_d = dEta_dd * d_d;
+                    const comp_rho0 = dEta_drho0 * d_rho0;
+                    const comp_t = dEta_dt * d_t_meas;
+                    const comp_L = dEta_dL * d_L;
+                    const comp_D = dEta_dD * d_D;
+
+                    // 各分量绝对值
+                    const abs_comp_d = Math.abs(comp_d);
+                    const abs_comp_rho0 = Math.abs(comp_rho0);
+                    const abs_comp_t = Math.abs(comp_t);
+                    const abs_comp_L = Math.abs(comp_L);
+                    const abs_comp_D = Math.abs(comp_D);
+
+                    const uB = Math.sqrt(
+                        comp_d * comp_d + comp_rho0 * comp_rho0 + comp_t * comp_t + comp_L * comp_L + comp_D * comp_D
+                    );
+                    const uC = Math.sqrt(uA * uA + uB * uB);
+                    const relU = avgEta > 0 ? (uC / avgEta * 100) : 0;
+
+                    groupResults.push({
+                        T,
+                        n,
+                        etas,
+                        avgEta,
+                        uA,
+                        uB,
+                        uC,
+                        relU,
+                        d_avg,
+                        t_avg,
+                        // 偏导数
+                        dEta_dd,
+                        dEta_dt,
+                        dEta_dL,
+                        dEta_dD,
+                        dEta_drho0,
+                        // 各分量（带符号）
+                        comp_d,
+                        comp_rho0,
+                        comp_t,
+                        comp_L,
+                        comp_D,
+                        // 各分量绝对值
+                        abs_comp_d,
+                        abs_comp_rho0,
+                        abs_comp_t,
+                        abs_comp_L,
+                        abs_comp_D,
+                    });
+
+                    detail += `── 温度 T=${T}°C (${n}组) ──\n`;
+                    detail += `  η值: [${etas.map(v=>v.toFixed(8)).join(', ')}]\n`;
+                    detail += `  平均d = ${d_avg.toFixed(4)} mm, 平均t = ${t_avg.toFixed(4)} s\n`;
+                    detail += `  平均η = ${avgEta.toFixed(8)} Pa·s\n`;
+                    detail += `  偏导数:\n`;
+                    detail += `    ∂η/∂d = ${dEta_dd.toFixed(8)}  Pa·s/mm\n`;
+                    detail += `    ∂η/∂ρ₀ = ${dEta_drho0.toFixed(8)}  Pa·s/(×10³ kg/m³)\n`;
+                    detail += `    ∂η/∂t = ${dEta_dt.toFixed(8)}  Pa·s/s\n`;
+                    detail += `    ∂η/∂L = ${dEta_dL.toFixed(8)}  Pa·s/cm\n`;
+                    detail += `    ∂η/∂D = ${dEta_dD.toFixed(8)}  Pa·s/mm\n`;
+                    detail += `  uB分量 (|∂η/∂x|·Δx):\n`;
+                    detail += `    ud  = |∂η/∂d|·Δd   = ${abs_comp_d.toFixed(8)} Pa·s\n`;
+                    detail += `    uρ₀ = |∂η/∂ρ₀|·Δρ₀ = ${abs_comp_rho0.toFixed(8)} Pa·s\n`;
+                    detail += `    ut  = |∂η/∂t|·Δt   = ${abs_comp_t.toFixed(8)} Pa·s\n`;
+                    detail += `    uL  = |∂η/∂L|·ΔL   = ${abs_comp_L.toFixed(8)} Pa·s\n`;
+                    detail += `    uD  = |∂η/∂D|·ΔD   = ${abs_comp_D.toFixed(8)} Pa·s\n`;
+                    detail += `  uA = ${uA.toFixed(8)} Pa·s\n`;
+                    detail += `  uB = √(ud²+uρ₀²+ut²+uL²+uD²) = ${uB.toFixed(8)} Pa·s\n`;
+                    detail += `  uC = √(uA²+uB²) = ${uC.toFixed(8)} Pa·s\n`;
+                    detail += `  相对不确定度 = ${relU.toFixed(4)}%\n`;
+                    detail += `  结果: η = (${avgEta.toFixed(8)} ± ${uC.toFixed(8)}) Pa·s\n\n`;
+                });
+
+                let html = `<h3 class="result-title">💧 液体粘度计算结果</h3>`;
+                html +=
+                    `<div style="background:#e8f4fc;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.9rem;">📏 统一L = <strong>${L_unified} cm</strong> | D = ${D} mm | ρ = ${rho} | ρ₀ = ${rho0} (×10³ kg/m³)</div>`;
+
+                groupResults.forEach(gr => {
+                    html += `
+                    <div class="group-card">
+                        <h4>🌡️ 温度 T = ${gr.T}°C <span style="font-weight:400;color:#888;">(${gr.n}组数据)</span></h4>
+                        <div style="font-size:0.9rem;color:#555;">平均d = ${gr.d_avg.toFixed(4)} mm | 平均t = ${gr.t_avg.toFixed(4)} s</div>
+                        <div class="eta-final">η = (${gr.avgEta.toFixed(8)} ± ${gr.uC.toFixed(8)}) Pa·s</div>
+                        <div class="uncertainty-box">
+                            <div style="font-weight:700;color:#7a6a00;margin-bottom:4px;">📐 不确定度分解</div>
+                            <div class="comp-row"><span class="comp-label">uA (A类)</span><span class="comp-val">= ${gr.uA.toFixed(8)} Pa·s${gr.n===1?' <span style="color:#999;">(n=1)</span>':''}</span></div>
+                            <div style="font-weight:600;color:#7a6a00;margin-top:4px;font-size:0.82rem;">uB 分量 (|∂η/∂x|·Δx):</div>
+                            <div class="comp-row"><span class="comp-label">  ud (直径d)</span><span class="comp-val">= ${gr.abs_comp_d.toFixed(8)} Pa·s</span></div>
+                            <div class="comp-row"><span class="comp-label">  uρ₀ (密度ρ₀)</span><span class="comp-val">= ${gr.abs_comp_rho0.toFixed(8)} Pa·s</span></div>
+                            <div class="comp-row"><span class="comp-label">  ut (时间t)</span><span class="comp-val">= ${gr.abs_comp_t.toFixed(8)} Pa·s</span></div>
+                            <div class="comp-row"><span class="comp-label">  uL (距离L)</span><span class="comp-val">= ${gr.abs_comp_L.toFixed(8)} Pa·s</span></div>
+                            <div class="comp-row"><span class="comp-label">  uD (管径D)</span><span class="comp-val">= ${gr.abs_comp_D.toFixed(8)} Pa·s</span></div>
+                            <div class="ub-total">uB = √(Σ分量²) = ${gr.uB.toFixed(8)} Pa·s</div>
+                            <div style="font-weight:700;color:#c0392b;margin-top:2px;">uC = √(uA²+uB²) = ${gr.uC.toFixed(8)} Pa·s</div>
+                            <div style="font-weight:700;color:#c0392b;">相对不确定度 = ${gr.relU.toFixed(4)}%</div>
+                        </div>
+                    </div>`;
+                });
+
+                if (groupResults.length >= 2) {
+                    const T_vals = groupResults.map(gr => gr.T);
+                    const eta_vals = groupResults.map(gr => gr.avgEta);
+                    const ls = Ls0(T_vals, eta_vals);
+                    const r = LSR(T_vals, eta_vals);
+                    html +=
+                        `<div class="result-equation">📈 η(T) = ${ls.a.toFixed(8)}·T + ${ls.b.toFixed(8)}</div>`;
+                    html +=
+                        `<div class="result-item"><h4>📊 相关系数 r</h4><div class="result-value success">${r.toFixed(6)}</div></div>`;
+                    resultOutput.innerHTML = html;
+                    addDetailBox('完整计算过程', detail);
+                    drawFitChart(T_vals, eta_vals, ls.a, ls.b, '温度 T (°C)', '粘度 η (Pa·s)',
+                    'η-T 线性拟合');
+                } else {
+                    resultOutput.innerHTML = html;
+                    addDetailBox('完整计算过程', detail);
+                }
+            }
+
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+            window.addRow({ T: 25.0, d: 1.20, t: 8.00 });
+            window.addRow({ T: 25.0, d: 1.20, t: 8.10 });
+            window.addRow({ T: 30.0, d: 1.20, t: 7.50 });
+            updateBtns();
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

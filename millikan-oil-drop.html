@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>密里根油滴实验 · 静态平衡法</title>
+<style>
+:root{--primary:#4b6cb7;--ink:#26374e;--muted:#64748b;--border:#dbe4f0}*{box-sizing:border-box}body{margin:0 auto;padding:18px;max-width:1440px;background:#f3f6fb;color:var(--ink);font:15px/1.75 'Segoe UI','Microsoft YaHei',sans-serif}.header{text-align:center;color:white;padding:24px 18px;border-radius:16px;background:linear-gradient(135deg,#4b6cb7,#1a2a4a)}h1{font-size:1.6rem;margin:0 0 6px}.header a{color:white}h2{font-size:1.18rem;margin:0 0 14px;border-bottom:2px solid var(--primary);padding-bottom:8px}h3{font-size:1rem;margin:15px 0 6px}.card{background:white;border-radius:14px;padding:22px;margin:18px 0;box-shadow:0 5px 22px #25365009;min-width:0}.note{color:var(--muted);font-size:.9rem}.rule{padding:12px 16px;background:#edf3ff;border-left:4px solid var(--primary);border-radius:8px;margin:12px 0}.formula{font:1.15rem/1.9 'Cambria Math','Times New Roman','Microsoft YaHei',serif;padding:12px;background:#f5f8fe;border:1px solid var(--border);border-radius:8px;text-align:center;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}.field label{display:block;font-weight:600;margin:0 0 5px}input,select,button{font:inherit}input[type=number],select{padding:9px;border:1px solid #cdd8e7;border-radius:7px;background:#fbfcff;width:100%;color:var(--ink)}input:focus,select:focus,button:focus-visible{outline:3px solid #c5d6f9;outline-offset:1px}button{cursor:pointer;border:1px solid #c7d5e7;border-radius:8px;padding:9px 15px;background:white;color:var(--ink)}button.primary{background:#278356;color:white;border-color:#278356}button:disabled{opacity:.5;cursor:not-allowed}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.table-scroll{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{padding:9px;border:1px solid var(--border);text-align:center}th{background:#f0f4fb}#measurement-table{min-width:1120px;table-layout:fixed}#measurement-table th:first-child{width:85px}#measurement-table input{text-align:center;padding:7px 4px;min-width:84px}.computed{color:#236697;background:#f4f9ff;overflow-wrap:anywhere}.status{padding:10px 14px;border-radius:8px;background:#f2f7ff;margin:12px 0}.error{color:#9b3232;background:#fff0ee}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:16px 0}.metric{border:1px solid var(--border);border-left:4px solid var(--primary);padding:12px;border-radius:8px}.metric strong{display:block;font-size:1.1rem;margin:5px 0}.report{white-space:pre-wrap;overflow-wrap:anywhere;font:16px/1.95 'Cambria Math','Times New Roman','SimSun',serif;color:#1f2937;margin:0}details{border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-top:15px}summary{font-weight:600;color:var(--primary);cursor:pointer}.report-tools{border-top:1px solid var(--border);padding-top:14px;margin-top:16px}.inline-check{display:inline-flex;align-items:center;gap:8px;margin:0 16px 6px 0}#validation:empty{display:none}.result-table{min-width:900px}ul,ol{padding-left:1.5em}@media(max-width:620px){body{padding:10px}.card{padding:15px}h1{font-size:1.25rem}.formula{font-size:1rem}.report{font-size:14px}}@media print{body{max-width:none;padding:0;background:white;font-size:11pt}.header,.entry-card,.screen-only,#lab-image-import,#lab-feedback,#lab-config-panel{display:none!important}.card{margin:0;padding:0;box-shadow:none}.report{font-size:11pt;line-height:1.7}.metrics{grid-template-columns:1fr 1fr}.metric{padding:6pt}.table-scroll{overflow:visible}.result-table{min-width:0;font-size:9pt}th,td{padding:4pt}#validation{display:none}pre{orphans:3;widows:3}}
+.formula-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:18px 36px;padding:10px 0}.formula math{font-family:'Cambria Math',math;font-size:1.15em}.math-line{max-width:100%;overflow-x:auto;padding:14px 3px;margin:4px 0;break-inside:avoid}.math-line math{width:max-content;max-width:none;margin:0 auto;font-family:'Cambria Math',math}.report[hidden]{display:none}.report-line{margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}.report-heading{font:600 1.08em/1.8 'Microsoft YaHei',sans-serif;margin:22px 0 10px;color:var(--ink);break-after:avoid}.report .math-line{font-size:1.12em;white-space:normal}.report .math-line math{margin-left:0}.report .report-title{text-align:center;font-size:1.25em;margin:20px 0}.math-line:focus-visible{outline:2px solid var(--primary);outline-offset:2px}@media(max-width:620px){.formula-row{gap:18px 24px}.formula math{font-size:1.05em}.report .math-line{font-size:1.02em}}@media print{.report-line{margin:3pt 0}.math-line{overflow:visible;padding:6pt 0;margin:0}.report .math-line{font-size:.93em}.report-heading{margin:12pt 0 5pt}.report .report-title{margin:10pt 0}}
+</style>
+</head>
+<body>
+<header class="header"><h1>💧 密里根油滴实验 · 静态平衡法</h1><a href="index.html">← 返回主页</a><div>5 颗油滴 × 每颗 5 次 · 黏度修正 · 元电荷验证法</div></header>
+<main>
+<div id="experiment-inputs">
+<section class="card entry-card">
+<h2>① 实验原理与参数</h2>
+<p class="note">按实际黑板要求处理；《大学物理实验教程》第 191～196 页辅助，采用式（3-4-10）～（3-4-12）。忽略空气浮力，计算电荷量的大小。教材的 3 次重复改为课堂要求的 5 次；密度按黑板取 979 kg/m³。</p>
+<div class="formula" aria-label="实验计算公式">
+<div class="formula-row">
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="匀速下落速度等于下落距离除以平均时间"><msub><mi>v</mi><mi>f</mi></msub><mo>=</mo><mfrac><mi>ℓ</mi><mover accent="true"><mi>t</mi><mo>¯</mo></mover></mfrac></math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="未修正半径等于九倍黏度与下落距离乘积除以两倍密度、重力加速度和平均时间乘积的平方根"><msub><mi>r</mi><mn>0</mn></msub><mo>=</mo><msqrt><mfrac><mrow><mn>9</mn><mi>η</mi><mi>ℓ</mi></mrow><mrow><mn>2</mn><mi>ρ</mi><mi>g</mi><mover accent="true"><mi>t</mi><mo>¯</mo></mover></mrow></mfrac></msqrt></math>
+</div>
+<div class="math-line"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="油滴电荷量的黏度修正公式"><mi>q</mi><mo>=</mo><mfrac><mrow><mn>18</mn><mi>π</mi></mrow><msqrt><mrow><mn>2</mn><mi>ρ</mi><mi>g</mi></mrow></msqrt></mfrac><mo>⋅</mo><msup><mrow><mo>[</mo><mfrac><mrow><mi>η</mi><mi>ℓ</mi></mrow><mrow><mover accent="true"><mi>t</mi><mo>¯</mo></mover><mo>(</mo><mn>1</mn><mo>+</mo><mfrac><mi>b</mi><mrow><mi>p</mi><msub><mi>r</mi><mn>0</mn></msub></mrow></mfrac><mo>)</mo></mrow></mfrac><mo>]</mo></mrow><mfrac><mn>3</mn><mn>2</mn></mfrac></msup><mo>⋅</mo><mfrac><mi>d</mi><mover accent="true"><mi>U</mi><mo>¯</mo></mover></mfrac></math></div>
+<div class="formula-row">
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="电荷数等于油滴电荷量除以参考元电荷后四舍五入"><mi>n</mi><mo>=</mo><mi mathvariant="normal">round</mi><mo>(</mo><mfrac><mi>q</mi><msub><mi>e</mi><mn>0</mn></msub></mfrac><mo>)</mo></math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="元电荷等于油滴电荷量除以电荷数"><mi>e</mi><mo>=</mo><mfrac><mi>q</mi><mi>n</mi></mfrac></math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="平均元电荷等于五颗油滴的元电荷之和除以五"><mover accent="true"><mi>e</mi><mo>¯</mo></mover><mo>=</mo><mfrac><mrow><msub><mi>e</mi><mn>1</mn></msub><mo>+</mo><msub><mi>e</mi><mn>2</mn></msub><mo>+</mo><msub><mi>e</mi><mn>3</mn></msub><mo>+</mo><msub><mi>e</mi><mn>4</mn></msub><mo>+</mo><msub><mi>e</mi><mn>5</mn></msub></mrow><mn>5</mn></mfrac></math>
+</div>
+</div>
+<div class="rule">每颗油滴先取 5 次的 Ū、t̄，再计算 q；修正项用未修正半径 r₀（教材近似）。n 为最接近 q/e₀ 的整数，不是油滴编号。e₀ 默认使用黑板的 1.602×10⁻¹⁹ C；此方法是元电荷验证，不能据此独立发现电荷量子化。</div>
+<div class="grid">
+<div class="field"><label for="plate-distance">极板间距 d / mm</label><input id="plate-distance" type="number" step="any" min="0" value="5"></div>
+<div class="field"><label for="fall-distance">下落距离 ℓ / mm</label><input id="fall-distance" type="number" step="any" min="0" value="1.6"></div>
+<div class="field"><label for="density">油的密度 ρ / kg·m⁻³</label><input id="density" type="number" step="any" min="0" value="979"></div>
+<div class="field"><label for="gravity">重力加速度 g / m·s⁻²</label><input id="gravity" type="number" step="any" min="0" value="9.7988"></div>
+<div class="field"><label for="viscosity">空气黏度 η / kg·m⁻¹·s⁻¹</label><input id="viscosity" type="number" step="any" min="0" value="1.83e-5"></div>
+<div class="field"><label for="pressure">大气压强 p / Pa</label><input id="pressure" type="number" step="any" min="0" value="101325"></div>
+<div class="field"><label for="slip-b">修正常数 b / Pa·m</label><input id="slip-b" type="number" step="any" min="0" value="0.00823"></div>
+<div class="field"><label for="reference">参考元电荷 e₀ / C</label><input id="reference" type="number" step="any" min="0" value="1.602e-19"></div>
+</div>
+<p class="note">d、ℓ 输入 mm，程序换成 m；p 与 b 必须配套使用 Pa、Pa·m。g、η、p、b、d 的默认值取教材第 193 页；p 为标准气压，若有实测值请替换。表中结果显示 4 位有效数字，平均和取整均使用未舍入值。</p>
+<details><summary>课堂操作、原理与注意事项</summary><ol><li>调平仪器，连接电源与成像系统；喷雾后调焦，选择清晰且较稳定的油滴。</li><li>按任意键 → 确认 → 喷雾 → 工作，调平衡电压，使油滴稳定悬浮，记录 U。</li><li>提升至 0 线以上 → 平衡 → 0 V；到 0 线按开始，到 1.6 线按结束，记录匀速下落时间。</li><li>同一颗油滴重复 5 次并确认数据，再按重做换下一颗；共测 5 颗，每次测量前重新核对平衡电压。</li></ol><p>平衡时电场力与重力相等；撤去电场后，匀速下落时黏滞阻力与重力平衡。先按斯托克斯公式求 r₀，用 r₀ 代入滑移修正项求 q。上方及下方的完整计算过程给出对应公式。</p><p>喷雾器使用后口朝上放入杯中；关机前将电压调到零。避免接触电极，保持仪器水平；正式计时应避开开始加速段。</p></details>
+</section>
+<section class="card entry-card">
+<h2>② 原始记录表（与黑板的 U₁、t₁…U₅、t₅ 对应）</h2>
+<p class="note">每两列是一颗油滴，每行是该油滴的一次测量。初始留空，可填入自己的数据，或载入本次照片数据后核对。手机上可横向滚动表格。</p>
+<div class="table-scroll"><table id="measurement-table"><thead id="measurement-head"></thead><tbody id="measurement-body"></tbody><tfoot id="measurement-foot"></tfoot></table></div>
+<div id="progress" class="status" role="status"></div>
+<div class="field"><label for="data-source">数据来源标记（随配置保存）</label><select id="data-source"><option value="manual">手动录入／已核对的测量数据</option><option value="photo">本次手写照片转录（请核对）</option></select></div>
+<p class="note" id="photo-note">照片电压按本人确认：第 1 颗 27 V，第 3 颗 16 V；第 4 颗读为 195 V，第 5 颗读为 85 V。各时间仍请逐格核对，修改后重新计算。载入照片会同时使用上方课堂及教材默认参数。</p>
+<div class="buttons"><button type="button" id="calculate-btn" class="primary">计算并生成详细过程</button><button type="button" id="photo-btn">载入本次照片数据</button><button type="button" id="clear-btn">清空测量数据</button></div>
+</section>
+<section class="card entry-card"><h2>③ 输出设置</h2><label class="inline-check"><input type="checkbox" id="include-principle" checked>原理推导</label><label class="inline-check"><input type="checkbox" id="include-analysis" checked>误差分析参考</label><label class="inline-check"><input type="checkbox" id="include-questions" checked>黑板思考题 1、2、4 参考</label><p class="note">输出为可核对的数据处理过程，思考题和误差分析为参考，请结合实际实验修改。</p></section>
+</div>
+<section class="card" id="result-card"><h2>④ 测量结果与详细计算过程</h2><div id="validation" role="alert"></div><div id="metrics" class="metrics"></div><div id="result-table" class="table-scroll"></div><pre id="report" class="report">补齐 5 颗油滴各 5 次数据后，点击“计算并生成详细过程”。</pre><div id="formatted-report" class="report" hidden></div><div class="report-tools screen-only"><div class="buttons"><button type="button" id="copy-btn" disabled>复制完整过程</button><button type="button" id="download-btn" disabled>下载过程 TXT</button><button type="button" id="print-btn" disabled>打印／保存 PDF</button></div><p id="copy-status" class="note" role="status"></p></div></section>
+</main>
+<script src="millikan-oil-drop.js?v=6.7.1"></script>
+<script src="ai-import.js?v=6.5.4" defer></script><script src="feedback.js?v=6.5.7" defer></script><script src="calculator-state.js?v=6.7.0" defer></script>
+</body></html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>固体线胀系数 · 右侧独立图表+下载</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --primary: #4b6cb7;
+            --success: #27ae60;
+            --danger: #ff6b6b;
+            --text: #2c3e50;
+            --border: #e9ecef;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+            --radius: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: #333;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1 1 380px;
+            min-width: 300px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .results-panel {
+            flex: 2 1 500px;
+            min-width: 350px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 15px;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .input-group .unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fafbfc;
+            transition: 0.25s;
+        }
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
+            background: #fff;
+        }
+        .data-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .data-row input {
+            flex: 1 1 80px;
+            padding: 8px 6px;
+            font-size: 0.9rem;
+        }
+        .data-row .unit {
+            font-size: 0.75rem;
+            color: #888;
+            white-space: nowrap;
+        }
+        .remove-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+            text-align: center;
+            line-height: 30px;
+            transition: 0.25s;
+        }
+        .remove-btn:hover {
+            background: #e04848;
+        }
+        .add-btn {
+            padding: 9px 18px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            margin-bottom: 14px;
+            transition: 0.25s;
+        }
+        .add-btn:hover {
+            background: #218838;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: 0.25s;
+        }
+        .calculate-btn:hover {
+            background: #1e8c4a;
+            transform: translateY(-2px);
+        }
+        .result-output {
+            background: #fafbfc;
+            border-radius: 10px;
+            padding: 18px;
+            min-height: 300px;
+            max-height: 800px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .result-title {
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .result-value.success {
+            color: #1e8c4a;
+        }
+        .result-equation {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 14px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th,
+        td {
+            padding: 10px 12px;
+            text-align: center;
+            border: 1px solid #dde;
+        }
+        th {
+            background: var(--primary);
+            color: #fff;
+        }
+        .chart-box {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 320px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .download-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .download-btn:hover {
+            background: #3a5a9f;
+        }
+        .detail-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-family: 'Consolas', 'Courier New', 'PingFang SC', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .detail-box h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .detail-box .result-line {
+            color: #1e8c4a;
+            font-weight: 700;
+        }
+        .instructions {
+            background: #e8f4fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📏 固体线胀系数 · 右侧独立图表+下载</h2>
+        <a href="index.html">← 返回主页</a>
+    </div>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">📋 参数与数据</h3>
+            <div class="instructions">
+                <p>ΔL = α·L₀·ΔT ，拟合 ΔL = a·ΔT + b ，则 α = a / L₀</p>
+            </div>
+            <div class="input-group"><label>原始长度 L₀ <span class="unit">mm</span></label><input type="number" id="L0" value="100.0" step="0.1"></div>
+            <h4>📊 测量数据 (ΔT, ΔL)</h4>
+            <div id="expansion-data-inputs"></div>
+            <button class="add-btn" onclick="addRow()">+ 添加数据行</button>
+            <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+        </div>
+        <div class="results-panel">
+            <h3 class="panel-title">📊 计算结果（含详细步骤与图表）</h3>
+            <div id="result-output" class="result-output">
+                <p style="color:#999;text-align:center;padding-top:40px;">👆 请填写数据并计算</p>
+            </div>
+            <div id="chart-container-box" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const $ = sel => document.querySelector(sel);
+            const resultOutput = $('#result-output');
+            const chartContainerBox = $('#chart-container-box');
+            let activeChart = null;
+
+            function ave(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+            function Ls0(x, y) {
+                const ax = ave(x),
+                    ay = ave(y),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length,
+                    ax2 = x.reduce((s, v) => s + v * v, 0) / x.length;
+                const den = ax2 - ax * ax;
+                return { a: (axy - ax * ay) / den, b: ay - (axy - ax * ay) / den * ax };
+            }
+
+            function LSR(x, y) {
+                const ax = ave(x),
+                    ay = ave(y),
+                    ax2 = ave(x.map(v => v * v)),
+                    ay2 = ave(y.map(v => v * v)),
+                    axy = x.reduce((s, xi, i) => s + xi * y[i], 0) / x.length;
+                return (axy - ax * ay) / Math.sqrt((ax2 - ax * ax) * (ay2 - ay * ay));
+            }
+
+            function destroyChart() {
+                if (activeChart) {
+                    activeChart.destroy();
+                    activeChart = null;
+                }
+                chartContainerBox.innerHTML = '';
+            }
+
+            function drawFitChart(xd, yd, a, b, xl, yl, title) {
+                destroyChart();
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h4>📈 ${title}</h4>`;
+
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                chartBox.appendChild(container);
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.innerHTML = '⬇️ 下载图像 (白色背景PNG)';
+                downloadBtn.addEventListener('click', () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    const link = document.createElement('a');
+                    link.download = `线胀系数拟合_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    link.click();
+                });
+                chartBox.appendChild(downloadBtn);
+
+                chartContainerBox.appendChild(chartBox);
+
+                const ctx = canvas.getContext('2d');
+                const xMin = Math.min(...xd),
+                    xMax = Math.max(...xd);
+                const xFit = [xMin - (xMax - xMin) * 0.1, xMax + (xMax - xMin) * 0.1];
+
+                activeChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '数据点',
+                            data: xd.map((x, i) => ({ x, y: yd[i] })),
+                            backgroundColor: '#4b6cb7',
+                            pointRadius: 5,
+                        }, {
+                            label: `ΔL=${a.toFixed(6)}ΔT+${b.toFixed(6)}`,
+                            data: [{ x: xFit[0], y: a * xFit[0] + b }, { x: xFit[1], y: a * xFit[1] + b }],
+                            type: 'line',
+                            borderColor: '#e74c3c',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: false } },
+                        scales: {
+                            x: { title: { display: true, text: xl } },
+                            y: { title: { display: true, text: yl } },
+                        },
+                    },
+                });
+            }
+
+            function displayTable(xd, yd, a, b, xn, yn) {
+                const cont = document.createElement('div');
+                cont.className = 'table-container';
+                cont.innerHTML =
+                    `<h4>拟合残差表</h4><table><thead><tr><th>序号</th><th>${xn}</th><th>${yn}</th><th>拟合值</th><th>残差</th><th>残差²</th></tr></thead><tbody></tbody></table>`;
+                const tbody = cont.querySelector('tbody');
+                let sse = 0;
+                for (let i = 0; i < xd.length; i++) {
+                    const x = xd[i],
+                        y = yd[i],
+                        yf = a * x + b,
+                        res = y - yf,
+                        res2 = res * res;
+                    sse += res2;
+                    tbody.innerHTML +=
+                        `<tr><td>${i+1}</td><td>${x.toFixed(4)}</td><td>${y.toFixed(4)}</td><td>${yf.toFixed(4)}</td><td>${res.toFixed(4)}</td><td>${res2.toFixed(4)}</td></tr>`;
+                }
+                tbody.innerHTML +=
+                    `<tr style="font-weight:bold;background:#f0f0f0;"><td colspan="5">SSE</td><td>${sse.toFixed(4)}</td></tr>`;
+                resultOutput.appendChild(cont);
+            }
+
+            function addDetailBox(title, content) {
+                const box = document.createElement('div');
+                box.className = 'detail-box';
+                box.innerHTML = `<h4>📝 ${title}</h4>${content}`;
+                resultOutput.appendChild(box);
+            }
+
+            window.addRow = function(dtVal, dlVal) {
+                const cont = $('#expansion-data-inputs');
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                const dt = (dtVal !== undefined) ? dtVal : '30';
+                const dl = (dlVal !== undefined) ? dlVal : '0';
+                row.innerHTML = `<input type="number" class="dt-input" placeholder="ΔT" value="${dt}" step="0.1"><span class="unit">°C</span>
+                    <input type="number" class="dl-input" placeholder="ΔL" value="${dl}" step="0.0001"><span class="unit">mm</span>
+                    <button class="remove-btn" onclick="this.closest('.data-row').remove(); updateRemoveBtns();">×</button>`;
+                cont.appendChild(row);
+                updateRemoveBtns();
+            };
+
+            function updateRemoveBtns() {
+                const rows = document.querySelectorAll('#expansion-data-inputs .data-row');
+                rows.forEach((r) => {
+                    const btn = r.querySelector('.remove-btn');
+                    if (btn) btn.style.display = rows.length === 1 ? 'none' : '';
+                });
+            }
+
+            function calculate() {
+                resultOutput.innerHTML = '';
+                destroyChart();
+                const L0 = parseFloat($('#L0').value);
+                if (isNaN(L0)) return alert('请输入L₀');
+                const rows = document.querySelectorAll('#expansion-data-inputs .data-row');
+                const deltaT = [],
+                    deltaL = [];
+                rows.forEach(r => {
+                    const dt = parseFloat(r.querySelector('.dt-input').value);
+                    const dl = parseFloat(r.querySelector('.dl-input').value);
+                    if (!isNaN(dt) && !isNaN(dl)) { deltaT.push(dt);
+                        deltaL.push(dl); }
+                });
+                if (deltaT.length < 2) return alert('至少需要两组数据');
+
+                const ls = Ls0(deltaT, deltaL);
+                const r = LSR(deltaT, deltaL);
+                const alpha = ls.a / L0;
+                const n = deltaT.length;
+                const sx = deltaT.reduce((a, b) => a + b, 0),
+                    sy = deltaL.reduce((a, b) => a + b, 0);
+                const sxy = deltaT.reduce((s, xi, i) => s + xi * deltaL[i], 0),
+                    sx2 = deltaT.reduce((s, v) => s + v * v, 0);
+                const Lxx = sx2 - sx * sx / n,
+                    Lxy = sxy - sx * sy / n;
+                const ax = sx / n,
+                    ay = sy / n;
+
+                let detail = `【公式】ΔL = α·L₀·ΔT  →  α = a / L₀ (a为拟合斜率)\n\n`;
+                detail += `【步骤1】原始数据 (n=${n})\n  ΔT = [${deltaT.join(', ')}] °C\n  ΔL = [${deltaL.join(', ')}] mm\n  L₀ = ${L0} mm\n\n`;
+                detail += `【步骤2】最小二乘法拟合 ΔL = a·ΔT + b\n`;
+                detail += `  ΣΔT = ${sx.toFixed(4)}\n  ΣΔL = ${sy.toFixed(4)}\n`;
+                detail += `  Σ(ΔT·ΔL) = ${sxy.toFixed(4)}\n  Σ(ΔT²) = ${sx2.toFixed(4)}\n`;
+                detail += `  ΔT̄ = ${ax.toFixed(4)}  ,  ΔL̄ = ${ay.toFixed(4)}\n`;
+                detail += `  Lxx = ΣΔT² - (ΣΔT)²/n = ${Lxx.toFixed(4)}\n`;
+                detail += `  Lxy = Σ(ΔT·ΔL) - (ΣΔT)(ΣΔL)/n = ${Lxy.toFixed(4)}\n`;
+                detail += `  a = Lxy / Lxx = ${ls.a.toFixed(8)} mm/°C\n`;
+                detail += `  b = ΔL̄ - a·ΔT̄ = ${ls.b.toFixed(8)} mm\n`;
+                detail += `  相关系数 r = Lxy / √(Lxx·Lyy) = ${r.toFixed(4)}\n\n`;
+                detail += `【步骤3】计算线胀系数\n`;
+                detail += `  α = a / L₀ = ${ls.a.toFixed(8)} / ${L0} = <span class="result-line">${alpha.toFixed(8)}</span> /°C\n`;
+
+                resultOutput.innerHTML = `<h3 class="result-title">线胀系数计算结果</h3>
+                    <div class="result-equation">ΔL = ${ls.a.toFixed(8)}·ΔT + ${ls.b.toFixed(8)}</div>
+                    <div class="result-item"><h4>斜率 a</h4><div class="result-value">${ls.a.toFixed(8)} mm/°C</div></div>
+                    <div class="result-item"><h4>截距 b</h4><div class="result-value">${ls.b.toFixed(8)} mm</div></div>
+                    <div class="result-item"><h4>相关系数 r</h4><div class="result-value success">${r.toFixed(4)}</div></div>
+                    <div class="result-item"><h4>线胀系数 α</h4><div class="result-value success">${alpha.toFixed(8)} /°C</div></div>`;
+                displayTable(deltaT, deltaL, ls.a, ls.b, 'ΔT (°C)', 'ΔL (mm)');
+                drawFitChart(deltaT, deltaL, ls.a, ls.b, 'ΔT (°C)', 'ΔL (mm)', 'ΔL-ΔT 线性拟合');
+                addDetailBox('详细推导过程', detail);
+            }
+
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+            // 初始提供多组数据（模拟真实实验）
+            const initialData = [
+                [30, ],
+                [35, ],
+                [40, ],
+                [45, ],
+                [50, ],
+                [55, ],
+                [60, ],
+                [65, ],
+                [70, ],
+            ];
+            initialData.forEach(([dt, dl]) => window.addRow(dt, dl));
+            updateRemoveBtns();
+            // 自动计算一次，展现初始结果
+            setTimeout(calculate, 100);
+        })();
+    </script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

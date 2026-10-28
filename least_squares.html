@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小二乘法 · 完整版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #f5f7fa; --card: #fff; --primary: #4b6cb7; --success: #27ae60; --danger: #ff6b6b;
+            --text: #2c3e50; --border: #e9ecef; --shadow: 0 4px 16px rgba(0,0,0,0.07); --radius:14px;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { background:var(--bg); color:#333; font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; line-height:1.6; padding:16px; max-width:1200px; margin:0 auto; }
+        .header { text-align:center; padding:20px; background:linear-gradient(135deg,#4b6cb7 0%,#1a2a4a 100%); color:#fff; border-radius:var(--radius); margin-bottom:20px; }
+        .header a { color:#fff; text-decoration:underline; }
+        .container { display:flex; flex-wrap:wrap; gap:20px; }
+        .control-panel { flex:1 1 380px; background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+        .results-panel { flex:2 1 500px; background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+        .panel-title { font-size:1.3rem; font-weight:700; color:var(--text); margin-bottom:15px; border-bottom:2.5px solid var(--primary); padding-bottom:8px; }
+        .sub-command-buttons { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px; }
+        .sub-command-btn { padding:8px 14px; background:#f0f2f6; color:#555; border:1.5px solid #dde; border-radius:6px; cursor:pointer; font-size:0.85rem; transition:0.2s; }
+        .sub-command-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .input-group { margin-bottom:14px; }
+        .input-group label { display:block; font-weight:600; color:var(--text); font-size:0.9rem; }
+        input, textarea { width:100%; padding:10px; border:1.5px solid #dde; border-radius:8px; font-size:0.95rem; background:#fafbfc; }
+        .calculate-btn { width:100%; padding:14px; background:var(--success); color:#fff; border:none; border-radius:8px; font-size:1.05rem; font-weight:700; cursor:pointer; margin-top:8px; }
+        .result-output { background:#fafbfc; border-radius:10px; padding:18px; min-height:300px; max-height:800px; overflow-y:auto; border:1px solid var(--border); }
+        .result-title { color:var(--text); font-size:1.2rem; font-weight:700; margin-bottom:12px; border-bottom:2px solid var(--primary); padding-bottom:8px; }
+        .result-item { margin-bottom:10px; padding:10px 14px; background:#fff; border-radius:8px; border-left:4px solid var(--primary); }
+        .result-value { font-size:1.1rem; font-weight:700; }
+        .result-value.success { color:#1e8c4a; }
+        .result-equation { font-size:1.2rem; font-weight:700; text-align:center; padding:14px; background:#e8f4fc; border-radius:8px; margin:12px 0; }
+        .table-container { overflow-x:auto; margin-top:16px; }
+        table { width:100%; border-collapse:collapse; font-size:0.9rem; }
+        th,td { padding:10px; text-align:center; border:1px solid #dde; }
+        th { background:var(--primary); color:#fff; }
+        .chart-container { margin-top:20px; max-height:380px; }
+        .chart-container canvas { width:100% !important; max-height:360px; }
+        .detail-box { background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:8px; padding:14px 18px; margin-top:14px; font-family:'Consolas','PingFang SC',monospace; font-size:0.88rem; line-height:1.8; white-space:pre-wrap; max-height:500px; overflow-y:auto; }
+        .detail-box h4 { color:var(--primary); }
+        .detail-box .result-line { color:#1e8c4a; font-weight:700; }
+        .hidden { display:none !important; }
+    </style>
+</head>
+<body>
+<div class="header"><h2>📈 最小二乘法 · 详细计算 + 拟合指标</h2><a href="index.html">← 返回主页</a></div>
+<div class="container">
+    <div class="control-panel">
+        <h3 class="panel-title">📋 参数设置</h3>
+        <div class="sub-command-buttons">
+            <button class="sub-command-btn active" data-subcmd="ave1">平均值</button>
+            <button class="sub-command-btn" data-subcmd="ave12">平方平均值</button>
+            <button class="sub-command-btn" data-subcmd="ave2">乘积平均值</button>
+            <button class="sub-command-btn" data-subcmd="LS">线性拟合</button>
+            <button class="sub-command-btn" data-subcmd="LS_LOG">幂函数拟合</button>
+            <button class="sub-command-btn" data-subcmd="LS^k">指定幂次拟合</button>
+        </div>
+        <div class="input-group"><label>数据个数 n:</label><input type="number" id="data-count" value="5"></div>
+        <label>（输入数据若过多会按前n个计算，过少则会补0）</label>
+        <div class="input-group hidden" id="power-k-group"><label>幂次 k:</label><input type="number" id="power-k" value="2"></div>
+        <div class="input-group"><label>自变量 x (空格分隔):</label><textarea id="x-data" rows="3">1 2 3 4 5</textarea></div>
+        <div class="input-group" id="y-data-group"><label>因变量 y (空格分隔):</label><textarea id="y-data" rows="3">2.1 3.9 6.2 8.1 9.8</textarea></div>
+        <button id="calculate-btn" class="calculate-btn">🚀 开始计算</button>
+    </div>
+    <div class="results-panel">
+        <h3 class="panel-title">📊 计算结果（含拟合程度）</h3>
+        <div id="result-output" class="result-output"><p style="color:#999;text-align:center;padding-top:40px;">👆 请选择功能并输入数据</p></div>
+    </div>
+</div>
+<script>
+(function() {
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const resultOutput = $('#result-output');
+    let currentSub = 'ave1';
+    let activeChart = null;
+
+    function parseDataInput(str) { return str.replace(/，/g,',').split(/[\s,;]+/).filter(v=>v!=='').map(Number).filter(v=>!isNaN(v)); }
+    function ave(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+    function ave2(x,y) { return x.reduce((s,xi,i)=>s+xi*y[i],0)/x.length; }
+    function Ls0(x,y) {
+        const ax=ave(x), ay=ave(y), axy=ave2(x,y), ax2=ave(x.map(v=>v*v));
+        const den = ax2 - ax*ax;
+        const a = (axy - ax*ay)/den;
+        return { a, b: ay - a*ax };
+    }
+    function LSR(x,y) {
+        const ax=ave(x), ay=ave(y), ax2=ave(x.map(v=>v*v)), ay2=ave(y.map(v=>v*v)), axy=ave2(x,y);
+        return (axy-ax*ay)/Math.sqrt((ax2-ax*ax)*(ay2-ay*ay));
+    }
+    function LS_LOG(x,y) {
+        const lnx=x.map(Math.log), lny=y.map(Math.log);
+        const ls=Ls0(lnx,lny);
+        return { k:ls.a, A:Math.exp(ls.b), lnA:ls.b };
+    }
+
+    function destroyChart() { if(activeChart){ activeChart.destroy(); activeChart=null; } const c=resultOutput.querySelector('canvas'); if(c?.parentElement) c.parentElement.remove(); }
+
+    function drawFitChart(xd,yd,a,b,title) {
+        destroyChart();
+        const cont=document.createElement('div'); cont.className='chart-container';
+        const canvas=document.createElement('canvas'); cont.appendChild(canvas);
+        resultOutput.appendChild(cont);
+        const ctx=canvas.getContext('2d');
+        const xMin=Math.min(...xd), xMax=Math.max(...xd);
+        const margin=(xMax-xMin)*0.1;
+        activeChart=new Chart(ctx,{type:'scatter',data:{datasets:[
+            {label:'数据点',data:xd.map((x,i)=>({x,y:yd[i]})),backgroundColor:'#4b6cb7',pointRadius:5},
+            {label:`y=${a.toFixed(4)}x+${b.toFixed(4)}`,data:[{x:xMin-margin,y:a*(xMin-margin)+b},{x:xMax+margin,y:a*(xMax+margin)+b}],type:'line',borderColor:'#e74c3c',borderWidth:2.5,pointRadius:0}
+        ]},options:{responsive:true,plugins:{title:{display:true,text:title}},scales:{x:{title:{display:true,text:'x'}},y:{title:{display:true,text:'y'}}}}});
+    }
+
+    function drawCurveChart(xd,yd,f,label,title) {
+        destroyChart();
+        const cont=document.createElement('div'); cont.className='chart-container';
+        const canvas=document.createElement('canvas'); cont.appendChild(canvas);
+        resultOutput.appendChild(cont);
+        const ctx=canvas.getContext('2d');
+        const xMin=Math.min(...xd), xMax=Math.max(...xd);
+        const N=100; const dx=(xMax-xMin)/(N-1);
+        const curve=[];
+        for(let i=0;i<N;i++){ const xv=xMin+i*dx; curve.push({x:xv,y:f(xv)}); }
+        activeChart=new Chart(ctx,{type:'scatter',data:{datasets:[
+            {label:'数据点',data:xd.map((x,i)=>({x,y:yd[i]})),backgroundColor:'#4b6cb7',pointRadius:5},
+            {label:label,data:curve,type:'line',borderColor:'#e74c3c',borderWidth:2.5,pointRadius:0}
+        ]},options:{responsive:true,plugins:{title:{display:true,text:title}},scales:{x:{title:{display:true,text:'x'}},y:{title:{display:true,text:'y'}}}}});
+    }
+
+    function displayTable(xd,yd,yPred,xn,yn) {
+        const cont=document.createElement('div'); cont.className='table-container';
+        cont.innerHTML=`<h4>拟合残差表</h4><table><tr><th>序号</th><th>${xn}</th><th>${yn}</th><th>拟合值</th><th>残差</th><th>残差²</th></tr></table>`;
+        const tbody=cont.querySelector('tbody'); let sse=0;
+        for(let i=0;i<xd.length;i++){
+            const yf=yPred[i], res=yd[i]-yf, res2=res*res;
+            sse+=res2;
+            tbody.innerHTML+=`<tr><td>${i+1}</td><td>${xd[i].toFixed(4)}</td><td>${yd[i].toFixed(4)}</td><td>${yf.toFixed(4)}</td><td>${res.toFixed(4)}</td><td>${res2.toFixed(4)}</td></tr>`;
+        }
+        tbody.innerHTML+=`<tr style="font-weight:bold"><td colspan="5">SSE</td><td>${sse.toFixed(4)}</td></tr>`;
+        resultOutput.appendChild(cont);
+    }
+
+    function addDetailBox(title,content){
+        const box=document.createElement('div'); box.className='detail-box';
+        box.innerHTML=`<h4>📝 ${title}</h4>${content}`;
+        resultOutput.appendChild(box);
+    }
+
+    function calculateLS() {
+        resultOutput.innerHTML=''; destroyChart();
+        const n=parseInt($('#data-count').value)||5;
+        const xRaw=parseDataInput($('#x-data').value), yRaw=parseDataInput($('#y-data').value);
+        const x=xRaw.length>=n?xRaw.slice(0,n):[...xRaw,...Array(n-xRaw.length).fill(0)];
+        const y=yRaw.length>=n?yRaw.slice(0,n):[...yRaw,...Array(n-yRaw.length).fill(0)];
+
+        if (currentSub==='ave1'){
+            const avg=ave(x);
+            let detail=`数据: [${x.join(', ')}]\n求和=${x.reduce((a,b)=>a+b,0).toFixed(4)}\n平均值=<span class="result-line">${avg.toFixed(4)}</span>`;
+            resultOutput.innerHTML=`<h3 class="result-title">平均值</h3><div class="result-item"><h4>x̄</h4><div class="result-value success">${avg.toFixed(4)}</div></div>`;
+            addDetailBox('计算过程',detail);
+        } else if (currentSub==='ave12'){
+            const avg=ave(x.map(v=>v*v));
+            let detail=`数据: [${x.join(', ')}]\n平方和=${x.reduce((a,b)=>a+b*b,0).toFixed(4)}\n平方平均值=<span class="result-line">${avg.toFixed(4)}</span>`;
+            resultOutput.innerHTML=`<h3 class="result-title">平方平均值</h3><div class="result-item"><h4>&lt;x²&gt;</h4><div class="result-value success">${avg.toFixed(4)}</div></div>`;
+            addDetailBox('计算过程',detail);
+        } else if (currentSub==='ave2'){
+            const avg=ave2(x,y);
+            let detail=`x=[${x}]\ny=[${y}]\n乘积和=${x.reduce((s,xi,i)=>s+xi*y[i],0).toFixed(4)}\n乘积平均值=<span class="result-line">${avg.toFixed(4)}</span>`;
+            resultOutput.innerHTML=`<h3 class="result-title">乘积平均值</h3><div class="result-item"><h4>&lt;xy&gt;</h4><div class="result-value success">${avg.toFixed(4)}</div></div>`;
+            addDetailBox('计算过程',detail);
+        } else if (currentSub==='LS'){
+            const ls=Ls0(x,y), r=LSR(x,y);
+            const yPred = x.map(xi=>ls.a*xi+ls.b);
+            const ssRes = y.reduce((s,yi,i)=>s+(yi-yPred[i])**2,0);
+            const ssTot = y.reduce((s,yi)=>s+(yi-ave(y))**2,0);
+            const R2 = ssTot===0?1:1-ssRes/ssTot;
+            const sx=x.reduce((a,b)=>a+b,0), sy=y.reduce((a,b)=>a+b,0);
+            const sxy=x.reduce((s,xi,i)=>s+xi*y[i],0), sx2=x.reduce((s,v)=>s+v*v,0);
+            const Lxx=sx2-sx*sx/n, Lxy=sxy-sx*sy/n;
+            let detail=`【步骤1】数据\nx=[${x}]\ny=[${y}]\n\n【步骤2】统计量\nΣx=${sx.toFixed(4)}, Σy=${sy.toFixed(4)}, Σxy=${sxy.toFixed(4)}, Σx²=${sx2.toFixed(4)}\n`;
+            detail+=`【步骤3】离差平方和\nLxx=${Lxx.toFixed(4)}, Lxy=${Lxy.toFixed(4)}\n`;
+            detail+=`【步骤4】回归系数\na=Lxy/Lxx=<span class="result-line">${ls.a.toFixed(4)}</span>\nb=ȳ-a·x̄=<span class="result-line">${ls.b.toFixed(4)}</span>\n`;
+            detail+=`【步骤5】相关系数与决定系数\nr=Lxy/√(Lxx·Lyy)=${r.toFixed(4)}\nR²=r²=${(r*r).toFixed(4)}\nSSE=${ssRes.toFixed(4)}, SST=${ssTot.toFixed(4)}\n`;
+            resultOutput.innerHTML=`<h3 class="result-title">线性拟合结果</h3><div class="result-equation">y=${ls.a.toFixed(4)}·x+${ls.b.toFixed(4)}</div>`;
+            const items=[{t:'斜率 a',v:ls.a.toFixed(4)},{t:'截距 b',v:ls.b.toFixed(4)},{t:'相关系数 r',v:r.toFixed(4)},{t:'决定系数 R²',v:R2.toFixed(4)}];
+            items.forEach(i=>{ const d=document.createElement('div'); d.className='result-item'; d.innerHTML=`<h4>${i.t}</h4><div class="result-value success">${i.v}</div>`; resultOutput.appendChild(d); });
+            displayTable(x,y,yPred,'x','y');
+            drawFitChart(x,y,ls.a,ls.b,'线性拟合');
+            addDetailBox('详细推导过程',detail);
+        } else if (currentSub==='LS_LOG'){
+            const res=LS_LOG(x,y);
+            const f=(xv)=>res.A*Math.pow(xv,res.k);
+            const yPred=x.map(xv=>f(xv));
+            const ssRes=y.reduce((s,yi,i)=>s+(yi-yPred[i])**2,0);
+            const ssTot=y.reduce((s,yi)=>s+(yi-ave(y))**2,0);
+            const R2 = ssTot===0?1:1-ssRes/ssTot;
+            const lnx=x.map(Math.log), lny=y.map(Math.log);
+            const ls=Ls0(lnx,lny);
+            const r_log=LSR(lnx,lny);
+            let detail=`原数据: x=[${x}], y=[${y}]\n对数变换: ln(x)=[${lnx.map(v=>v.toFixed(4))}], ln(y)=[${lny.map(v=>v.toFixed(4))}]\n`;
+            detail+=`对数空间拟合: k=${ls.a.toFixed(4)}, ln(A)=${ls.b.toFixed(4)}\n`;
+            detail+=`A=exp(lnA)=<span class="result-line">${res.A.toFixed(4)}</span>\n`;
+            detail+=`对数空间相关系数 r_log=${r_log.toFixed(4)}\n`;
+            detail+=`原空间拟合: y=${res.A.toFixed(4)}·x^${res.k.toFixed(4)}\n`;
+            detail+=`拟合值: [${yPred.map(v=>v.toFixed(4)).join(', ')}]\nSSE=${ssRes.toFixed(4)}, SST=${ssTot.toFixed(4)}\nR²=1-SSE/SST=<span class="result-line">${R2.toFixed(4)}</span>`;
+            resultOutput.innerHTML=`<h3 class="result-title">幂函数拟合</h3><div class="result-equation">y=${res.A.toFixed(4)}·x^${res.k.toFixed(4)}</div>`;
+            const items=[{t:'指数 k',v:res.k.toFixed(4)},{t:'系数 A',v:res.A.toFixed(4)},{t:'对数空间 r',v:r_log.toFixed(4)},{t:'原空间 R²',v:R2.toFixed(4)}];
+            items.forEach(i=>{ const d=document.createElement('div'); d.className='result-item'; d.innerHTML=`<h4>${i.t}</h4><div class="result-value success">${i.v}</div>`; resultOutput.appendChild(d); });
+            displayTable(x,y,yPred,'x','y');
+            drawCurveChart(x,y,f,`y=${res.A.toFixed(4)}·x^${res.k.toFixed(4)}`,'幂函数拟合');
+            addDetailBox('详细推导过程',detail);
+        } else if (currentSub==='LS^k'){
+            const k=parseFloat($('#power-k').value)||2;
+            const xT=x.map(v=>Math.pow(v,k));
+            const ls=Ls0(xT,y);
+            const f=(xv)=>ls.a*Math.pow(xv,k)+ls.b;
+            const yPred=x.map(xv=>f(xv));
+            const ssRes=y.reduce((s,yi,i)=>s+(yi-yPred[i])**2,0);
+            const ssTot=y.reduce((s,yi)=>s+(yi-ave(y))**2,0);
+            const R2 = ssTot===0?1:1-ssRes/ssTot;
+            const r=LSR(xT,y);
+            let detail=`指定幂次 k=${k}\n变换 X=x^${k}=[${xT.map(v=>v.toFixed(4))}]\ny=[${y}]\n`;
+            detail+=`线性拟合 y=a·X+b:\na=<span class="result-line">${ls.a.toFixed(4)}</span>, b=<span class="result-line">${ls.b.toFixed(4)}</span>\n`;
+            detail+=`相关系数 r=${r.toFixed(4)}\n拟合值:[${yPred.map(v=>v.toFixed(4))}]\nSSE=${ssRes.toFixed(4)}, SST=${ssTot.toFixed(4)}\nR²=<span class="result-line">${R2.toFixed(4)}</span>`;
+            resultOutput.innerHTML=`<h3 class="result-title">指定幂次拟合 k=${k}</h3><div class="result-equation">y=${ls.a.toFixed(4)}·x^${k}+${ls.b.toFixed(4)}</div>`;
+            const items=[{t:'系数 a',v:ls.a.toFixed(4)},{t:'截距 b',v:ls.b.toFixed(4)},{t:'相关系数 r',v:r.toFixed(4)},{t:'决定系数 R²',v:R2.toFixed(4)}];
+            items.forEach(i=>{ const d=document.createElement('div'); d.className='result-item'; d.innerHTML=`<h4>${i.t}</h4><div class="result-value success">${i.v}</div>`; resultOutput.appendChild(d); });
+            displayTable(x,y,yPred,'x','y');
+            drawCurveChart(x,y,f,`y=${ls.a.toFixed(4)}·x^${k}+${ls.b.toFixed(4)}`,'指定幂次拟合');
+            addDetailBox('详细推导过程',detail);
+        }
+    }
+
+    function updateUI() {
+        const yGroup=$('#y-data-group'), pkGroup=$('#power-k-group');
+        yGroup.classList.toggle('hidden', currentSub==='ave1'||currentSub==='ave12');
+        pkGroup.classList.toggle('hidden', currentSub!=='LS^k');
+    }
+
+    document.querySelectorAll('.sub-command-btn').forEach(btn=>{
+        btn.addEventListener('click',function(){
+            $$('.sub-command-btn').forEach(b=>b.classList.remove('active'));
+            this.classList.add('active');
+            currentSub=this.dataset.subcmd;
+            updateUI();
+            resultOutput.innerHTML='<p style="color:#999;text-align:center;">👆 已切换功能，请点击计算</p>';
+            destroyChart();
+        });
+    });
+    $('#calculate-btn').addEventListener('click',calculateLS);
+    updateUI();
+})();
+</script>
+<!-- Shared image import: does not change calculator logic. -->
+<script src="ai-import.js?v=6.5.4" defer></script>
+    <script src="feedback.js?v=6.5.7" defer></script>
+<script src="lab-math.js?v=6.7.3" defer></script>
+<script src="calculator-state.js?v=6.6.4" defer></script>
+</body>
+</html>

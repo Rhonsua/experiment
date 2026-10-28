@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabVIEW 实验（超详细图解教程）</title>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --primary: #4b6cb7;
+            --text: #2c3e50;
+            --muted: #64748b;
+            --border: #e6ebf2;
+            --shadow: 0 6px 22px rgba(20, 40, 80, 0.07);
+            --radius: 16px;
+
+            /* ===== 部件配色体系 ===== */
+            --c-rnd: #4f46e5;
+            --c-mul: #0891b2;
+            --c-num: #64748b;
+            --c-round: #7c3aed;
+            --c-cmp: #ea580c;
+            --c-case: #db2777;
+            --c-str: #16a34a;
+            --c-strind: #0d9488;
+            --c-thermo: #dc2626;
+            --c-chart: #0284c7;
+            --c-led: #e11d48;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: #33404f;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.78;
+            padding: 18px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* ---------- 头部 ---------- */
+        .hero {
+            background: linear-gradient(135deg, #4b6cb7 0%, #1a2a4a 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 28px 26px 24px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -60px; top: -60px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .hero h1 { font-size: 1.6rem; letter-spacing: -0.4px; }
+        .hero .sub { margin-top: 6px; font-size: 0.93rem; opacity: 0.92; }
+        .hero .links { margin-top: 14px; display: flex; gap: 9px; flex-wrap: wrap; }
+        .hero a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 5px 13px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            transition: background 0.2s;
+        }
+        .hero a:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* ---------- 卡片与标题 ---------- */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px 26px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow);
+        }
+        .sec-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text);
+            padding-bottom: 9px;
+            margin-bottom: 14px;
+            border-bottom: 2.5px solid var(--primary);
+        }
+        .sec-title .no {
+            flex: 0 0 auto;
+            width: 30px; height: 30px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        h3.sub-h {
+            font-size: 1rem;
+            color: var(--text);
+            margin: 20px 0 8px;
+            padding-left: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        h3.sub-h:first-of-type { margin-top: 6px; }
+
+        /* ---------- 部件色标 chip ---------- */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px 0 8px;
+            margin: 0 2px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.86em;
+            white-space: nowrap;
+            color: var(--c);
+            background: #f1f5f9;
+            background: color-mix(in srgb, var(--c) 11%, #fff);
+            border: 1.5px solid #dfe6ee;
+            border-color: color-mix(in srgb, var(--c) 42%, #fff);
+        }
+        .chip::before {
+            content: "";
+            width: 8px; height: 8px;
+            border-radius: 3px;
+            background: var(--c);
+            flex: 0 0 auto;
+        }
+        .c-rnd   { --c: var(--c-rnd); }
+        .c-mul   { --c: var(--c-mul); }
+        .c-num   { --c: var(--c-num); }
+        .c-round { --c: var(--c-round); }
+        .c-cmp   { --c: var(--c-cmp); }
+        .c-case  { --c: var(--c-case); }
+        .c-str   { --c: var(--c-str); }
+        .c-strind{ --c: var(--c-strind); }
+        .c-thermo{ --c: var(--c-thermo); }
+        .c-chart { --c: var(--c-chart); }
+        .c-led   { --c: var(--c-led); }
+
+        /* ---------- 表格 ---------- */
+        .lookup {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+            margin-top: 6px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .lookup th {
+            background: #eef2f9;
+            color: #445a7a;
+            font-size: 0.82rem;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.4px;
+        }
+        .lookup td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #f0f4f9;
+            vertical-align: middle;
+        }
+        .lookup tr:last-child td { border-bottom: none; }
+        .lookup tbody tr:hover td { background: #fafcff; }
+        .lookup td.cat {
+            background: #f8fafc;
+            font-weight: 800;
+            color: #33404f;
+            font-size: 0.88rem;
+            letter-spacing: 0.5px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .lookup td.name { font-weight: 700; color: #33404f; }
+        .lookup .path {
+            font-family: 'Consolas', 'SF Mono', monospace;
+            font-size: 0.84rem;
+            color: #475569;
+            background: #f4f7fb;
+            border: 1px solid #e3e9f2;
+            border-radius: 6px;
+            padding: 1px 8px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .add-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #b45309;
+            background: #fff7e6;
+            border: 1px solid #fcd9a1;
+            border-radius: 999px;
+            padding: 0 7px;
+            margin-left: 6px;
+            vertical-align: 2px;
+        }
+
+        /* ---------- 步骤：紧凑编号清单 ---------- */
+        ol.steps {
+            list-style: none;
+            counter-reset: st;
+            padding: 0;
+            margin: 4px 0 2px;
+        }
+        ol.steps > li {
+            counter-increment: st;
+            position: relative;
+            padding-left: 33px;
+            margin-bottom: 9px;
+            font-size: 0.94rem;
+        }
+        ol.steps > li:last-child { margin-bottom: 0; }
+        ol.steps > li::before {
+            content: counter(st);
+            position: absolute;
+            left: 0; top: 3px;
+            width: 23px; height: 23px;
+            border-radius: 8px;
+            background: #e9eff9;
+            color: var(--primary);
+            font-size: 0.77rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        ol.steps > li > b { color: #22304a; }
+        .path {
+            font-family: 'Consolas', 'SF Mono', monospace;
+            font-size: 0.85em;
+            color: #3d5a80;
+            background: #f2f6fb;
+            border: 1px solid #e1e9f3;
+            border-radius: 5px;
+            padding: 0 6px;
+            white-space: nowrap;
+        }
+
+        /* ---------- 行内小注 ---------- */
+        .note {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.86rem;
+            color: #46607e;
+            background: #f5f8fc;
+            border-left: 3px solid #b9cbe6;
+            border-radius: 0 8px 8px 0;
+            padding: 6px 12px;
+        }
+        .note.warn { background: #fdf2f2; border-left-color: #e8a0a0; color: #8d3a3a; }
+        .note b { color: #22304a; }
+        .note.warn b { color: #8d3a3a; }
+
+        .key {
+            background: #fffbe6;
+            border-left: 4px solid #d9a800;
+            color: #7a5c00;
+            border-radius: 0 10px 10px 0;
+            padding: 10px 15px;
+            font-size: 0.89rem;
+            margin: 12px 0;
+        }
+        .key b { font-weight: 800; }
+
+        /* ---------- 图 ---------- */
+        figure { margin: 14px 0; text-align: center; }
+        figure img {
+            max-width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 16px rgba(20, 40, 80, 0.08);
+            background: #1e1e1e;
+        }
+        figcaption { font-size: 0.83rem; color: var(--muted); margin-top: 8px; }
+        details.raw {
+            margin-top: 14px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 9px 15px;
+            background: #fbfcfe;
+        }
+        details.raw > summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.89rem;
+            list-style: none;
+        }
+        details.raw > summary::-webkit-details-marker { display: none; }
+        details.raw > summary::before { content: "\25B8  "; }
+        details.raw[open] > summary::before { content: "\25BE  "; }
+        .svg-wrap {
+            background: #fcfdff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 8px;
+            overflow-x: auto;
+        }
+
+        /* ---------- 目录 ---------- */
+        .toc {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 9px;
+            margin-top: 4px;
+        }
+        .toc a {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+            color: var(--text);
+            background: #f6f9fd;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 10px 13px;
+            font-size: 0.89rem;
+            font-weight: 600;
+            transition: all 0.18s;
+        }
+        .toc a:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(75, 108, 183, 0.22);
+        }
+        .toc a .n {
+            width: 23px; height: 23px;
+            border-radius: 8px;
+            background: #e3ebf7;
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+        .toc a:hover .n { background: rgba(255,255,255,0.25); color: #fff; }
+
+        .kbd {
+            font-family: 'Consolas', monospace;
+            background: #eef2f9;
+            border: 1px solid #dbe4f0;
+            border-bottom-width: 2px;
+            border-radius: 5px;
+            padding: 0 6px;
+            font-size: 0.85em;
+            color: #3d5a80;
+        }
+
+        /* ---------- 实验分页 ---------- */
+        .tabs {
+            display: flex;
+            gap: 7px;
+            margin-bottom: 18px;
+            background: #e9eff8;
+            padding: 6px;
+            border-radius: 14px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            flex: 1 1 auto;
+            min-width: 170px;
+            border: none;
+            background: transparent;
+            color: #4a5d7a;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .tab:hover { background: rgba(255, 255, 255, 0.7); }
+        .tab.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: 0 3px 10px rgba(20, 40, 80, 0.10);
+        }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: none; }
+        }
+        .smart { color: #0f766e; }
+        .path.smart-path { color: #0f766e; background: #e9f7f5; border-color: #c3e6e2; }
+        footer {
+            text-align: center;
+            color: #9aa8bb;
+            font-size: 0.82rem;
+            padding: 16px 0 8px;
+        }
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .card { padding: 18px 15px; }
+            .hero h1 { font-size: 1.25rem; }
+            .lookup { font-size: 0.82rem; }
+            .lookup td, .lookup th { padding: 8px 8px; }
+            .lookup .path { font-size: 0.76rem; padding: 1px 6px; }
+            ol.steps > li { padding-left: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>🧪 LabVIEW 实验一 · 温度监测与报警</h1>
+    <div class="sub">从空白 VI 到「随机温度 + 越限报警 + 曲线记录」完整跑通</div>
+    <div class="links">
+        <a href="index.html">← 返回主页</a>
+        <a href="#steps">📝 操作步骤</a>
+        <a href="#legend">📇 部件速查表</a>
+        <a href="#diagram">🔌 数据流示意</a>
+        <a href="#faq">⚠️ 易错点</a>
+    </div>
+</div>
+
+<!-- ===================== 分页切换 ===================== -->
+<div class="tabs">
+    <button type="button" class="tab active" data-tab="exp1">🌡️ 实验一 · 温度监测与报警</button>
+    <button type="button" class="tab" data-tab="exp2">📡 实验二 · 传感器数据读取</button>
+</div>
+
+<!-- ===================== 实验一 ===================== -->
+<section class="page active" id="page-exp1">
+
+<!-- ===================== 目录 ===================== -->
+<div class="card">
+    <div class="sec-title"><span class="no">目</span>内容导航</div>
+    <div class="toc">
+        <a href="#prep"><span class="n">0</span>准备工作：新建 VI</a>
+        <a href="#steps"><span class="n">1</span>实验一 操作步骤</a>
+        <a href="#legend"><span class="n">2</span>部件速查表（四列）</a>
+        <a href="#diagram"><span class="n">3</span>程序框图数据流示意</a>
+        <a href="#run"><span class="n">4</span>运行与验证</a>
+        <a href="#faq"><span class="n">5</span>易错点与调试提示</a>
+    </div>
+</div>
+
+<!-- ===================== 0 准备 ===================== -->
+<div class="card" id="prep">
+    <div class="sec-title"><span class="no">0</span>准备工作：打开并新建 VI</div>
+    <ol class="steps">
+        <li><b>打开 LabVIEW。</b>双击桌面上的 <span class="kbd">LabVIEW</span> 图标启动软件，等待启动界面加载完成。</li>
+        <li><b>新建一个 VI。</b>点击左上角菜单 <span class="kbd">文件</span> → <span class="kbd">新建</span>（或 <span class="kbd">Ctrl + N</span>）。打开后会看到两个并排的面板，这就是本实验要来回切换的两个工作区。</li>
+    </ol>
+
+    <h3 class="sub-h">两个面板分别是什么？</h3>
+    <table class="lookup">
+        <thead>
+            <tr><th style="width:20%">面板</th><th style="width:28%">作用</th><th>你可以做什么</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="name">前面板<br><span style="font-weight:400;font-size:0.78rem;color:#94a3b8">Front Panel</span></td>
+                <td>用户界面（UI），相当于仪器的<b>操作面板</b></td>
+                <td>放置<span class="chip c-thermo">温度计</span><span class="chip c-led">圆形指示灯</span><span class="chip c-chart">波形图表</span><span class="chip c-strind">字符串显示</span>等控件，运行时观察结果</td>
+            </tr>
+            <tr>
+                <td class="name">程序框图<br><span style="font-weight:400;font-size:0.78rem;color:#94a3b8">Block Diagram</span></td>
+                <td>程序的<b>源代码 / 连线图</b>，决定逻辑</td>
+                <td>放置<span class="chip c-rnd">随机数</span><span class="chip c-mul">乘法</span><span class="chip c-cmp">大于</span><span class="chip c-case">条件结构</span>等函数，并用连线把它们连起来</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="key">
+        <b>核心思想 —— 数据流：</b>LabVIEW 是"数据流动到哪，哪才执行"。一条线把 A 的输出接到 B 的输入，就表示"先算 A，再算 B"。所以<b>连线本身就是程序逻辑</b>，不用写一行代码。两个面板用 <span class="kbd">Ctrl + E</span> 切换；前面板放的每个控件，都会在程序框图里自动生成对应的接线端。
+    </div>
+</div>
+
+<!-- ===================== 1 操作步骤 ===================== -->
+<div class="card" id="steps">
+    <div class="sec-title"><span class="no">1</span>实验一：操作步骤</div>
+
+    <div class="key" style="margin-top:0;">
+        <b>目标：</b>用 <span class="chip c-rnd">随机数</span> 造 0~1 的小数 → 乘 100 变成 0~100 的"温度" → 用 <span class="chip c-thermo">温度计</span> 显示、<span class="chip c-chart">波形图表</span> 记曲线 → 再和 50 比较：<b>大于 50 亮红灯、显示"温度过高"；否则亮绿灯、显示"温度正常"</b>。
+    </div>
+
+    <h3 class="sub-h">A. 程序框图：搭出"造数据"的链路</h3>
+    <ol class="steps">
+        <li><b>创建随机数。</b>进入程序框图（<span class="kbd">Ctrl + E</span>），空白处右键 → <span class="path">数值 → 随机数</span> → 左键放置。它每次运行输出一个 <b>0~1</b> 的小数。<span class="chip c-rnd">随机数</span></li>
+        <li><b>创建乘法。</b>右键 → <span class="path">数值 → 乘法</span> → 左键放置。左边两个输入、右边一个输出。<span class="chip c-mul">乘法</span></li>
+        <li><b>创建数值常量并设为 100。</b>菜单法：右键 → <span class="path">数值 → 数值常量</span>，双击输入框键入 <b>100</b>。快捷法（推荐）：鼠标移到<span class="chip c-mul">乘法</span>的输入端，等左侧冒出小圆点、鼠标闪烁时右键 → <span class="path">创建 → 常数</span>，自动生成已接好的常量。<span class="chip c-num">数值常量</span>
+            <span class="note">为什么是 100：随机数是 0~1，乘 100 后正好变成 <b>0~100</b>，用来模拟 0~100 ℃ 的温度。</span>
+        </li>
+        <li><b>连线：随机数 × 100。</b>从<span class="chip c-rnd">随机数</span>和<span class="chip c-num">常量(100)</span>的输出端（小三角）分别拖到<span class="chip c-mul">乘法</span>的两个输入端（小圆点）。
+            <span class="note warn">线连不上＝拖错端点或类型不符。规则固定是"输出三角 → 输入圆点"，断线会显示成带红叉的虚线。</span>
+        </li>
+        <li><b>创建"就近取整"。</b>右键 → <span class="path">数值 → 就近取整</span>，输入接<span class="chip c-mul">乘法</span>的输出。作用是把小数四舍五入成整数温度（47.83 → 48）。<span class="chip c-round">就近取整</span></li>
+    </ol>
+
+    <h3 class="sub-h">B. 前面板：摆控件，再回框图接线</h3>
+    <ol class="steps">
+        <li><b>在前面板创建三个显示控件。</b>切回前面板，依次右键创建 <span class="chip c-thermo">温度计</span>（<span class="path">数值 → 温度计</span>）、<span class="chip c-led">圆形指示灯</span>（<span class="path">布尔 → 圆形指示灯</span>）、<span class="chip c-chart">波形图表</span>（<span class="path">图形 → 波形图表</span>）。</li>
+        <li><b>把"就近取整"的输出接到这两个显示端。</b>回程序框图，<span class="chip c-round">就近取整</span> 的输出同时接 <span class="chip c-thermo">温度计</span>（显示当前温度）和 <span class="chip c-chart">波形图表</span>（保存历史并画曲线）。
+            <span class="note">一个输出可以接多条线：从同一端点拖出第二根即可分叉，LabVIEW 会在分叉处自动打上实心节点。</span>
+        </li>
+    </ol>
+
+    <h3 class="sub-h">C. 加上"越限判断 + 报警"的逻辑</h3>
+    <ol class="steps">
+        <li><b>创建比较函数，与 50 比较。</b>右键 → <span class="path">比较 → 大于</span>，一个输入接<span class="chip c-round">就近取整</span>的输出，另一个输入用快捷法建常量、填 <b>50</b>。<span class="chip c-cmp">大于</span>
+            <span class="note">大于 / 小于等于都行，逻辑看自己的设计思路。本教程按"<b>大于 50 → 报警</b>"搭。</span>
+        </li>
+        <li><b>创建条件结构与两条字符串。</b>右键 → <span class="path">结构 → 条件结构</span>；再建两个 <span class="chip c-str">字符串常量</span>（<span class="path">字符串 → 字符串常量</span>），分别填 <b>"温度过高"</b> 和 <b>"温度正常"</b>；最后建一个 <span class="chip c-strind">字符串显示</span>（<span class="path">字符串 → 字符串显示</span>）。<span class="chip c-case">条件结构</span></li>
+        <li><b>接进条件结构，两个分支各放一条字符串。</b>把<span class="chip c-cmp">大于</span>的输出接到<span class="chip c-case">条件结构</span>左侧的<b>选择端</b>（问号端子）；在结构边框上右键 → <span class="path">添加分支</span>，确认有"真""假"两支；在"假"分支放 <span class="chip c-str">"温度正常"</span>、点顶部标签切到"真"分支放 <span class="chip c-str">"温度过高"</span>，两条都连到右侧输出隧道，再把输出接到<span class="chip c-strind">字符串显示</span>。
+            <span class="note warn"><b>关键点：</b>条件结构的每个分支都必须给输出隧道赋值，否则隧道显示为空心，程序跑不起来。</span>
+        </li>
+        <li><b>接指示灯，并设置红/绿颜色。</b>把<span class="chip c-cmp">大于</span>的输出直接接<span class="chip c-led">圆形指示灯</span>（即"大于 50 就亮"）；回到前面板右键指示灯 → <b>属性</b> → 颜色，把<b>真</b>设为红、<b>假</b>设为绿。
+            <span class="note">最终效果：温度 &gt; 50 ℃ → <b style="color:#dc2626">红灯</b> + "温度过高"；温度 ≤ 50 ℃ → <b style="color:#16a34a">绿灯</b> + "温度正常"。</span>
+        </li>
+    </ol>
+</div>
+
+<!-- ===================== 2 部件速查表（四列） ===================== -->
+<div class="card" id="legend">
+    <div class="sec-title"><span class="no">2</span>部件速查表（四列）</div>
+    <p style="font-size:0.92rem;color:#4a5d7a;">
+        上面每个部件都带一个<b>彩色圆点标签</b>。下表按「<b>类别 → 部件 → 右键菜单路径 → 色标</b>」四列对齐列出：先按"类别"列找到分组，再顺着"路径"列逐级点开右键菜单即可。
+    </p>
+
+    <table class="lookup">
+        <thead>
+            <tr>
+                <th style="width:14%">类别</th>
+                <th style="width:18%">部件</th>
+                <th style="width:38%">右键菜单路径</th>
+                <th style="width:30%">本教程色标</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="cat" rowspan="5">前面板控件</td>
+                <td class="name">数值输入</td>
+                <td><span class="path">数值 → 数值输入</span></td>
+                <td><span class="chip c-num">数值输入</span></td>
+            </tr>
+            <tr>
+                <td class="name">温度计</td>
+                <td><span class="path">数值 → 温度计</span></td>
+                <td><span class="chip c-thermo">温度计</span></td>
+            </tr>
+            <tr>
+                <td class="name">指示灯</td>
+                <td><span class="path">布尔 → 圆形指示灯</span></td>
+                <td><span class="chip c-led">圆形指示灯</span></td>
+            </tr>
+            <tr>
+                <td class="name">字符串显示</td>
+                <td><span class="path">字符串 → 字符串显示</span></td>
+                <td><span class="chip c-strind">字符串显示</span></td>
+            </tr>
+            <tr>
+                <td class="name">波形图表</td>
+                <td><span class="path">图形 → 波形图表</span></td>
+                <td><span class="chip c-chart">波形图表</span></td>
+            </tr>
+
+            <tr>
+                <td class="cat" rowspan="7">程序框图函数</td>
+                <td class="name">数值常量</td>
+                <td><span class="path">数值 → 数值常量</span></td>
+                <td><span class="chip c-num">数值常量</span></td>
+            </tr>
+            <tr>
+                <td class="name">条件结构</td>
+                <td><span class="path">结构 → 条件结构</span></td>
+                <td><span class="chip c-case">条件结构</span></td>
+            </tr>
+            <tr>
+                <td class="name">比较函数</td>
+                <td><span class="path">比较 → 大于</span></td>
+                <td><span class="chip c-cmp">大于</span></td>
+            </tr>
+            <tr>
+                <td class="name">字符串常量</td>
+                <td><span class="path">字符串 → 字符串常量</span></td>
+                <td><span class="chip c-str">字符串常量</span></td>
+            </tr>
+            <tr>
+                <td class="name">随机数</td>
+                <td><span class="path">数值 → 随机数</span></td>
+                <td><span class="chip c-rnd">随机数</span></td>
+            </tr>
+            <tr>
+                <td class="name">乘法</td>
+                <td><span class="path">数值 → 乘法</span></td>
+                <td><span class="chip c-mul">乘法</span></td>
+            </tr>
+            <tr>
+                <td class="name">就近取整<span class="add-tag">补充</span></td>
+                <td><span class="path">数值 → 就近取整</span></td>
+                <td><span class="chip c-round">就近取整</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="note" style="margin-top:12px;">
+        <b>关于色标：</b>色标是本教程自定的辅助记忆色，LabVIEW 软件本身不会把部件显示成这些颜色。它的作用是让正文、上表、下方示意图三处用同一个颜色指代同一个部件，方便来回对照。
+    </div>
+
+    <details class="raw">
+        <summary>查看原始截图（LabVIEW_POS.png）</summary>
+        <figure>
+            <img src="LabVIEW_POS.png" alt="LabVIEW 前面板控件与程序框图函数的位置速查表（原始截图）">
+            <figcaption>图 1　原始速查截图。内容已在上表完整转写为文字表格，此图仅作对照留存。</figcaption>
+        </figure>
+    </details>
+</div>
+
+<!-- ===================== 3 数据流示意 ===================== -->
+<div class="card" id="diagram">
+    <div class="sec-title"><span class="no">3</span>程序框图数据流示意</div>
+    <p style="font-size:0.92rem;color:#4a5d7a;">
+        把上面各步连起来就是这张图，颜色与第 2 节色标一一对应。数据从左往右、自上而下流动：<b>造数 → 取整 → 显示 / 比较 → 分支报警</b>。
+    </p>
+    <div class="svg-wrap">
+    <svg viewBox="0 0 1060 580" width="100%" style="max-width:1060px;display:block;margin:0 auto;">
+        <defs>
+            <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+                <path d="M0,0 L7,3.2 L0,6.4 Z" fill="#94a3b8"/>
+            </marker>
+        </defs>
+
+        <g fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)">
+            <path d="M160 98 L190 98 L190 112 L220 112"/>
+            <path d="M160 205 L190 205 L190 132 L220 132"/>
+            <path d="M340 122 L380 122"/>
+            <path d="M520 122 L590 122"/>
+            <path d="M590 122 L590 41 L620 41"/>
+            <path d="M590 122 L620 122"/>
+            <path d="M590 122 L590 227 L620 227"/>
+            <path d="M570 325 L595 325 L595 247 L620 247"/>
+            <path d="M770 237 L795 237"/>
+            <path d="M795 237 L795 180 L830 180"/>
+            <path d="M795 237 L795 300 L810 300"/>
+            <path d="M910 450 L910 492"/>
+        </g>
+        <g fill="#94a3b8">
+            <circle cx="590" cy="122" r="3.8"/>
+            <circle cx="795" cy="237" r="3.8"/>
+        </g>
+
+        <g>
+            <rect x="30" y="70" width="130" height="56" rx="10" fill="#eef0ff" stroke="#4f46e5" stroke-width="2"/>
+            <text x="95" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#4f46e5">随机数</text>
+            <text x="95" y="112" text-anchor="middle" font-size="11" fill="#6b74d8">0 ~ 1</text>
+        </g>
+        <g>
+            <rect x="30" y="180" width="130" height="50" rx="10" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="95" y="203" text-anchor="middle" font-size="13" font-weight="700" fill="#475569">数值常量</text>
+            <text x="95" y="220" text-anchor="middle" font-size="12" fill="#64748b">100</text>
+        </g>
+        <g>
+            <rect x="220" y="90" width="120" height="64" rx="10" fill="#e6f7fb" stroke="#0891b2" stroke-width="2"/>
+            <text x="280" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#0e7490">乘法</text>
+            <text x="280" y="136" text-anchor="middle" font-size="11" fill="#0891b2">×100</text>
+        </g>
+        <g>
+            <rect x="380" y="90" width="140" height="64" rx="10" fill="#f3ecff" stroke="#7c3aed" stroke-width="2"/>
+            <text x="450" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#7c3aed">就近取整</text>
+            <text x="450" y="136" text-anchor="middle" font-size="11" fill="#8b5cf6">取整数温度</text>
+        </g>
+        <g>
+            <rect x="620" y="12" width="150" height="58" rx="10" fill="#fdeaea" stroke="#dc2626" stroke-width="2"/>
+            <text x="695" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#dc2626">温度计</text>
+        </g>
+        <g>
+            <rect x="620" y="93" width="150" height="58" rx="10" fill="#e6f3fb" stroke="#0284c7" stroke-width="2"/>
+            <text x="695" y="127" text-anchor="middle" font-size="15" font-weight="700" fill="#0284c7">波形图表</text>
+        </g>
+        <g>
+            <rect x="620" y="205" width="150" height="64" rx="10" fill="#fff0e6" stroke="#ea580c" stroke-width="2"/>
+            <text x="695" y="233" text-anchor="middle" font-size="15" font-weight="700" fill="#ea580c">大于</text>
+            <text x="695" y="251" text-anchor="middle" font-size="11" fill="#c2410c">温度 &gt; 50 ?</text>
+        </g>
+        <g>
+            <rect x="430" y="300" width="140" height="50" rx="10" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="500" y="323" text-anchor="middle" font-size="13" font-weight="700" fill="#475569">数值常量</text>
+            <text x="500" y="340" text-anchor="middle" font-size="12" fill="#64748b">50</text>
+        </g>
+        <g>
+            <rect x="830" y="150" width="170" height="60" rx="10" fill="#fde8ec" stroke="#e11d48" stroke-width="2"/>
+            <circle cx="858" cy="180" r="9" fill="#e11d48"/>
+            <text x="930" y="186" text-anchor="middle" font-size="14" font-weight="700" fill="#be123c">圆形指示灯</text>
+        </g>
+        <g>
+            <rect x="810" y="250" width="200" height="200" rx="10" fill="#fdeaf3" stroke="#db2777" stroke-width="2.4"/>
+            <text x="910" y="272" text-anchor="middle" font-size="13" font-weight="800" fill="#be185d">条件结构</text>
+            <text x="818" y="298" font-size="13" font-weight="800" fill="#db2777">?</text>
+            <rect x="832" y="286" width="158" height="56" rx="8" fill="#fff" stroke="#f0a6c6" stroke-width="1.6"/>
+            <text x="911" y="309" text-anchor="middle" font-size="12" font-weight="700" fill="#16a34a">真："温度过高"</text>
+            <text x="911" y="328" text-anchor="middle" font-size="10.5" fill="#7a8699">字符串常量</text>
+            <rect x="832" y="362" width="158" height="56" rx="8" fill="#fff" stroke="#f0a6c6" stroke-width="1.6"/>
+            <text x="911" y="385" text-anchor="middle" font-size="12" font-weight="700" fill="#16a34a">假："温度正常"</text>
+            <text x="911" y="404" text-anchor="middle" font-size="10.5" fill="#7a8699">字符串常量</text>
+            <text x="926" y="445" font-size="10" fill="#be185d">输出</text>
+        </g>
+        <g>
+            <rect x="810" y="492" width="200" height="54" rx="10" fill="#e6f7f5" stroke="#0d9488" stroke-width="2"/>
+            <text x="910" y="525" text-anchor="middle" font-size="15" font-weight="700" fill="#0d9488">字符串显示</text>
+        </g>
+
+        <text x="30" y="440" font-size="12" fill="#64748b">数据流方向：</text>
+        <line x1="130" y1="436" x2="196" y2="436" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)"/>
+        <text x="30" y="470" font-size="12" fill="#64748b">· 就近取整的输出同时送给温度计、波形图表、大于三个下游</text>
+        <text x="30" y="492" font-size="12" fill="#64748b">· 大于的输出同时送给圆形指示灯与条件结构的选择端</text>
+        <text x="30" y="514" font-size="12" fill="#64748b">· 条件结构"真/假"两分支各放一条字符串常量，汇合后送字符串显示</text>
+    </svg>
+    </div>
+    <figcaption style="text-align:center;font-size:0.83rem;color:#64748b;margin-top:8px;">
+        图 2　实验一程序框图数据流示意（颜色与第 2 节部件色标一致）
+    </figcaption>
+</div>
+
+<!-- ===================== 4 运行 ===================== -->
+<div class="card" id="run">
+    <div class="sec-title"><span class="no">4</span>运行与验证</div>
+    <ol class="steps">
+        <li><b>先检查连线。</b>看程序框图工具栏的「运行」箭头：若显示为<b>断裂的灰色箭头</b>，说明程序有错，点击它会弹出错误列表，逐条修复后再继续。</li>
+        <li><b>连续运行。</b>点击工具栏的「连续运行」（循环箭头按钮），程序会不断产生新的随机温度，波形图表上实时画出曲线。</li>
+        <li><b>观察现象。</b>温度计指针随随机数跳动，<span class="chip c-led">圆形指示灯</span> 在红/绿之间切换，<span class="chip c-strind">字符串显示</span> 在"温度过高"/"温度正常"之间切换——三者应当始终同步。</li>
+    </ol>
+    <div class="key" style="margin-bottom:0;">
+        <b>判断是否搭对了：</b>只要出现"<b>红灯 ↔ 温度过高</b>"、"<b>绿灯 ↔ 温度正常</b>"这两组一一对应的现象，实验就成功了。
+    </div>
+</div>
+
+<!-- ===================== 5 易错点 ===================== -->
+<div class="card" id="faq">
+    <div class="sec-title"><span class="no">5</span>易错点与调试提示</div>
+    <table class="lookup">
+        <thead>
+            <tr><th style="width:32%">现象 / 问题</th><th>原因与解决办法</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>运行箭头是<b>断裂的灰箭头</b></td>
+                <td>存在连线错误。点击断裂箭头查看错误列表，通常是<span class="chip c-case">条件结构</span>某个分支的<b>输出隧道没接线</b>，或数据类型不匹配。</td>
+            </tr>
+            <tr>
+                <td>线拉不出来 / 连不上</td>
+                <td>必须从<b>输出端（小三角）</b>拖到<b>输入端（小圆点）</b>；把鼠标悬停在端点上会出现闪烁的小圆点提示。</td>
+            </tr>
+            <tr>
+                <td>温度显示总是 0 或 1</td>
+                <td><span class="chip c-num">数值常量</span> 没设成 100，或 <span class="chip c-mul">乘法</span> 的两个输入接反/未接。检查"随机数 × 100"这条链。</td>
+            </tr>
+            <tr>
+                <td>指示灯颜色不对</td>
+                <td>回到前面板，右键指示灯 → <b>属性</b> → 颜色，把<b>真</b>设为红、<b>假</b>设为绿（或按你的逻辑互换）。</td>
+            </tr>
+            <tr>
+                <td>字符串始终显示同一个值</td>
+                <td><span class="chip c-case">条件结构</span> 只有一个分支接了字符串常量，另一个分支是空的。点结构顶部标签切换分支，把两条都接上。</td>
+            </tr>
+            <tr>
+                <td>波形图表不画曲线</td>
+                <td><span class="chip c-chart">波形图表</span> 未接到 <span class="chip c-round">就近取整</span> 的输出，或只在单次运行时执行一次（改用<b>连续运行</b>才能看到曲线累积）。</td>
+            </tr>
+            <tr>
+                <td>找不到某个部件</td>
+                <td>对照 <a href="#legend">第 2 节 部件速查表</a>，按"类别 → 部件 → 路径"三列定位（如 <span class="path">布尔 → 圆形指示灯</span>）。</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</section>
+
+<!-- ===================== 实验二 ===================== -->
+<section class="page" id="page-exp2">
+
+<div class="card">
+    <div class="sec-title"><span class="no">目</span>内容导航</div>
+    <div class="toc">
+        <a href="#e2-src"><span class="n">0</span>函数从哪来：自定义/用户 → smart</a>
+        <a href="#e2-steps"><span class="n">1</span>操作步骤</a>
+        <a href="#e2-diagram"><span class="n">2</span>程序框图数据流示意</a>
+        <a href="#e2-tips"><span class="n">3</span>易错点与调试提示</a>
+    </div>
+</div>
+
+<!-- ---------- 实验二 0 ---------- -->
+<div class="card" id="e2-src">
+    <div class="sec-title"><span class="no">0</span>函数从哪来：自定义/用户 → smart</div>
+
+    <div class="key" style="margin-top:0;">
+        <b>目标：</b>用「smart」用户库里的传感器 VI，读出一路传感器的<b>类型 / ID / 名称 / 连接状态</b>，设定<b>采样频率与数量</b>，然后在 While 循环里反复采集数据，把数值送进<b>波形图表</b>画曲线。
+    </div>
+
+    <p style="font-size:0.94rem;">
+        本实验用到的 VI <b>不在标准函数选板里</b>，它们放在一个叫 <b>smart</b> 的<b>用户库</b>中。找法只有一条路径：
+    </p>
+
+    <div class="note" style="font-size:0.92rem;">
+        <b>程序框图空白处右键</b> → 把弹出的函数选板菜单<b>拉到最下面</b> → 找到 <b>「自定义」/「用户」</b> 分类 → 展开 <b>smart</b> → 里面就是本实验要用的全部 VI。
+    </div>
+
+    <table class="lookup">
+        <thead>
+            <tr><th style="width:34%">VI 名称</th><th>作用</th></tr>
+        </thead>
+        <tbody>
+            <tr><td class="name">Set Sensor Type.vi</td><td>设定传感器类型（另一个输入接常量 <b>0</b>）</td></tr>
+            <tr><td class="name">Get Sensor ID.vi</td><td>按编号取传感器 ID（另一个输入接常量 <b>1</b>）</td></tr>
+            <tr><td class="name">Get Sensor Name.vi</td><td>由 ID 取出传感器名称，输出给字符串显示 <b>Name</b></td></tr>
+            <tr><td class="name">Connected.vi</td><td>判断传感器是否连接，输出给指示灯 <b>iConnected</b></td></tr>
+            <tr><td class="name">Set Freq And Count.vi</td><td>设定采样<b>频率</b>与<b>数量</b>（接常量 100 与 1000），输出 <b>fc</b> 给指示灯 <b>Read</b></td></tr>
+            <tr><td class="name">Read Data.vi</td><td>执行一次数据读取，输出给指示灯 <b>Read</b></td></tr>
+            <tr><td class="name">Get Record Count.vi</td><td>取回当前记录条数，输出给数值显示 <b>Count</b></td></tr>
+            <tr><td class="name">Get Value.vi</td><td>取出测量值（输入接常量 <b>1</b>），输出给 <b>Value</b> 与波形图表</td></tr>
+        </tbody>
+    </table>
+
+    <div class="note warn" style="font-size:0.92rem;">
+        <b>⚠️ 第一次创建会报错，点「确定」即可。</b>首次从 <b>smart</b> 里把这些 VI 拖到程序框图时，LabVIEW 会弹出一个报错对话框——这是<b>正常现象</b>（用户库加载提示），直接点 <b>「确定」</b> 关掉就行，<b>不影响后续连线和使用</b>。
+    </div>
+</div>
+
+<!-- ---------- 实验二 1 ---------- -->
+<div class="card" id="e2-steps">
+    <div class="sec-title"><span class="no">1</span>实验二：操作步骤</div>
+
+    <h3 class="sub-h">A. 配置传感器（循环外，只执行一次）</h3>
+    <ol class="steps">
+        <li><b>放置 smart 库 VI。</b>在程序框图空白处右键 → 拉到最下面 → <span class="path smart-path">自定义/用户 → smart</span>，把本实验要用的 VI 依次拖出来。第一次拖出时会报错，点「确定」。</li>
+        <li><b>创建两个控件。</b>回到前面板，创建 <b>Type</b> 与 <b>ID</b> 两个控件（<b>ID</b> 用 I32，示例值 <b>123</b>）。</li>
+        <li><b>接传感器类型。</b><span class="chip c-num">Type</span> → <b>Set Sensor Type.vi</b>；该 VI 的另一个输入端用快捷法建常量，填 <b>0</b>。</li>
+        <li><b>取 ID 与名称。</b><span class="chip c-num">ID</span> → <b>Get Sensor ID.vi</b>（另一输入接常量 <b>1</b>）；再把它的输出接到 <b>Get Sensor Name.vi</b>，输出接字符串显示 <span class="chip c-strind">Name</span>。</li>
+        <li><b>接连接状态。</b><b>Connected.vi</b> 的输出接指示灯 <span class="chip c-led">iConnected</span>。</li>
+    </ol>
+
+    <h3 class="sub-h">B. 设定采样频率与数量</h3>
+    <ol class="steps">
+        <li><b>建两个常量。</b>程序框图里创建两个数值常量，分别填 <b>100</b>（频率）与 <b>1000</b>（数量）。<span class="chip c-num">数值常量</span></li>
+        <li><b>接 Set Freq And Count.vi。</b>两个常量分别接到该 VI 的两个输入端，它的输出 <b>fc</b> 接指示灯 <span class="chip c-led">Read</span>。</li>
+    </ol>
+
+    <h3 class="sub-h">C. 放进 While 循环反复采集</h3>
+    <ol class="steps">
+        <li><b>放置 While 循环。</b>右键 → <span class="path">结构 → While 循环</span>，把采集相关的 VI 全部<b>拖进循环框内</b>（框外的配置部分留在外面）。</li>
+        <li><b>读取数据。</b><b>Read Data.vi</b> 的输出接指示灯 <span class="chip c-led">Read</span>，表示本圈是否读到数据。</li>
+        <li><b>取记录条数。</b><b>Get Record Count.vi</b> 的输出接数值显示 <span class="chip c-num">Count</span>。</li>
+        <li><b>取测量值。</b><b>Get Value.vi</b> 的输入端接常量 <b>1</b>，输出接数值显示 <span class="chip c-num">Value</span>。</li>
+        <li><b>送波形图表。</b><span class="chip c-num">Value</span> 再接到 <span class="chip c-chart">波形图表</span>，把每圈的数值画成曲线。</li>
+        <li><b>控制循环节奏。</b>数值常量 <b>1000</b> 接到<b>定时/等待</b>函数（时钟图标），决定每圈之间的间隔。</li>
+        <li><b>加停止按钮。</b>前面板放一个 <b>停止（STOP）</b> 按钮，接 While 循环右下角的<b>条件端</b>（红点），用来结束循环。
+            <span class="note">While 循环默认「条件端为真时继续」，接上 STOP 按钮后需在条件端上右键 → <b>真时停止</b>，否则按钮逻辑会反过来。</span>
+        </li>
+        <li><b>运行观察。</b>点「连续运行」，观察 <span class="chip c-chart">波形图表</span> 曲线、<span class="chip c-num">Count</span> 与 <span class="chip c-num">Value</span> 的读数，以及 <span class="chip c-led">Read</span>／<span class="chip c-led">iConnected</span> 指示灯的状态。</li>
+    </ol>
+</div>
+
+<!-- ---------- 实验二 2 ---------- -->
+<div class="card" id="e2-diagram">
+    <div class="sec-title"><span class="no">2</span>程序框图数据流示意</div>
+    <p style="font-size:0.92rem;color:#4a5d7a;">
+        整张框图分两块：<b>上方是配置区</b>（循环外，只跑一次：设定类型 → 取 ID/名称 → 判断连接 → 设定频率与数量），<b>下方是 While 循环</b>（每圈读一次数据、取记录数与测量值、送波形图表，由 STOP 按钮退出）。
+    </p>
+    <div class="svg-wrap">
+    <svg viewBox="0 0 1080 1000" width="100%" style="max-width:1080px;display:block;margin:0 auto;">
+        <defs>
+            <marker id="arw2" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+                <path d="M0,0 L7,3.2 L0,6.4 Z" fill="#94a3b8"/>
+            </marker>
+        </defs>
+
+        <!-- ===== 配置区 ===== -->
+        <text x="20" y="26" font-size="13" font-weight="700" fill="#64748b">配置区（循环外 · 只执行一次）</text>
+        <rect x="16" y="38" width="1048" height="600" rx="14" fill="#fcfdff" stroke="#cbd5e1" stroke-dasharray="7 5" stroke-width="1.5"/>
+
+        <!-- wires 配置区 -->
+        <g fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw2)">
+            <path d="M150 116 L230 116 L230 108 L310 108"/>
+            <path d="M244 190 L275 190 L275 138 L310 138"/>
+            <path d="M150 276 L230 276 L230 268 L310 268"/>
+            <path d="M244 350 L275 350 L275 298 L310 298"/>
+            <path d="M480 284 L560 284"/>
+            <path d="M730 284 L800 284"/>
+            <path d="M480 424 L560 424"/>
+            <path d="M130 530 L220 530 L220 526 L310 526"/>
+            <path d="M130 582 L260 582 L260 562 L310 562"/>
+            <path d="M490 546 L560 546"/>
+        </g>
+
+        <!-- Type 控件 -->
+        <g>
+            <rect x="40" y="90" width="110" height="52" rx="9" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="95" y="115" text-anchor="middle" font-size="13" font-weight="700" fill="#475569">Type</text>
+            <text x="95" y="132" text-anchor="middle" font-size="10" fill="#94a3b8">控件</text>
+        </g>
+        <!-- 常量 0 -->
+        <g>
+            <rect x="180" y="170" width="64" height="40" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="212" y="196" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">0</text>
+        </g>
+        <!-- Set Sensor Type.vi -->
+        <g>
+            <rect x="310" y="90" width="170" height="68" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="310" y="90" width="7" height="68" rx="3" fill="#0f766e"/>
+            <text x="400" y="120" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Set Sensor</text>
+            <text x="400" y="139" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Type.vi</text>
+        </g>
+
+        <!-- ID 控件 -->
+        <g>
+            <rect x="40" y="250" width="110" height="52" rx="9" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="95" y="275" text-anchor="middle" font-size="13" font-weight="700" fill="#475569">ID</text>
+            <text x="95" y="292" text-anchor="middle" font-size="10" fill="#94a3b8">I32 = 123</text>
+        </g>
+        <!-- 常量 1 -->
+        <g>
+            <rect x="180" y="330" width="64" height="40" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="212" y="356" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">1</text>
+        </g>
+        <!-- Get Sensor ID.vi -->
+        <g>
+            <rect x="310" y="250" width="170" height="68" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="310" y="250" width="7" height="68" rx="3" fill="#0f766e"/>
+            <text x="400" y="280" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Get Sensor</text>
+            <text x="400" y="299" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">ID.vi</text>
+        </g>
+        <!-- Get Sensor Name.vi -->
+        <g>
+            <rect x="560" y="250" width="170" height="68" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="560" y="250" width="7" height="68" rx="3" fill="#0f766e"/>
+            <text x="650" y="280" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Get Sensor</text>
+            <text x="650" y="299" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Name.vi</text>
+        </g>
+        <!-- Name -->
+        <g>
+            <rect x="800" y="262" width="140" height="48" rx="9" fill="#e6f7f5" stroke="#0d9488" stroke-width="2"/>
+            <text x="870" y="292" text-anchor="middle" font-size="14" font-weight="700" fill="#0d9488">Name</text>
+        </g>
+
+        <!-- Connected.vi -->
+        <g>
+            <rect x="310" y="390" width="170" height="68" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="310" y="390" width="7" height="68" rx="3" fill="#0f766e"/>
+            <text x="400" y="430" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Connected.vi</text>
+        </g>
+        <!-- iConnected -->
+        <g>
+            <rect x="560" y="402" width="150" height="48" rx="9" fill="#fde8ec" stroke="#e11d48" stroke-width="2"/>
+            <circle cx="586" cy="426" r="8" fill="#e11d48"/>
+            <text x="650" y="431" text-anchor="middle" font-size="13" font-weight="700" fill="#be123c">iConnected</text>
+        </g>
+
+        <!-- 常量 100 / 1000 -->
+        <g>
+            <rect x="40" y="510" width="90" height="40" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="85" y="536" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">100</text>
+        </g>
+        <g>
+            <rect x="40" y="562" width="90" height="40" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="85" y="588" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">1000</text>
+        </g>
+        <!-- Set Freq And Count.vi -->
+        <g>
+            <rect x="310" y="510" width="180" height="72" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="310" y="510" width="7" height="72" rx="3" fill="#0f766e"/>
+            <text x="405" y="541" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Set Freq And</text>
+            <text x="405" y="560" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Count.vi</text>
+        </g>
+        <!-- Read 指示灯 -->
+        <g>
+            <rect x="560" y="522" width="140" height="48" rx="9" fill="#fde8ec" stroke="#e11d48" stroke-width="2"/>
+            <circle cx="586" cy="546" r="8" fill="#e11d48"/>
+            <text x="655" y="551" text-anchor="middle" font-size="14" font-weight="700" fill="#be123c">Read</text>
+        </g>
+        <text x="512" y="538" font-size="11" fill="#0f766e" font-weight="700">fc</text>
+
+        <!-- ===== While 循环 ===== -->
+        <text x="20" y="656" font-size="13" font-weight="700" fill="#64748b">While 循环（每圈采集一次 · 由 STOP 退出）</text>
+        <rect x="16" y="668" width="1048" height="310" rx="14" fill="#fdfdff" stroke="#94a3b8" stroke-width="3"/>
+
+        <g fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw2)">
+            <path d="M250 744 L330 744"/>
+            <path d="M260 824 L330 824"/>
+            <path d="M146 898 L230 898"/>
+            <path d="M390 904 L450 904"/>
+            <path d="M570 904 L620 904"/>
+            <path d="M710 729 L760 729"/>
+            <path d="M990 787 L1020 787 L1020 835"/>
+        </g>
+
+        <!-- Read Data.vi -->
+        <g>
+            <rect x="90" y="713" width="160" height="62" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="90" y="713" width="7" height="62" rx="3" fill="#0f766e"/>
+            <text x="175" y="750" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Read Data.vi</text>
+        </g>
+        <g>
+            <rect x="330" y="720" width="120" height="48" rx="9" fill="#fde8ec" stroke="#e11d48" stroke-width="2"/>
+            <circle cx="354" cy="744" r="8" fill="#e11d48"/>
+            <text x="410" y="749" text-anchor="middle" font-size="13" font-weight="700" fill="#be123c">Read</text>
+        </g>
+
+        <!-- Get Record Count.vi -->
+        <g>
+            <rect x="90" y="793" width="170" height="62" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="90" y="793" width="7" height="62" rx="3" fill="#0f766e"/>
+            <text x="180" y="821" text-anchor="middle" font-size="12" font-weight="700" fill="#0f766e">Get Record</text>
+            <text x="180" y="839" text-anchor="middle" font-size="12" font-weight="700" fill="#0f766e">Count.vi</text>
+        </g>
+        <g>
+            <rect x="330" y="800" width="120" height="48" rx="9" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="390" y="830" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">Count</text>
+        </g>
+
+        <!-- 常量 1 + Get Value.vi -->
+        <g>
+            <rect x="90" y="878" width="56" height="40" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="118" y="904" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">1</text>
+        </g>
+        <g>
+            <rect x="230" y="873" width="160" height="62" rx="9" fill="#e6f6f4" stroke="#0f766e" stroke-width="2"/>
+            <rect x="230" y="873" width="7" height="62" rx="3" fill="#0f766e"/>
+            <text x="315" y="910" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">Get Value.vi</text>
+        </g>
+        <g>
+            <rect x="450" y="880" width="120" height="48" rx="9" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="510" y="910" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">Value</text>
+        </g>
+        <!-- 波形图表 -->
+        <g>
+            <rect x="620" y="870" width="160" height="62" rx="9" fill="#e6f3fb" stroke="#0284c7" stroke-width="2"/>
+            <text x="700" y="907" text-anchor="middle" font-size="14" font-weight="700" fill="#0284c7">波形图表</text>
+        </g>
+
+        <!-- 常量 1000 + 定时 -->
+        <g>
+            <rect x="620" y="708" width="90" height="42" rx="8" fill="#eef1f5" stroke="#64748b" stroke-width="2"/>
+            <text x="665" y="735" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">1000</text>
+        </g>
+        <g>
+            <rect x="760" y="703" width="120" height="52" rx="9" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+            <text x="820" y="735" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">定时 / 等待</text>
+        </g>
+
+        <!-- 停止 -->
+        <g>
+            <rect x="880" y="758" width="110" height="58" rx="9" fill="#fdeaea" stroke="#dc2626" stroke-width="2"/>
+            <text x="935" y="793" text-anchor="middle" font-size="14" font-weight="800" fill="#dc2626">STOP</text>
+        </g>
+        <text x="858" y="752" font-size="11" fill="#dc2626" font-weight="700">停止</text>
+        <circle cx="1020" cy="848" r="13" fill="#fdeaea" stroke="#dc2626" stroke-width="3"/>
+        <text x="1046" y="853" font-size="10" fill="#dc2626">条件端</text>
+
+        <!-- i 迭代端子 -->
+        <g>
+            <rect x="46" y="916" width="44" height="32" rx="6" fill="#eef1f5" stroke="#64748b" stroke-width="1.6"/>
+            <text x="68" y="938" text-anchor="middle" font-size="13" font-weight="700" fill="#64748b">i</text>
+        </g>
+
+        <!-- 图例 -->
+        <text x="300" y="966" font-size="11" fill="#64748b">■ 青绿 = smart 用户库 VI　　■ 灰 = 数值常量/控件　　■ 玫红 = 指示灯　　■ 天蓝 = 波形图表</text>
+    </svg>
+    </div>
+    <figcaption style="text-align:center;font-size:0.83rem;color:#64748b;margin-top:8px;">
+        图 3　实验二程序框图数据流示意（依据实验二框图绘制）
+    </figcaption>
+</div>
+
+<!-- ---------- 实验二 3 ---------- -->
+<div class="card" id="e2-tips">
+    <div class="sec-title"><span class="no">3</span>易错点与调试提示</div>
+    <table class="lookup">
+        <thead>
+            <tr><th style="width:32%">现象 / 问题</th><th>原因与解决办法</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>标准选板里找不到这些 VI</td>
+                <td>它们<b>不在标准函数选板</b>，必须从 <span class="path smart-path">自定义/用户 → smart</span> 里找（右键菜单拉到最下面）。</td>
+            </tr>
+            <tr>
+                <td>首次拖入 VI 时弹出报错</td>
+                <td><b>正常现象</b>（用户库加载提示），直接点 <b>「确定」</b> 关掉即可，不影响使用。</td>
+            </tr>
+            <tr>
+                <td>程序跑起来停不下来</td>
+                <td>检查 <b>STOP</b> 按钮是否接到 While 循环右下角的<b>条件端</b>，以及条件端是否设为「<b>真时停止</b>」。</td>
+            </tr>
+            <tr>
+                <td>波形图表不出曲线</td>
+                <td>检查 <b>Get Value.vi</b> 的输出是否接到了 <b>Value</b> 与<b>波形图表</b>；确认是「连续运行」而不是只跑一次。</td>
+            </tr>
+            <tr>
+                <td>Count / Value 一直是 0</td>
+                <td>检查 <b>Get Record Count.vi</b>、<b>Get Value.vi</b> 的输入端是否接好（Get Value.vi 需接常量 <b>1</b>），以及传感器是否真的处于连接状态（看 iConnected 灯）。</td>
+            </tr>
+            <tr>
+                <td>循环转得太快 / 太慢</td>
+                <td>调整接在<b>定时/等待</b>上的常量（图中为 1000，单位 ms），或修改 <b>Set Freq And Count.vi</b> 上的频率与数量。</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</section>
+
+<footer>
+    LabVIEW 实验一 · 温度监测与报警　/　实验二 · 传感器数据读取　|　<a href="index.html" style="color:#4b6cb7;">返回主页</a>
+</footer>
+
+<script>
+    (function () {
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+        var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+        function show(name) {
+            tabs.forEach(function (t) { t.classList.toggle('active', t.dataset.tab === name); });
+            pages.forEach(function (p) { p.classList.toggle('active', p.id === 'page-' + name); });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () { show(t.dataset.tab); });
+        });
+        // 顶部快捷链接：先切回实验一，再跳到锚点
+        document.querySelectorAll('.hero a[href^="#"]').forEach(function (a) {
+            a.addEventListener('click', function () {
+                if (document.getElementById('page-exp1').classList.contains('active')) return;
+                show('exp1');
+                setTimeout(function () {
+                    var el = document.querySelector(a.getAttribute('href'));
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 260);
+            });
+        });
+    })();
+</script>
+
+    <script src="feedback.js?v=6.5.7" defer></script>
+</body>
+</html>
